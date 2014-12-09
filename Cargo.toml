@@ -1,0 +1,17 @@
+[package]
+name = "obj-rs"
+version = "0.0.4"
+authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
+description   = "A parser for wavefront '.obj' and '.mtl' file format."
+documentation = "https://simnalamburt.github.io/obj-rs"
+homepage      = "https://github.com/simnalamburt/obj-rs"
+repository    = "https://github.com/simnalamburt/obj-rs"
+readme        = "README.md"
+keywords      = ["graphics"]
+license       = "BSD-2-Clause"
+
+[lib]
+name = "obj"
+
+[dev-dependencies]
+bear = "0.1.1"
