@@ -1,0 +1,12 @@
+language: rust
+os:
+  - linux
+  - osx
+notifications:
+  irc:
+    nick: obj-rs
+    channels:
+      - irc.uriirc.org:16667#hyeon
+    template:
+      - "#%{build_number} %{result}, %{build_url}"
+    skip_join: true
