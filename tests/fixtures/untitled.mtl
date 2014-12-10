@@ -1,0 +1,30 @@
+# Blender MTL File: 'None'
+# Material Count: 2
+
+# name
+newmtl Material
+# Phong specular coefficient
+Ns 96.078431
+# ambient color (weighted)
+Ka 0.000000 0.000000 0.000000
+# diffuse color (weighted)
+Kd 0.640000 0.640000 0.640000
+# dissolve factor (weighted)
+Ks 0.500000 0.500000 0.500000
+# optical density (refraction)
+Ni 1.000000
+# alpha
+d 1.000000
+# illumination: 0=ambient, 1=ambient+diffuse, 2=ambient+diffuse+specular
+illum 2
+
+newmtl None
+Ns 0
+# ambient
+Ka 0.000000 0.000000 0.000000
+# diffuse
+Kd 0.8 0.8 0.8
+# specular
+Ks 0.8 0.8 0.8
+d 1
+illum 2
