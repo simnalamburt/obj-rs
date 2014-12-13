@@ -12,6 +12,3 @@ license       = "BSD-2-Clause"
 
 [lib]
 name = "obj"
-
-[dev-dependencies]
-bear = "0.1.1"
