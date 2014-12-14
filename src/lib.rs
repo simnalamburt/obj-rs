@@ -9,9 +9,9 @@ fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]|) -> Option<std::io::I
 
                 let mut words = line.words();
                 match words.next() {
-                    Some(header) => {
+                    Some(stmt) => {
                         let args: Vec<&str> = words.collect();
-                        callback(header, args.as_slice())
+                        callback(stmt, args.as_slice())
                     }
                     None => {}
                 }
@@ -25,17 +25,17 @@ fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]|) -> Option<std::io::I
 #[test]
 fn test_lex() {
     let input = r#"
-   header0      arg0  arg1	arg2#argX   argX
-header1 arg0    arg1
+   statement0      arg0  arg1	arg2#argX   argX
+statement1 arg0    arg1
 # Comment
-header2 Hello, world!
+statement2 Hello, world!
 "#;
 
-    lex(&mut input.as_bytes(), |header, args| {
-        match header {
-            "header0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
-            "header1" => assert_eq!(args, ["arg0", "arg1"]),
-            "header2" => assert_eq!(args, ["Hello,", "world!"]),
+    lex(&mut input.as_bytes(), |stmt, args| {
+        match stmt {
+            "statement0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
+            "statement1" => assert_eq!(args, ["arg0", "arg1"]),
+            "statement2" => assert_eq!(args, ["Hello,", "world!"]),
             _ => panic!()
         }
     });
@@ -43,9 +43,9 @@ header2 Hello, world!
 
 
 /// Parses a wavefront `.obj` file
-pub fn load<T: Buffer>(input: &mut T) {
-    lex(input, |header, args| {
-        match header {
+pub fn obj<T: Buffer>(input: &mut T) {
+    lex(input, |stmt, args| {
+        match stmt {
             // Vertex data
             "v" => {}
             "vt" => {}
@@ -95,7 +95,45 @@ pub fn load<T: Buffer>(input: &mut T) {
             "ctech" => {}
             "stech" => {}
 
-            // Unexpected header
+            // Unexpected statement
+            _ => {}
+        }
+    });
+}
+
+pub fn mtl<T: Buffer>(input: &mut T) {
+    lex(input, |stmt, args| {
+        match stmt {
+            // Material name statement
+            "newmtl" => {}
+
+            // Material color and illumination statements
+            "Ka" => {}
+            "Kd" => {}
+            "Ks" => {}
+            "Ke" => {}
+            "Km" => {}
+            "Ns" => {}
+            "Ni" => {}
+            "Tr" => {}
+            "Tf" => {}
+            "illum" => {}
+            "d" => {}
+
+            // Texture map statements
+            "map_Ka" => {}
+            "map_Kd" => {}
+            "map_Ks" => {}
+            "map_d" => {}
+            "map_aat" => {}
+            "map_refl" => {}
+            "map_bump" | "map_Bump" | "bump" => {}
+            "disp" => {}
+
+            // Reflection map statement
+            "refl" => {}
+
+            // Unexpected statement
             _ => {}
         }
     });
