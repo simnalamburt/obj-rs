@@ -1,11 +1,23 @@
+use std::simd::f32x4;
 use lex::lex;
+
+fn f<'a>(args: &'a [&str]) -> Vec<f32> {
+    args.iter().map(|&input| from_str::<f32>(input).unwrap()).collect()
+}
 
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) {
+
+    let mut vertices = Vec::new();
+
     lex(input, |stmt, args| {
         match stmt {
             // Vertex data
-            "v" => {}
+            "v" => vertices.push(match f(args).as_slice() {
+                [x, y, z, w] => { f32x4(x, y, z, w) }
+                [x, y, z] => { f32x4(x, y, z, 1.0) }
+                _ => panic!()
+            }),
             "vt" => {}
             "vn" => {}
             "vp" => {}
