@@ -1,5 +1,6 @@
 use std::simd::f32x4;
 use lex::lex;
+use error::ParseResult;
 
 macro_rules! f {
     ($args: ident) => {
@@ -11,7 +12,7 @@ macro_rules! f {
 }
 
 /// Parses a wavefront `.obj` file
-pub fn obj<T: Buffer>(input: &mut T) {
+pub fn obj<T: Buffer>(input: &mut T) -> ParseResult<Obj> {
 
     let mut vertices = Vec::new();
     let mut tex_coords = Vec::new();
@@ -87,7 +88,14 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "stech" => {}
 
             // Unexpected statement
-            _ => panic!("Unexpected statement: {} {}", stmt, args.connect(" "))
+            _ => panic!()
         }
     });
+
+    Ok(Obj)
 }
+
+/// Parsed obj file
+pub struct Obj;
+
+impl Copy for Obj{}
