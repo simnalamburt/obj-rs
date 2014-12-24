@@ -15,7 +15,7 @@ pub fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]| -> Option<ParseEr
                         let ret = callback(stmt, args.as_slice());
 
                         if ret.is_some() {
-                            panic!("Callback has returned 'ParseError', proper error handler is not implemented yet.");
+                            unimplemented!()
                         }
                     }
                     None => {}

@@ -5,7 +5,10 @@ use error::{parse_error, ParseErrorKind};
 macro_rules! f {
     ($args: ident) => {
         $args.iter()
-            .map(|&input| from_str::<f32>(input).unwrap())
+            .map(|&input| match from_str::<f32>(input) {
+                Some(number) => number,
+                None => unimplemented!()
+            })
             .collect::<Vec<f32>>()
             .as_slice()
     }
@@ -51,47 +54,74 @@ pub fn obj<T: Buffer>(input: &mut T) {
             }),
 
             // Free-form curve / surface attributes
-            "cstype" => {}
-            "deg" => {}
-            "bmat" => {}
-            "step" => {}
+            "cstype" => {
+                let rational: bool;
+                let geometry = match args {
+                    ["rat", ty] => {
+                        rational = true;
+                        ty
+                    }
+                    [ty] => {
+                        rational = false;
+                        ty
+                    }
+                    _ => unimplemented!()
+                };
+
+                let _ = rational; // TODO : remove this line
+                match geometry {
+                    "bmatrix" => unimplemented!(),
+                    "bezier" => unimplemented!(),
+                    "bspline" => unimplemented!(),
+                    "cardinal" => unimplemented!(),
+                    "taylor" => unimplemented!(),
+                    _ => unimplemented!()
+                }
+            }
+            "deg" => match f!(args) {
+                [_, _]  => unimplemented!(),
+                [_] => unimplemented!(),
+                _ => unimplemented!(),
+            },
+            "bmat" => unimplemented!(),
+            "step" => unimplemented!(),
 
             // Elements
-            "p" => {}
-            "l" => {}
-            "f" => {}
-            "curv" => {}
-            "curv2" => {}
-            "surf" => {}
+            "p" => unimplemented!(),
+            "l" => unimplemented!(),
+            "f" => unimplemented!(),
+            "curv" => unimplemented!(),
+            "curv2" => unimplemented!(),
+            "surf" => unimplemented!(),
 
             // Free-form curve / surface body statements
-            "parm" => {}
-            "trim" => {}
-            "hole" => {}
-            "scrv" => {}
-            "sp" => {}
-            "end" => {}
+            "parm" => unimplemented!(),
+            "trim" => unimplemented!(),
+            "hole" => unimplemented!(),
+            "scrv" => unimplemented!(),
+            "sp" => unimplemented!(),
+            "end" => unimplemented!(),
 
             // Connectivity between free-form surfaces
-            "con" => {}
+            "con" => unimplemented!(),
 
             // Grouping
-            "g" => {}
-            "s" => {}
-            "mg" => {}
-            "o" => {}
+            "g" => unimplemented!(),
+            "s" => unimplemented!(),
+            "mg" => unimplemented!(),
+            "o" => unimplemented!(),
 
             // Display / render attributes
-            "bevel" => {}
-            "c_interp" => {}
-            "d_interp" => {}
-            "lod" => {}
-            "usemtl" => {}
-            "mtllib" => {}
-            "shadow_obj" => {}
-            "trace_obj" => {}
-            "ctech" => {}
-            "stech" => {}
+            "bevel" => unimplemented!(),
+            "c_interp" => unimplemented!(),
+            "d_interp" => unimplemented!(),
+            "lod" => unimplemented!(),
+            "usemtl" => unimplemented!(),
+            "mtllib" => unimplemented!(),
+            "shadow_obj" => unimplemented!(),
+            "trace_obj" => unimplemented!(),
+            "ctech" => unimplemented!(),
+            "stech" => unimplemented!(),
 
             // Unexpected statement
             _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
