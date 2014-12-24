@@ -1,6 +1,6 @@
 use std::simd::f32x4;
 use lex::lex;
-use error::ParseResult;
+use error::{parse_error, ParseErrorKind};
 
 macro_rules! f {
     ($args: ident) => {
@@ -11,9 +11,15 @@ macro_rules! f {
     }
 }
 
-/// Parses a wavefront `.obj` file
-pub fn obj<T: Buffer>(input: &mut T) -> ParseResult<Obj> {
+macro_rules! wrong_number {
+    () => {
+        Some(parse_error(ParseErrorKind::WrongNumberOfArguments))
+    }
+}
 
+
+/// Parses a wavefront `.obj` file
+pub fn obj<T: Buffer>(input: &mut T) {
     let mut vertices = Vec::new();
     let mut tex_coords = Vec::new();
     let mut normals = Vec::new();
@@ -25,23 +31,23 @@ pub fn obj<T: Buffer>(input: &mut T) -> ParseResult<Obj> {
             "v" => vertices.push(match f!(args) {
                 [x, y, z, w] => f32x4(x, y, z, w),
                 [x, y, z] => f32x4(x, y, z, 1.0),
-                _ => panic!()
+                _ => return wrong_number!()
             }),
             "vt" => tex_coords.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 0.0, 0.0),
                 [u] => f32x4(u, 0.0, 0.0, 0.0),
-                _ => panic!()
+                _ => return wrong_number!()
             }),
             "vn" => normals.push(match f!(args) {
                 [x, y, z] => f32x4(x, y, z, 0.0),
-                _ => panic!()
+                _ => return wrong_number!()
             }),
             "vp" => param_vertices.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 1.0, 0.0),
                 [u] => f32x4(u, 0.0, 1.0, 0.0),
-                _ => panic!()
+                _ => return wrong_number!()
             }),
 
             // Free-form curve / surface attributes
@@ -88,11 +94,11 @@ pub fn obj<T: Buffer>(input: &mut T) -> ParseResult<Obj> {
             "stech" => {}
 
             // Unexpected statement
-            _ => panic!()
+            _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
         }
-    });
 
-    Ok(Obj)
+        None
+    });
 }
 
 /// Parsed obj file

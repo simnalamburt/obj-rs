@@ -1,7 +1,8 @@
 use lex::lex;
+use error::{parse_error, ParseErrorKind};
 
 pub fn mtl<T: Buffer>(input: &mut T) {
-    lex(input, |stmt, args| {
+    lex(input, |stmt, _| {
         match stmt {
             // Material name statement
             "newmtl" => {}
@@ -33,7 +34,9 @@ pub fn mtl<T: Buffer>(input: &mut T) {
             "refl" => {}
 
             // Unexpected statement
-            _ => panic!("Unexpected statement: {} {}", stmt, args.connect(" "))
+            _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
         }
+
+        None
     });
 }

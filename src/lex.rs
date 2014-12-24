@@ -1,6 +1,7 @@
 use std::io::IoError;
+use error::ParseError;
 
-pub fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]|) -> Option<IoError> {
+pub fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]| -> Option<ParseError>) -> Option<IoError> {
     for maybe_line in input.lines() {
         match maybe_line {
             Ok(line) => {
@@ -11,7 +12,11 @@ pub fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]|) -> Option<IoErro
                 match words.next() {
                     Some(stmt) => {
                         let args: Vec<&str> = words.collect();
-                        callback(stmt, args.as_slice())
+                        let ret = callback(stmt, args.as_slice());
+
+                        if ret.is_some() {
+                            panic!("Callback has returned 'ParseError', proper error handler is not implemented yet.");
+                        }
                     }
                     None => {}
                 }
@@ -24,6 +29,8 @@ pub fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]|) -> Option<IoErro
 
 #[test]
 fn test_lex() {
+    use error::{parse_error, ParseErrorKind};
+
     let input = r#"
    statement0      arg0  arg1	arg2#argX   argX
 statement1 arg0    arg1
@@ -36,8 +43,9 @@ statement2 Hello, world!
             "statement0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
             "statement1" => assert_eq!(args, ["arg0", "arg1"]),
             "statement2" => assert_eq!(args, ["Hello,", "world!"]),
-            _ => panic!()
+            _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
         }
+        None
     });
 }
 
