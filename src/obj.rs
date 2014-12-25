@@ -28,6 +28,8 @@ pub fn obj<T: Buffer>(input: &mut T) {
     let mut normals = Vec::new();
     let mut param_vertices = Vec::new();
 
+    let mut material_libraries = Vec::new();
+
     lex(input, |stmt, args| {
         match stmt {
             // Vertex data
@@ -117,7 +119,10 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => unimplemented!(),
-            "mtllib" => unimplemented!(),
+            "mtllib" => {
+                let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
+                material_libraries.push_all(paths.as_slice());
+            }
             "shadow_obj" => unimplemented!(),
             "trace_obj" => unimplemented!(),
             "ctech" => unimplemented!(),
