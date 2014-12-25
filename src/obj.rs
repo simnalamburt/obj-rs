@@ -23,6 +23,8 @@ macro_rules! wrong_number {
 
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) {
+    let mut name = String::new();
+
     let mut vertices = Vec::new();
     let mut tex_coords = Vec::new();
     let mut normals = Vec::new();
@@ -111,7 +113,9 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "g" => unimplemented!(),
             "s" => unimplemented!(),
             "mg" => unimplemented!(),
-            "o" => unimplemented!(),
+            "o" => {
+                name = args.connect(" ");
+            }
 
             // Display / render attributes
             "bevel" => unimplemented!(),
