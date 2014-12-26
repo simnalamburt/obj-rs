@@ -59,20 +59,19 @@ pub fn obj<T: Buffer>(input: &mut T) {
 
             // Free-form curve / surface attributes
             "cstype" => {
-                let rational: bool;
+                let _rational: bool;
                 let geometry = match args {
                     ["rat", ty] => {
-                        rational = true;
+                        _rational = true;
                         ty
                     }
                     [ty] => {
-                        rational = false;
+                        _rational = false;
                         ty
                     }
                     _ => unimplemented!()
                 };
 
-                let _ = rational; // TODO : remove this line
                 match geometry {
                     "bmatrix" => unimplemented!(),
                     "bezier" => unimplemented!(),
@@ -83,8 +82,8 @@ pub fn obj<T: Buffer>(input: &mut T) {
                 }
             }
             "deg" => match f!(args) {
-                [_, _]  => unimplemented!(),
-                [_] => unimplemented!(),
+                [_deg_u, _deg_v]  => unimplemented!(),
+                [_deg_u] => unimplemented!(),
                 _ => unimplemented!(),
             },
             "bmat" => unimplemented!(),
@@ -114,6 +113,8 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "s" => unimplemented!(),
             "mg" => unimplemented!(),
             "o" => {
+                if !name.is_empty() { unimplemented!() }
+
                 name = args.connect(" ");
             }
 
