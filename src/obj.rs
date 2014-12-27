@@ -3,7 +3,7 @@ use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` file
-pub fn obj<T: Buffer>(input: &mut T) {
+pub fn obj<T: Buffer>(input: &mut T) -> Obj {
     let mut obj = Obj::new();
 
     lex(input, |stmt, args| {
@@ -189,6 +189,8 @@ pub fn obj<T: Buffer>(input: &mut T) {
 
         None
     });
+
+    obj
 }
 
 
