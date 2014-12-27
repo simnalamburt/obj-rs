@@ -106,7 +106,16 @@ pub fn obj<T: Buffer>(input: &mut T) {
                 [name] => obj.groups.push(Group::new(name)),
                 _ => unimplemented!()
             },
-            "s" => unimplemented!(),
+            "s" => match args {
+                ["off"] => (),
+                [param] => match param.parse::<uint>() {
+                    Some(_index) => {
+                        unimplemented!()
+                    }
+                    None => unimplemented!()
+                },
+                _ => error!(WrongNumberOfArguments)
+            },
             "mg" => unimplemented!(),
             "o" => {
                 if !obj.name.is_empty() { unimplemented!() }
