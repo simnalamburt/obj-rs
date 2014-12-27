@@ -129,7 +129,7 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] => obj.groups.as_mut_slice().last_mut().unwrap().meshes.push(Mesh::new(material)),
+                [material] => obj.last_group().meshes.push(Mesh::new(material)),
                 _ => error!(WrongNumberOfArguments)
             },
             "mtllib" => {
@@ -175,6 +175,11 @@ impl Obj {
             groups: vec![ Group::new("default") ]
         }
     }
+
+    fn last_group<'a>(&'a mut self) -> &'a mut Group {
+        let len = self.groups.len();
+        &mut self.groups[len - 1]
+    }
 }
 
 pub struct Group {
@@ -185,6 +190,11 @@ pub struct Group {
 impl Group {
     fn new(name: &str) -> Self {
         Group { name: name.to_string(), meshes: vec![ Mesh::new("") ] }
+    }
+
+    fn last_mesh<'a>(&'a mut self) -> &'a mut Mesh {
+        let len = self.meshes.len();
+        &mut self.meshes[len - 1]
     }
 }
 
