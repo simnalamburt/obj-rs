@@ -63,7 +63,7 @@ mod bench {
             let args: Vec<&str> = words.collect();
             let args = args.as_slice();
 
-            args.iter().map(|&input| from_str::<f32>(input).unwrap()).collect::<Vec<f32>>();
+            args.iter().map(|&input| input.parse::<f32>().unwrap()).collect::<Vec<f32>>();
         })
     }
 
@@ -72,7 +72,7 @@ mod bench {
         b.iter(|| {
             let words = "1.00 2.00 3.00".words();
 
-            words.map(|input| from_str::<f32>(input).unwrap()).collect::<Vec<f32>>();
+            words.map(|input| input.parse::<f32>().unwrap()).collect::<Vec<f32>>();
         })
     }
 }
