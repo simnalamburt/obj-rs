@@ -5,7 +5,7 @@ use error::{parse_error, ParseErrorKind};
 macro_rules! f {
     ($args: ident) => {
         $args.iter()
-            .map(|&input| match from_str::<f32>(input) {
+            .map(|&input| match input.parse::<f32>() {
                 Some(number) => number,
                 None => unimplemented!()
             })
@@ -85,7 +85,60 @@ pub fn obj<T: Buffer>(input: &mut T) {
             // Elements
             "p" => unimplemented!(),
             "l" => unimplemented!(),
-            "f" => unimplemented!(),
+            "f" => {
+                if args.len() < 3 { unimplemented!() }
+                let mut args = args.iter();
+
+                let first = args.next().unwrap();
+
+                macro_rules! s {
+                    ($param: ident) => {
+                        $param.split('/').collect::<Vec<&str>>().as_slice()
+                    }
+                }
+
+                let callback = |cb: |&[&str]|| for param in args { cb(s!(param)) };
+
+                // First, detect the type of the vertex with the first argument
+                // Then apply it to the rest of the arguments
+                let polygon = match s!(first) {
+                    [p] => {
+                        let mut polygon = vec![ u(p) ];
+                        callback(|param| match param {
+                            [p] => polygon.push(u(p)),
+                            _ => unimplemented!()
+                        });
+                        Polygon::P(polygon)
+                    }
+                    [p, t] => {
+                        let mut polygon = vec![ (u(p), u(t)) ];
+                        callback(|param| match param {
+                            [p, t] => polygon.push((u(p), u(t))),
+                            _ => unimplemented!()
+                        });
+                        Polygon::PT(polygon)
+                    }
+                    [p, "", n] => {
+                        let mut polygon = vec![ (u(p), u(n)) ];
+                        callback(|param| match param {
+                            [p, "", n] => polygon.push((u(p), u(n))),
+                            _ => unimplemented!()
+                        });
+                        Polygon::PN(polygon)
+                    }
+                    [p, t, n] => {
+                        let mut polygon = vec![ (u(p), u(t), u(n)) ];
+                        callback(|param| match param {
+                            [p, t, n] => polygon.push((u(p), u(t), u(n))),
+                            _ => unimplemented!()
+                        });
+                        Polygon::PTN(polygon)
+                    }
+                    _ => unimplemented!()
+                };
+
+                obj.last_group().last_mesh().polygons.push(polygon);
+            }
             "curv" => unimplemented!(),
             "curv2" => unimplemented!(),
             "surf" => unimplemented!(),
@@ -108,12 +161,9 @@ pub fn obj<T: Buffer>(input: &mut T) {
             },
             "s" => match args {
                 ["off"] => (),
-                [param] => match param.parse::<uint>() {
-                    Some(_index) => {
-                        unimplemented!()
-                    }
-                    None => unimplemented!()
-                },
+                [param] => {
+                    let _index = u(param);
+                }
                 _ => error!(WrongNumberOfArguments)
             },
             "mg" => unimplemented!(),
@@ -145,9 +195,17 @@ pub fn obj<T: Buffer>(input: &mut T) {
             _ => error!(UnexpectedStatement)
         }
 
+        fn u(input: &str) -> uint {
+            match input.parse::<uint>() {
+                Some(number) => number,
+                None => unimplemented!()
+            }
+        }
+
         None
     });
 }
+
 
 /// Parsed obj file
 pub struct Obj {
@@ -199,11 +257,19 @@ impl Group {
 }
 
 pub struct Mesh {
-    pub material: String
+    pub material: String,
+    pub polygons: Vec<Polygon>
 }
 
 impl Mesh {
     fn new(material: &str) -> Self {
-        Mesh { material: material.to_string() }
+        Mesh { material: material.to_string(), polygons: Vec::new() }
     }
+}
+
+pub enum Polygon {
+    P(Vec<uint>),
+    PT(Vec<(uint, uint)>),
+    PN(Vec<(uint, uint)>),
+    PTN(Vec<(uint, uint, uint)>)
 }
