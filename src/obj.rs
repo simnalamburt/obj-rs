@@ -32,6 +32,8 @@ pub fn obj<T: Buffer>(input: &mut T) {
 
     let mut material_libraries = Vec::new();
 
+    let mut meshes = vec![ Mesh::new("") ];
+
     lex(input, |stmt, args| {
         match stmt {
             // Vertex data
@@ -123,7 +125,10 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "c_interp" => unimplemented!(),
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
-            "usemtl" => unimplemented!(),
+            "usemtl" => match args {
+                [material] => meshes.push(Mesh::new(material)),
+                _ => error!(WrongNumberOfArguments)
+            },
             "mtllib" => {
                 let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
                 material_libraries.push_all(paths.as_slice());
@@ -145,3 +150,13 @@ pub fn obj<T: Buffer>(input: &mut T) {
 pub struct Obj;
 
 impl Copy for Obj{}
+
+pub struct Mesh {
+    pub material: String
+}
+
+impl Mesh {
+    fn new(material: &str) -> Self {
+        Mesh { material: String::from_str(material) }
+    }
+}
