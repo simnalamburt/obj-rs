@@ -2,30 +2,35 @@ use std::simd::f32x4;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
-macro_rules! f {
-    ($args: ident) => {
-        $args.iter()
-            .map(|&input| match input.parse::<f32>() {
-                Some(number) => number,
-                None => unimplemented!()
-            })
-            .collect::<Vec<f32>>()
-            .as_slice()
-    }
-}
-
-macro_rules! error {
-    ($kind: ident) => {
-        return Some(parse_error(ParseErrorKind::$kind))
-    }
-}
-
-
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) {
     let mut obj = Obj::new();
 
     lex(input, |stmt, args| {
+        macro_rules! f {
+            ($args:ident) => {
+                $args.iter()
+                    .map(|&input| match input.parse::<f32>() {
+                        Some(number) => number,
+                        None => unimplemented!()
+                    })
+                    .collect::<Vec<f32>>()
+                    .as_slice()
+            }
+        }
+
+        macro_rules! s {
+            ($param:ident) => {
+                $param.split('/').collect::<Vec<&str>>().as_slice()
+            }
+        }
+
+        macro_rules! error {
+            ($kind:ident) => {
+                return Some(parse_error(ParseErrorKind::$kind))
+            }
+        }
+
         match stmt {
             // Vertex data
             "v" => obj.vertices.push(match f!(args) {
@@ -88,56 +93,36 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "f" => {
                 if args.len() < 3 { unimplemented!() }
                 let mut args = args.iter();
-
                 let first = args.next().unwrap();
 
-                macro_rules! s {
-                    ($param: ident) => {
-                        $param.split('/').collect::<Vec<&str>>().as_slice()
-                    }
+                macro_rules! m {
+                    { $($pat:pat => $exp:expr : $name:ident),* } => (
+                        // First, detect the type of the vertices with the first argument
+                        // Then apply it to the rest of the arguments
+                        match s!(first) {
+                            $(
+                                $pat => Polygon::$name({
+                                    let mut polygon = vec![ $exp ];
+                                    for param in args {
+                                        match s!(param) {
+                                            $pat => polygon.push($exp),
+                                            _ => unimplemented!()
+                                        }
+                                    }
+                                    polygon
+                                }),
+                            )*
+                            _ => unimplemented!()
+                        }
+                    )
                 }
 
-                let callback = |cb: |&[&str]|| for param in args { cb(s!(param)) };
-
-                // First, detect the type of the vertex with the first argument
-                // Then apply it to the rest of the arguments
-                let polygon = match s!(first) {
-                    [p] => {
-                        let mut polygon = vec![ u(p) ];
-                        callback(|param| match param {
-                            [p] => polygon.push(u(p)),
-                            _ => unimplemented!()
-                        });
-                        Polygon::P(polygon)
-                    }
-                    [p, t] => {
-                        let mut polygon = vec![ (u(p), u(t)) ];
-                        callback(|param| match param {
-                            [p, t] => polygon.push((u(p), u(t))),
-                            _ => unimplemented!()
-                        });
-                        Polygon::PT(polygon)
-                    }
-                    [p, "", n] => {
-                        let mut polygon = vec![ (u(p), u(n)) ];
-                        callback(|param| match param {
-                            [p, "", n] => polygon.push((u(p), u(n))),
-                            _ => unimplemented!()
-                        });
-                        Polygon::PN(polygon)
-                    }
-                    [p, t, n] => {
-                        let mut polygon = vec![ (u(p), u(t), u(n)) ];
-                        callback(|param| match param {
-                            [p, t, n] => polygon.push((u(p), u(t), u(n))),
-                            _ => unimplemented!()
-                        });
-                        Polygon::PTN(polygon)
-                    }
-                    _ => unimplemented!()
-                };
-
-                obj.last_group().last_mesh().polygons.push(polygon);
+                obj.last_group().last_mesh().polygons.push(m! {
+                    [p]         => (u(p)): P,
+                    [p, t]      => (u(p), u(t)): PT,
+                    [p, "", n]  => (u(p), u(n)): PN,
+                    [p, t, n]   => (u(p), u(t), u(n)): PTN
+                });
             }
             "curv" => unimplemented!(),
             "curv2" => unimplemented!(),
