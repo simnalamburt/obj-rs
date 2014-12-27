@@ -25,32 +25,25 @@ macro_rules! error {
 pub fn obj<T: Buffer>(input: &mut T) {
     let mut obj = Obj::new();
 
-    let mut vertices = Vec::new();
-    let mut tex_coords = Vec::new();
-    let mut normals = Vec::new();
-    let mut param_vertices = Vec::new();
-
-    let mut material_libraries = Vec::new();
-
     lex(input, |stmt, args| {
         match stmt {
             // Vertex data
-            "v" => vertices.push(match f!(args) {
+            "v" => obj.vertices.push(match f!(args) {
                 [x, y, z, w] => f32x4(x, y, z, w),
                 [x, y, z] => f32x4(x, y, z, 1.0),
                 _ => error!(WrongNumberOfArguments)
             }),
-            "vt" => tex_coords.push(match f!(args) {
+            "vt" => obj.tex_coords.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 0.0, 0.0),
                 [u] => f32x4(u, 0.0, 0.0, 0.0),
                 _ => error!(WrongNumberOfArguments)
             }),
-            "vn" => normals.push(match f!(args) {
+            "vn" => obj.normals.push(match f!(args) {
                 [x, y, z] => f32x4(x, y, z, 0.0),
                 _ => error!(WrongNumberOfArguments)
             }),
-            "vp" => param_vertices.push(match f!(args) {
+            "vp" => obj.param_vertices.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 1.0, 0.0),
                 [u] => f32x4(u, 0.0, 1.0, 0.0),
@@ -132,7 +125,7 @@ pub fn obj<T: Buffer>(input: &mut T) {
             },
             "mtllib" => {
                 let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
-                material_libraries.push_all(paths.as_slice());
+                obj.material_libraries.push_all(paths.as_slice());
             }
             "shadow_obj" => unimplemented!(),
             "trace_obj" => unimplemented!(),
@@ -150,12 +143,28 @@ pub fn obj<T: Buffer>(input: &mut T) {
 /// Parsed obj file
 pub struct Obj {
     pub name: String,
+
+    pub vertices: Vec<f32x4>,
+    pub tex_coords: Vec<f32x4>,
+    pub normals: Vec<f32x4>,
+    pub param_vertices: Vec<f32x4>,
+
+    pub material_libraries: Vec<String>,
+
     pub groups: Vec<Group>
 }
 
 impl Obj {
     fn new() -> Self {
-        Obj { name: String::new(), groups: vec![ Group::new("default") ] }
+        Obj {
+            name: String::new(),
+            vertices: Vec::new(),
+            tex_coords: Vec::new(),
+            normals: Vec::new(),
+            param_vertices: Vec::new(),
+            material_libraries: Vec::new(),
+            groups: vec![ Group::new("default") ]
+        }
     }
 }
 
