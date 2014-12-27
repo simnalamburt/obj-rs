@@ -23,7 +23,7 @@ macro_rules! error {
 
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) {
-    let mut name = String::new();
+    let mut obj = Obj::new();
 
     let mut vertices = Vec::new();
     let mut tex_coords = Vec::new();
@@ -31,8 +31,6 @@ pub fn obj<T: Buffer>(input: &mut T) {
     let mut param_vertices = Vec::new();
 
     let mut material_libraries = Vec::new();
-
-    let mut meshes = vec![ Mesh::new("") ];
 
     lex(input, |stmt, args| {
         match stmt {
@@ -111,13 +109,16 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "con" => unimplemented!(),
 
             // Grouping
-            "g" => unimplemented!(),
+            "g" => match args {
+                [name] => obj.groups.push(Group::new(name)),
+                _ => unimplemented!()
+            },
             "s" => unimplemented!(),
             "mg" => unimplemented!(),
             "o" => {
-                if !name.is_empty() { unimplemented!() }
+                if !obj.name.is_empty() { unimplemented!() }
 
-                name = args.connect(" ");
+                obj.name = args.connect(" ");
             }
 
             // Display / render attributes
@@ -126,7 +127,7 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] => meshes.push(Mesh::new(material)),
+                [material] => obj.groups.as_mut_slice().last_mut().unwrap().meshes.push(Mesh::new(material)),
                 _ => error!(WrongNumberOfArguments)
             },
             "mtllib" => {
@@ -147,9 +148,27 @@ pub fn obj<T: Buffer>(input: &mut T) {
 }
 
 /// Parsed obj file
-pub struct Obj;
+pub struct Obj {
+    pub name: String,
+    pub groups: Vec<Group>
+}
 
-impl Copy for Obj{}
+impl Obj {
+    fn new() -> Self {
+        Obj { name: String::new(), groups: vec![ Group::new("default") ] }
+    }
+}
+
+pub struct Group {
+    pub name: String,
+    pub meshes: Vec<Mesh>
+}
+
+impl Group {
+    fn new(name: &str) -> Self {
+        Group { name: name.to_string(), meshes: vec![ Mesh::new("") ] }
+    }
+}
 
 pub struct Mesh {
     pub material: String
@@ -157,6 +176,6 @@ pub struct Mesh {
 
 impl Mesh {
     fn new(material: &str) -> Self {
-        Mesh { material: String::from_str(material) }
+        Mesh { material: material.to_string() }
     }
 }
