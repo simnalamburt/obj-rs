@@ -14,9 +14,9 @@ macro_rules! f {
     }
 }
 
-macro_rules! wrong_number {
-    () => {
-        Some(parse_error(ParseErrorKind::WrongNumberOfArguments))
+macro_rules! error {
+    ($kind: ident) => {
+        return Some(parse_error(ParseErrorKind::$kind))
     }
 }
 
@@ -38,23 +38,23 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "v" => vertices.push(match f!(args) {
                 [x, y, z, w] => f32x4(x, y, z, w),
                 [x, y, z] => f32x4(x, y, z, 1.0),
-                _ => return wrong_number!()
+                _ => error!(WrongNumberOfArguments)
             }),
             "vt" => tex_coords.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 0.0, 0.0),
                 [u] => f32x4(u, 0.0, 0.0, 0.0),
-                _ => return wrong_number!()
+                _ => error!(WrongNumberOfArguments)
             }),
             "vn" => normals.push(match f!(args) {
                 [x, y, z] => f32x4(x, y, z, 0.0),
-                _ => return wrong_number!()
+                _ => error!(WrongNumberOfArguments)
             }),
             "vp" => param_vertices.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 1.0, 0.0),
                 [u] => f32x4(u, 0.0, 1.0, 0.0),
-                _ => return wrong_number!()
+                _ => error!(WrongNumberOfArguments)
             }),
 
             // Free-form curve / surface attributes
@@ -134,7 +134,7 @@ pub fn obj<T: Buffer>(input: &mut T) {
             "stech" => unimplemented!(),
 
             // Unexpected statement
-            _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
+            _ => error!(UnexpectedStatement)
         }
 
         None
