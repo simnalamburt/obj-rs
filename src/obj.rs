@@ -141,7 +141,11 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 
             // Grouping
             "g" => match args {
-                [name] => obj.groups.push(Group::new(name)),
+                [name] => if obj.last_group().is_empty() {
+                    obj.last_group().name = name.to_string()
+                } else {
+                    obj.groups.push(Group::new(name))
+                },
                 _ => unimplemented!()
             },
             "s" => match args {
@@ -164,7 +168,14 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] => obj.last_group().meshes.push(Mesh::new(material)),
+                [material] => {
+                    let last_group = &mut obj.last_group();
+                    if last_group.last_mesh().is_empty() {
+                        last_group.last_mesh().material = material.to_string()
+                    } else {
+                        last_group.meshes.push(Mesh::new(material))
+                    }
+                }
                 _ => error!(WrongNumberOfArguments)
             },
             "mtllib" => {
@@ -241,6 +252,10 @@ impl Group {
         let len = self.meshes.len();
         &mut self.meshes[len - 1]
     }
+
+    fn is_empty(&self) -> bool {
+        self.meshes.is_empty()
+    }
 }
 
 pub struct Mesh {
@@ -251,6 +266,10 @@ pub struct Mesh {
 impl Mesh {
     fn new(material: &str) -> Self {
         Mesh { material: material.to_string(), polygons: Vec::new() }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.polygons.is_empty()
     }
 }
 
