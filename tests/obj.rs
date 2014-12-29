@@ -4,6 +4,7 @@ extern crate obj;
 
 use std::io::{BufferedReader, File};
 use std::simd::f32x4;
+use obj::obj::Polygon::PT;
 
 #[test]
 fn test_obj() {
@@ -67,5 +68,14 @@ fn test_obj() {
         obj.tex_coords[11] :                        0.755790, -0.001677,  0.000000, 0.0
         obj.tex_coords[12] :                        0.005127,  0.497044,  0.000000, 0.0
         obj.tex_coords[13] :                        0.005524,  0.247088,  0.000000, 0.0
+    };
+
+    eq! {
+        obj.groups[0].meshes[0].polygons[0]         PT( vec![ (1, 1), (2, 2), (3, 3), (4, 4)   ] )
+        obj.groups[0].meshes[0].polygons[1]         PT( vec![ (5, 5), (8, 6), (7, 7), (6, 8)   ] )
+        obj.groups[0].meshes[0].polygons[2]         PT( vec![ (1, 9), (5, 10), (6, 8), (2, 2)  ] )
+        obj.groups[0].meshes[0].polygons[3]         PT( vec![ (2, 2), (6, 8), (7, 7), (3, 3)   ] )
+        obj.groups[0].meshes[0].polygons[4]         PT( vec![ (3, 3), (7, 7), (8, 11), (4, 12) ] )
+        obj.groups[0].meshes[0].polygons[5]         PT( vec![ (5, 5), (1, 13), (4, 14), (8, 6) ] )
     };
 }

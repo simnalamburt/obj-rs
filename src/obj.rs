@@ -273,6 +273,7 @@ impl Mesh {
     }
 }
 
+#[deriving(PartialEq, Eq, Show)]
 pub enum Polygon {
     P(Vec<uint>),
     PT(Vec<(uint, uint)>),
