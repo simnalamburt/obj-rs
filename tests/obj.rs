@@ -3,6 +3,7 @@
 extern crate obj;
 
 use std::io::{BufferedReader, File};
+use std::simd::f32x4;
 
 #[test]
 fn test_obj() {
@@ -12,23 +13,59 @@ fn test_obj() {
     let obj = obj::obj(&mut input);
 
     macro_rules! eq {
-        { $($lhs:expr $rhs:expr)* } => ({
+        ($($lhs:expr $rhs:expr)*) => ({
             $(
                 assert_eq!($lhs, $rhs);
             )*
         })
     }
 
+    macro_rules! vec_eq {
+        ($($lhs:expr : $x:expr, $y:expr, $z:expr, $w:expr)*) => ({
+            $(
+                let f32x4(x, y, z, w) = $lhs;
+                assert_eq!(x, stringify!($x).parse().unwrap());
+                assert_eq!(y, stringify!($y).parse().unwrap());
+                assert_eq!(z, stringify!($z).parse().unwrap());
+                assert_eq!(w, stringify!($w).parse().unwrap());
+            )*
+        })
+    }
+
     eq! {
         obj.name                                    "Cube".to_string()
-
         obj.vertices.len()                          8
         obj.tex_coords.len()                        14
         obj.normals.len()                           0
         obj.param_vertices.len()                    0
-
         obj.groups.len()                            1
         obj.groups[0].meshes.len()                  1
         obj.groups[0].meshes[0].polygons.len()      6
+    };
+
+    vec_eq! {
+        obj.vertices[0] :                           1.000000, -1.000000, -1.000000, 1.0
+        obj.vertices[1] :                           1.000000, -1.000000,  1.000000, 1.0
+        obj.vertices[2] :                          -1.000000, -1.000000,  1.000000, 1.0
+        obj.vertices[3] :                          -1.000000, -1.000000, -1.000000, 1.0
+        obj.vertices[4] :                           1.000000,  1.000000, -0.999999, 1.0
+        obj.vertices[5] :                           0.999999,  1.000000,  1.000001, 1.0
+        obj.vertices[6] :                          -1.000000,  1.000000,  1.000000, 1.0
+        obj.vertices[7] :                          -1.000000,  1.000000, -1.000000, 1.0
+
+        obj.tex_coords[00] :                        1.004952,  0.498633,  0.000000, 0.0
+        obj.tex_coords[01] :                        0.754996,  0.498236,  0.000000, 0.0
+        obj.tex_coords[02] :                        0.755393,  0.248279,  0.000000, 0.0
+        obj.tex_coords[03] :                        1.005349,  0.248677,  0.000000, 0.0
+        obj.tex_coords[04] :                        0.255083,  0.497442,  0.000000, 0.0
+        obj.tex_coords[05] :                        0.255480,  0.247485,  0.000000, 0.0
+        obj.tex_coords[06] :                        0.505437,  0.247882,  0.000000, 0.0
+        obj.tex_coords[07] :                        0.505039,  0.497839,  0.000000, 0.0
+        obj.tex_coords[08] :                        0.754598,  0.748193,  0.000000, 0.0
+        obj.tex_coords[09] :                        0.504642,  0.747795,  0.000000, 0.0
+        obj.tex_coords[10] :                        0.505834, -0.002074,  0.000000, 0.0
+        obj.tex_coords[11] :                        0.755790, -0.001677,  0.000000, 0.0
+        obj.tex_coords[12] :                        0.005127,  0.497044,  0.000000, 0.0
+        obj.tex_coords[13] :                        0.005524,  0.247088,  0.000000, 0.0
     };
 }
