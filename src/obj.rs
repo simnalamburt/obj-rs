@@ -191,8 +191,8 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             _ => error!(UnexpectedStatement)
         }
 
-        fn u(input: &str) -> uint {
-            match input.parse::<uint>() {
+        fn u(input: &str) -> u32 {
+            match input.parse::<u32>() {
                 Some(number) => number,
                 None => unimplemented!()
             }
@@ -275,8 +275,8 @@ impl Mesh {
 
 #[deriving(PartialEq, Eq, Show)]
 pub enum Polygon {
-    P(Vec<uint>),
-    PT(Vec<(uint, uint)>),
-    PN(Vec<(uint, uint)>),
-    PTN(Vec<(uint, uint, uint)>)
+    P(Vec<u32>),
+    PT(Vec<(u32, u32)>),
+    PN(Vec<(u32, u32)>),
+    PTN(Vec<(u32, u32, u32)>)
 }
