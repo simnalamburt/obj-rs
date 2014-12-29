@@ -149,9 +149,10 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                 _ => unimplemented!()
             },
             "s" => match args {
-                ["off"] => (),
+                ["off"] | ["0"] => (),
                 [param] => {
                     let _index = u(param);
+                    unimplemented!()
                 }
                 _ => error!(WrongNumberOfArguments)
             },
