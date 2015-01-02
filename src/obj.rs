@@ -144,7 +144,8 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                 [name] => if obj.last_group().is_empty() {
                     obj.last_group().name = name.to_string()
                 } else {
-                    obj.groups.push(Group::new(name))
+                    let group = Group::new(name, obj.last_group().last_mesh().material.as_slice());
+                    obj.groups.push(group)
                 },
                 _ => unimplemented!()
             },
@@ -170,7 +171,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             "lod" => unimplemented!(),
             "usemtl" => match args {
                 [material] => {
-                    let last_group = &mut obj.last_group();
+                    let last_group = obj.last_group();
                     if last_group.last_mesh().is_empty() {
                         last_group.last_mesh().material = material.to_string()
                     } else {
@@ -229,7 +230,7 @@ impl Obj {
             normals: Vec::new(),
             param_vertices: Vec::new(),
             material_libraries: Vec::new(),
-            groups: vec![ Group::new("default") ]
+            groups: vec![ Group::new("default", "") ]
         }
     }
 
@@ -245,8 +246,8 @@ pub struct Group {
 }
 
 impl Group {
-    fn new(name: &str) -> Self {
-        Group { name: name.to_string(), meshes: vec![ Mesh::new("") ] }
+    fn new(name: &str, material: &str) -> Self {
+        Group { name: name.to_string(), meshes: vec![ Mesh::new(material) ] }
     }
 
     fn last_mesh<'a>(&'a mut self) -> &'a mut Mesh {
