@@ -1,28 +1,28 @@
+use std::str::FromStr;
+use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
+
+static DEFAULT_GROUP: &'static str = "default";
+static DEFAULT_MATERIAL: &'static str = "";
 
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) -> Obj {
     let mut obj = Obj::new();
 
+    // TODO
+    let mut current_group = DEFAULT_GROUP.to_string();
+    let mut current_material = DEFAULT_MATERIAL.to_string();
+    let mut current_smooth = 0u;
+    let mut current_merge = 0u;
+
     lex(input, |stmt, args| {
         macro_rules! f {
-            ($args:ident) => {
-                $args.iter()
-                    .map(|&input| match input.parse::<f32>() {
-                        Some(number) => number,
-                        None => unimplemented!()
-                    })
-                    .collect::<Vec<f32>>()
-                    .as_slice()
-            }
+            ($args:ident) => { $args.iter().map(|&input| n(input)).collect::<Vec<f32>>().as_slice() }
         }
-
         macro_rules! s {
-            ($param:ident) => {
-                $param.split('/').collect::<Vec<&str>>().as_slice()
-            }
+            ($param:ident) => { $param.split('/').collect::<Vec<&str>>().as_slice() }
         }
 
         match stmt {
@@ -111,11 +111,11 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                     )
                 }
 
-                obj.last_group().last_mesh().polygons.push(m! {
-                    [p]         => (u(p)): P,
-                    [p, t]      => (u(p), u(t)): PT,
-                    [p, "", n]  => (u(p), u(n)): PN,
-                    [p, t, n]   => (u(p), u(t), u(n)): PTN
+                obj.polygons.push(m! {
+                    [p]         => (n(p)): P,
+                    [p, t]      => (n(p), n(t)): PT,
+                    [p, "", u]  => (n(p), n(u)): PN,
+                    [p, t, u]   => (n(p), n(t), n(u)): PTN
                 });
             }
             "curv" => unimplemented!(),
@@ -135,23 +135,34 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 
             // Grouping
             "g" => match args {
-                [name] => if obj.last_group().is_empty() {
-                    obj.last_group().name = name.to_string()
-                } else {
-                    let group = Group::new(name, obj.last_group().last_mesh().material.as_slice());
-                    obj.groups.push(group)
-                },
+                [name] if name != current_group.as_slice() => {
+                    // TODO
+                    current_group = name.to_string();
+                }
                 _ => unimplemented!()
             },
-            "s" => match args {
-                ["off"] | ["0"] => (),
-                [param] => {
-                    let _index = u(param);
-                    unimplemented!()
+            "s" => {
+                let smooth = match args {
+                    ["off"] => 0u,
+                    [param] => n(param),
+                    _ => error!(WrongNumberOfArguments)
+                };
+                if smooth != current_smooth {
+                    // TODO
+                    current_smooth = smooth;
                 }
-                _ => error!(WrongNumberOfArguments)
-            },
-            "mg" => unimplemented!(),
+            }
+            "mg" => {
+                let merge = match args {
+                    ["off"] => 0u,
+                    [param] => n(param),
+                    _ => error!(WrongNumberOfArguments)
+                };
+                if merge != current_merge {
+                    // TODO
+                    current_merge = merge;
+                }
+            }
             "o" => {
                 if !obj.name.is_empty() { unimplemented!() }
 
@@ -164,14 +175,10 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] => {
-                    let last_group = obj.last_group();
-                    if last_group.last_mesh().is_empty() {
-                        last_group.last_mesh().material = material.to_string()
-                    } else {
-                        last_group.meshes.push(Mesh::new(material))
-                    }
-                }
+                [material] if material != current_material.as_slice() => {
+                    // TODO
+                    current_material = material.to_string();
+                },
                 _ => error!(WrongNumberOfArguments)
             },
             "mtllib" => {
@@ -187,8 +194,8 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             _ => error!(UnexpectedStatement)
         }
 
-        fn u(input: &str) -> u32 {
-            match input.parse::<u32>() {
+        fn n<T: FromStr>(input: &str) -> T {
+            match input.parse::<T>() {
                 Some(number) => number,
                 None => unimplemented!()
             }
@@ -197,6 +204,9 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
         None
     });
 
+    // TODO
+    // Group, Material 괄호닫기 동작
+
     obj
 }
 
@@ -204,69 +214,56 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 /// Parsed obj file
 pub struct Obj {
     pub name: String,
+    pub material_libraries: Vec<String>,
 
     pub vertices: Vec<f32x4>,
     pub tex_coords: Vec<f32x4>,
     pub normals: Vec<f32x4>,
     pub param_vertices: Vec<f32x4>,
 
-    pub material_libraries: Vec<String>,
+    pub points: Vec<Point>,
+    pub lines: Vec<Line>,
+    pub polygons: Vec<Polygon>,
 
-    pub groups: Vec<Group>
+    pub groups: HashMap<String, Group>,
+    pub meshes: HashMap<String, Group>,
+    pub smoothing_groups: VecMap<Group>,
+    pub merging_groups: VecMap<Group>
 }
 
 impl Obj {
     fn new() -> Self {
-        Obj {
+        let mut ret = Obj {
             name: String::new(),
+            material_libraries: Vec::new(),
+
             vertices: Vec::new(),
             tex_coords: Vec::new(),
             normals: Vec::new(),
             param_vertices: Vec::new(),
-            material_libraries: Vec::new(),
-            groups: vec![ Group::new("default", "") ]
-        }
-    }
 
-    fn last_group<'a>(&'a mut self) -> &'a mut Group {
-        let len = self.groups.len();
-        &mut self.groups[len - 1]
-    }
-}
+            points: Vec::new(),
+            lines: Vec::new(),
+            polygons: Vec::new(),
 
-pub struct Group {
-    pub name: String,
-    pub meshes: Vec<Mesh>
-}
+            groups: HashMap::with_capacity(1),
+            meshes: HashMap::with_capacity(1),
+            smoothing_groups: VecMap::new(),
+            merging_groups: VecMap::new()
+        };
 
-impl Group {
-    fn new(name: &str, material: &str) -> Self {
-        Group { name: name.to_string(), meshes: vec![ Mesh::new(material) ] }
-    }
-
-    fn last_mesh<'a>(&'a mut self) -> &'a mut Mesh {
-        let len = self.meshes.len();
-        &mut self.meshes[len - 1]
-    }
-
-    fn is_empty(&self) -> bool {
-        self.meshes.is_empty()
+        ret.groups.insert(DEFAULT_GROUP.to_string(), Group::new());
+        ret.meshes.insert(DEFAULT_MATERIAL.to_string(), Group::new());
+        ret
     }
 }
 
-pub struct Mesh {
-    pub material: String,
-    pub polygons: Vec<Polygon>
-}
+pub type Point = uint;
 
-impl Mesh {
-    fn new(material: &str) -> Self {
-        Mesh { material: material.to_string(), polygons: Vec::new() }
-    }
-
-    fn is_empty(&self) -> bool {
-        self.polygons.is_empty()
-    }
+#[derive(Copy)]
+pub enum Line {
+    P([u32; 2]),
+    PT([(u32, u32); 2])
 }
 
 #[derive(PartialEq, Eq, Show)]
@@ -275,4 +272,26 @@ pub enum Polygon {
     PT(Vec<(u32, u32)>),
     PN(Vec<(u32, u32)>),
     PTN(Vec<(u32, u32, u32)>)
+}
+
+pub struct Group {
+    pub points: Vec<Range>,
+    pub lines: Vec<Range>,
+    pub polygons: Vec<Range>
+}
+
+impl Group {
+    fn new() -> Self {
+        Group {
+            points: Vec::new(),
+            lines: Vec::new(),
+            polygons: Vec::new()
+        }
+    }
+}
+
+#[derive(Copy)]
+pub struct Range {
+    pub start: uint,
+    pub end: uint
 }

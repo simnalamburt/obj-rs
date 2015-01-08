@@ -33,13 +33,21 @@ fn test_obj() {
 
     eq! {
         obj.name                                    "Cube".to_string()
+        obj.material_libraries                      vec![ "cube.mtl" ]
+
         obj.vertices.len()                          8
         obj.tex_coords.len()                        14
         obj.normals.len()                           0
         obj.param_vertices.len()                    0
+
+        obj.points.len()                            0
+        obj.lines.len()                             0
+        obj.polygons.len()                          6
+
         obj.groups.len()                            1
-        obj.groups[0].meshes.len()                  1
-        obj.groups[0].meshes[0].polygons.len()      6
+        obj.meshes.len()                            1
+        obj.smoothing_groups.len()                  0
+        obj.merging_groups.len()                    0
     };
 
     vec_eq! {
@@ -69,11 +77,11 @@ fn test_obj() {
     };
 
     eq! {
-        obj.groups[0].meshes[0].polygons[0]         PT( vec![ (1, 1), (2, 2), (3, 3), (4, 4)   ] )
-        obj.groups[0].meshes[0].polygons[1]         PT( vec![ (5, 5), (8, 6), (7, 7), (6, 8)   ] )
-        obj.groups[0].meshes[0].polygons[2]         PT( vec![ (1, 9), (5, 10), (6, 8), (2, 2)  ] )
-        obj.groups[0].meshes[0].polygons[3]         PT( vec![ (2, 2), (6, 8), (7, 7), (3, 3)   ] )
-        obj.groups[0].meshes[0].polygons[4]         PT( vec![ (3, 3), (7, 7), (8, 11), (4, 12) ] )
-        obj.groups[0].meshes[0].polygons[5]         PT( vec![ (5, 5), (1, 13), (4, 14), (8, 6) ] )
+        obj.polygons[0]                             PT( vec![ (1, 1), (2, 2), (3, 3), (4, 4)   ] )
+        obj.polygons[1]                             PT( vec![ (5, 5), (8, 6), (7, 7), (6, 8)   ] )
+        obj.polygons[2]                             PT( vec![ (1, 9), (5, 10), (6, 8), (2, 2)  ] )
+        obj.polygons[3]                             PT( vec![ (2, 2), (6, 8), (7, 7), (3, 3)   ] )
+        obj.polygons[4]                             PT( vec![ (3, 3), (7, 7), (8, 11), (4, 12) ] )
+        obj.polygons[5]                             PT( vec![ (5, 5), (1, 13), (4, 14), (8, 6) ] )
     };
 }
