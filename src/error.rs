@@ -21,3 +21,9 @@ pub fn parse_error(kind: ParseErrorKind) -> ParseError {
         desc: desc,
     }
 }
+
+macro_rules! error {
+    ($kind:ident) => {
+        return Some(parse_error(ParseErrorKind::$kind))
+    }
+}

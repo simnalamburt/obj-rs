@@ -5,36 +5,36 @@ pub fn mtl<T: Buffer>(input: &mut T) {
     lex(input, |stmt, _| {
         match stmt {
             // Material name statement
-            "newmtl" => {}
+            "newmtl" => unimplemented!(),
 
             // Material color and illumination statements
-            "Ka" => {}
-            "Kd" => {}
-            "Ks" => {}
-            "Ke" => {}
-            "Km" => {}
-            "Ns" => {}
-            "Ni" => {}
-            "Tr" => {}
-            "Tf" => {}
-            "illum" => {}
-            "d" => {}
+            "Ka" => unimplemented!(),
+            "Kd" => unimplemented!(),
+            "Ks" => unimplemented!(),
+            "Ke" => unimplemented!(),
+            "Km" => unimplemented!(),
+            "Ns" => unimplemented!(),
+            "Ni" => unimplemented!(),
+            "Tr" => unimplemented!(),
+            "Tf" => unimplemented!(),
+            "illum" => unimplemented!(),
+            "d" => unimplemented!(),
 
             // Texture map statements
-            "map_Ka" => {}
-            "map_Kd" => {}
-            "map_Ks" => {}
-            "map_d" => {}
-            "map_aat" => {}
-            "map_refl" => {}
-            "map_bump" | "map_Bump" | "bump" => {}
-            "disp" => {}
+            "map_Ka" => unimplemented!(),
+            "map_Kd" => unimplemented!(),
+            "map_Ks" => unimplemented!(),
+            "map_d" => unimplemented!(),
+            "map_aat" => unimplemented!(),
+            "map_refl" => unimplemented!(),
+            "map_bump" | "map_Bump" | "bump" => unimplemented!(),
+            "disp" => unimplemented!(),
 
             // Reflection map statement
-            "refl" => {}
+            "refl" => unimplemented!(),
 
             // Unexpected statement
-            _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
+            _ => error!(UnexpectedStatement)
         }
 
         None

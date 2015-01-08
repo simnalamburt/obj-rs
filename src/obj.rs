@@ -25,12 +25,6 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             }
         }
 
-        macro_rules! error {
-            ($kind:ident) => {
-                return Some(parse_error(ParseErrorKind::$kind))
-            }
-        }
-
         match stmt {
             // Vertex data
             "v" => obj.vertices.push(match f!(args) {
