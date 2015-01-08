@@ -275,7 +275,7 @@ impl Mesh {
     }
 }
 
-#[deriving(PartialEq, Eq, Show)]
+#[derive(PartialEq, Eq, Show)]
 pub enum Polygon {
     P(Vec<u32>),
     PT(Vec<(u32, u32)>),

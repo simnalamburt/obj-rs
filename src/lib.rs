@@ -1,5 +1,4 @@
 #![experimental]
-#![feature(macro_rules)]
 
 pub use obj::obj;
 pub use mtl::mtl;

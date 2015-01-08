@@ -1,5 +1,3 @@
-#![feature(macro_rules)]
-
 extern crate obj;
 
 use std::io::{BufferedReader, File};

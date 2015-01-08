@@ -1,7 +1,9 @@
 use std::io::IoError;
 use error::ParseError;
 
-pub fn lex<T: Buffer>(input: &mut T, callback: |&str, &[&str]| -> Option<ParseError>) -> Option<IoError> {
+pub fn lex<T, F>(input: &mut T, mut callback: F) -> Option<IoError>
+    where T: Buffer, F: FnMut(&str, &[&str]) -> Option<ParseError>
+{
     for maybe_line in input.lines() {
         match maybe_line {
             Ok(line) => {
