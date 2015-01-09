@@ -11,7 +11,7 @@ static DEFAULT_MATERIAL: &'static str = "";
 pub fn obj<T: Buffer>(input: &mut T) -> Obj {
     let mut obj = Obj::new();
 
-    // TODO
+    // TODO : start_group, start_material
     let mut current_group = DEFAULT_GROUP.to_string();
     let mut current_material = DEFAULT_MATERIAL.to_string();
     let mut current_smooth = 0u;
@@ -136,7 +136,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             // Grouping
             "g" => match args {
                 [name] if name != current_group.as_slice() => {
-                    // TODO
+                    // TODO : end_group, start_group
                     current_group = name.to_string();
                 }
                 _ => unimplemented!()
@@ -148,7 +148,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                     _ => error!(WrongNumberOfArguments)
                 };
                 if smooth != current_smooth {
-                    // TODO
+                    // TODO : maybe(end_smooth), start_smooth
                     current_smooth = smooth;
                 }
             }
@@ -159,7 +159,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                     _ => error!(WrongNumberOfArguments)
                 };
                 if merge != current_merge {
-                    // TODO
+                    // TODO : maybe(end_merge), start_merge
                     current_merge = merge;
                 }
             }
@@ -176,7 +176,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             "lod" => unimplemented!(),
             "usemtl" => match args {
                 [material] if material != current_material.as_slice() => {
-                    // TODO
+                    // TODO : end_material, start_material
                     current_material = material.to_string();
                 },
                 _ => error!(WrongNumberOfArguments)
@@ -204,8 +204,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
         None
     });
 
-    // TODO
-    // Group, Material 괄호닫기 동작
+    // TODO : end_group, end_material, maybe(end_smooth), maybe(end_merge)
 
     obj
 }
