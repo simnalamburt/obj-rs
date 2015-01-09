@@ -106,6 +106,20 @@ fn cube() {
             PT vec![ (5, 5), (1, 13), (4, 14), (8, 6) ]
         }
     };
+
+    eq! {
+        obj.groups["default".to_string()].points.len()      0
+        obj.groups["default".to_string()].lines.len()       0
+        obj.groups["default".to_string()].polygons.len()    1
+        obj.groups["default".to_string()].polygons[0].start 0
+        obj.groups["default".to_string()].polygons[0].end   6
+
+        obj.meshes[String::new()].points.len()              0
+        obj.meshes[String::new()].lines.len()               0
+        obj.meshes[String::new()].polygons.len()            1
+        obj.meshes[String::new()].polygons[0].start         0
+        obj.meshes[String::new()].polygons[0].end           6
+    };
 }
 
 #[test]
@@ -234,5 +248,31 @@ fn dome() {
             P vec!(33, 21, 25)
             P vec!(21, 33, 12)
         }
+    };
+
+    eq! {
+        obj.groups["default".to_string()].points.len()      0
+        obj.groups["default".to_string()].lines.len()       0
+        obj.groups["default".to_string()].polygons.len()    1
+        obj.groups["default".to_string()].polygons[0].start 0
+        obj.groups["default".to_string()].polygons[0].end   62
+
+        obj.meshes[String::new()].points.len()              0
+        obj.meshes[String::new()].lines.len()               0
+        obj.meshes[String::new()].polygons.len()            1
+        obj.meshes[String::new()].polygons[0].start         0
+        obj.meshes[String::new()].polygons[0].end           62
+
+        obj.smoothing_groups[1].points.len()                0
+        obj.smoothing_groups[1].lines.len()                 0
+        obj.smoothing_groups[1].polygons.len()              1
+        obj.smoothing_groups[1].polygons[0].start           0
+        obj.smoothing_groups[1].polygons[0].end             56
+
+        obj.smoothing_groups[2].points.len()                0
+        obj.smoothing_groups[2].lines.len()                 0
+        obj.smoothing_groups[2].polygons.len()              1
+        obj.smoothing_groups[2].polygons[0].start           56
+        obj.smoothing_groups[2].polygons[0].end             62
     };
 }
