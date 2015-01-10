@@ -9,7 +9,27 @@ static DEFAULT_MATERIAL: &'static str = "";
 
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) -> Obj {
-    let mut obj = Obj::new();
+    let mut name = String::new();
+    let mut material_libraries = Vec::new();
+
+    let mut vertices = Vec::new();
+    let mut tex_coords = Vec::new();
+    let mut normals = Vec::new();
+    let mut param_vertices = Vec::new();
+
+    let mut points = Vec::new();
+    let mut lines = Vec::new();
+    let mut polygons = Vec::new();
+
+    let mut groups = HashMap::with_capacity(1);
+    let mut meshes = HashMap::with_capacity(1);
+    let mut smoothing_groups = VecMap::new();
+    let mut merging_groups = VecMap::new();
+
+    groups.insert(DEFAULT_GROUP.to_string(), Group::new());
+    meshes.insert(DEFAULT_MATERIAL.to_string(), Group::new());
+
+
 
     // TODO : start_group, start_material
     let mut current_group = DEFAULT_GROUP.to_string();
@@ -27,22 +47,22 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 
         match stmt {
             // Vertex data
-            "v" => obj.vertices.push(match f!(args) {
+            "v" => vertices.push(match f!(args) {
                 [x, y, z, w] => f32x4(x, y, z, w),
                 [x, y, z] => f32x4(x, y, z, 1.0),
                 _ => error!(WrongNumberOfArguments)
             }),
-            "vt" => obj.tex_coords.push(match f!(args) {
+            "vt" => tex_coords.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 0.0, 0.0),
                 [u] => f32x4(u, 0.0, 0.0, 0.0),
                 _ => error!(WrongNumberOfArguments)
             }),
-            "vn" => obj.normals.push(match f!(args) {
+            "vn" => normals.push(match f!(args) {
                 [x, y, z] => f32x4(x, y, z, 0.0),
                 _ => error!(WrongNumberOfArguments)
             }),
-            "vp" => obj.param_vertices.push(match f!(args) {
+            "vp" => param_vertices.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 1.0, 0.0),
                 [u] => f32x4(u, 0.0, 1.0, 0.0),
@@ -111,7 +131,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                     )
                 }
 
-                obj.polygons.push(m! {
+                polygons.push(m! {
                     P   [p]        => (n(p))
                     PT  [p, t]     => (n(p), n(t))
                     PN  [p, "", u] => (n(p), n(u))
@@ -164,9 +184,9 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                 }
             }
             "o" => {
-                if !obj.name.is_empty() { unimplemented!() }
+                if !name.is_empty() { unimplemented!() }
 
-                obj.name = args.connect(" ");
+                name = args.connect(" ");
             }
 
             // Display / render attributes
@@ -183,7 +203,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             },
             "mtllib" => {
                 let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
-                obj.material_libraries.push_all(&paths[]);
+                material_libraries.push_all(&paths[]);
             }
             "shadow_obj" => unimplemented!(),
             "trace_obj" => unimplemented!(),
@@ -206,7 +226,24 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 
     // TODO : end_group, end_material, maybe(end_smooth), maybe(end_merge)
 
-    obj
+    Obj {
+        name: name,
+        material_libraries: material_libraries,
+
+        vertices: vertices,
+        tex_coords: tex_coords,
+        normals: normals,
+        param_vertices: param_vertices,
+
+        points: points,
+        lines: lines,
+        polygons: polygons,
+
+        groups: groups,
+        meshes: meshes,
+        smoothing_groups: smoothing_groups,
+        merging_groups: merging_groups
+    }
 }
 
 
@@ -228,33 +265,6 @@ pub struct Obj {
     pub meshes: HashMap<String, Group>,
     pub smoothing_groups: VecMap<Group>,
     pub merging_groups: VecMap<Group>
-}
-
-impl Obj {
-    fn new() -> Self {
-        let mut ret = Obj {
-            name: String::new(),
-            material_libraries: Vec::new(),
-
-            vertices: Vec::new(),
-            tex_coords: Vec::new(),
-            normals: Vec::new(),
-            param_vertices: Vec::new(),
-
-            points: Vec::new(),
-            lines: Vec::new(),
-            polygons: Vec::new(),
-
-            groups: HashMap::with_capacity(1),
-            meshes: HashMap::with_capacity(1),
-            smoothing_groups: VecMap::new(),
-            merging_groups: VecMap::new()
-        };
-
-        ret.groups.insert(DEFAULT_GROUP.to_string(), Group::new());
-        ret.meshes.insert(DEFAULT_MATERIAL.to_string(), Group::new());
-        ret
-    }
 }
 
 pub type Point = usize;
