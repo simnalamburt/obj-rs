@@ -1,11 +1,8 @@
-use std::str::FromStr;
+use std::hash::*;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
-
-static DEFAULT_GROUP: &'static str = "default";
-static DEFAULT_MATERIAL: &'static str = "";
 
 /// Parses a wavefront `.obj` file
 pub fn obj<T: Buffer>(input: &mut T) -> Obj {
@@ -17,25 +14,15 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
     let mut normals = Vec::new();
     let mut param_vertices = Vec::new();
 
-    let mut points = Vec::new();
-    let mut lines = Vec::new();
+    let points = Vec::new();
+    let lines = Vec::new();
     let mut polygons = Vec::new();
 
-    let mut groups = HashMap::with_capacity(1);
-    let mut meshes = HashMap::with_capacity(1);
-    let mut smoothing_groups = VecMap::new();
-    let mut merging_groups = VecMap::new();
-
-    groups.insert(DEFAULT_GROUP.to_string(), Group::new());
-    meshes.insert(DEFAULT_MATERIAL.to_string(), Group::new());
-
-
-
-    // TODO : start_group, start_material
-    let mut current_group = DEFAULT_GROUP.to_string();
-    let mut current_material = DEFAULT_MATERIAL.to_string();
-    let mut current_smooth = 0us;
-    let mut current_merge = 0us;
+    let counter = Counter::new(&points, &lines, &polygons);
+    let mut group_builder       = counter.hash_map("default".to_string());
+    let mut mesh_builder        = counter.hash_map(String::new());
+    let mut smoothing_builder   = counter.vec_map();
+    let mut merging_builder     = counter.vec_map();
 
     lex(input, |stmt, args| {
         macro_rules! f {
@@ -155,34 +142,19 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 
             // Grouping
             "g" => match args {
-                [name] if name != &current_group[] => {
-                    // TODO : end_group, start_group
-                    current_group = name.to_string();
-                }
+                [name] => group_builder.start(name.to_string()),
                 _ => unimplemented!()
             },
-            "s" => {
-                let smooth = match args {
-                    ["off"] => 0us,
-                    [param] => n(param),
-                    _ => error!(WrongNumberOfArguments)
-                };
-                if smooth != current_smooth {
-                    // TODO : maybe(end_smooth), start_smooth
-                    current_smooth = smooth;
-                }
-            }
-            "mg" => {
-                let merge = match args {
-                    ["off"] => 0us,
-                    [param] => n(param),
-                    _ => error!(WrongNumberOfArguments)
-                };
-                if merge != current_merge {
-                    // TODO : maybe(end_merge), start_merge
-                    current_merge = merge;
-                }
-            }
+            "s" => match args {
+                ["off"] | ["0"] => smoothing_builder.end(),
+                [param] => smoothing_builder.start(n(param)),
+                _ => error!(WrongNumberOfArguments)
+            },
+            "mg" => match args {
+                ["off"] | ["0"] => merging_builder.end(),
+                [param] => merging_builder.start(n(param)),
+                _ => error!(WrongNumberOfArguments)
+            },
             "o" => {
                 if !name.is_empty() { unimplemented!() }
 
@@ -195,10 +167,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] if material != &current_material[] => {
-                    // TODO : end_material, start_material
-                    current_material = material.to_string();
-                },
+                [material] => mesh_builder.start(material.to_string()),
                 _ => error!(WrongNumberOfArguments)
             },
             "mtllib" => {
@@ -214,8 +183,8 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             _ => error!(UnexpectedStatement)
         }
 
-        fn n<T: FromStr>(input: &str) -> T {
-            match input.parse::<T>() {
+        fn n<T: ::std::str::FromStr>(input: &str) -> T {
+            match input.parse() {
                 Some(number) => number,
                 None => unimplemented!()
             }
@@ -224,7 +193,10 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
         None
     });
 
-    // TODO : end_group, end_material, maybe(end_smooth), maybe(end_merge)
+    group_builder.end();
+    mesh_builder.end();
+    smoothing_builder.end();
+    merging_builder.end();
 
     Obj {
         name: name,
@@ -239,15 +211,173 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
         lines: lines,
         polygons: polygons,
 
-        groups: groups,
-        meshes: meshes,
-        smoothing_groups: smoothing_groups,
-        merging_groups: merging_groups
+        groups: group_builder.result,
+        meshes: mesh_builder.result,
+        smoothing_groups: smoothing_builder.result,
+        merging_groups: merging_builder.result
     }
 }
 
 
-/// Parsed obj file
+/// Counts current total count of parsed `points`, `lines` and `polygons`.
+struct Counter {
+    points:     *const Vec<Point>,
+    lines:      *const Vec<Line>,
+    polygons:   *const Vec<Polygon>,
+}
+
+impl Counter {
+    /// Constructs a new `Counter`.
+    fn new(points: *const Vec<Point>, lines: *const Vec<Line>, polygons: *const Vec<Polygon>) -> Self {
+        Counter {
+            points:     points,
+            lines:      lines,
+            polygons:   polygons
+        }
+    }
+
+    /// Returns a current count of parsed `(points, lines, polygons)`.
+    fn get(&self) -> (usize, usize, usize) {
+        unsafe { ((*self.points).len(), (*self.lines).len(), (*self.polygons).len()) }
+    }
+
+    /// Creates a `HashMap<String, Group>` builder which references `self` as counter.
+    fn hash_map<'a>(&'a self, input: String) -> GroupBuilder<'a, HashMap<String, Group>, String> {
+        let mut init = Vec::with_capacity(1);
+        init.start(0);
+
+        let mut result = HashMap::with_capacity(1);
+        result.insert(input.clone(), Group {
+            points:     init.clone(),
+            lines:      init.clone(),
+            polygons:   init
+        });
+
+        GroupBuilder {
+            counter: self,
+            current: Some(input),
+            result: result
+        }
+    }
+
+    /// Creates a `VecMap<Group>` builder which references `self` as counter.
+    fn vec_map<'a>(&'a self) -> GroupBuilder<'a, VecMap<Group>, usize> {
+        GroupBuilder {
+            counter: self,
+            current: None,
+            result: VecMap::new()
+        }
+    }
+}
+
+
+/// Helper for creating `groups`, `meshes`, `smoothing_groups` and `merging_groups` member of
+/// `Obj`.
+struct GroupBuilder<'a, T, K> where T: Map<K>, K: Eq {
+    counter: &'a Counter,
+    current: Option<K>, // Some(K) if some group has been started
+                        // None    otherwise
+    result: T
+}
+
+impl<'a, T, K> GroupBuilder<'a, T, K> where T: Map<K>, K: Eq {
+    /// Starts a group whose name is `input`.
+    fn start(&mut self, input: K) {
+        let (points, lines, polygons) = self.counter.get();
+
+        match self.current {
+            Some(ref current) => {
+                if *current == input { return }
+
+                let old = &mut self.result[*current];
+                old.points  .end(points);
+                old.lines   .end(lines);
+                old.polygons.end(polygons);
+            }
+            None => ()
+        }
+
+        let new = &mut self.result[input];
+        new.points  .start(points);
+        new.lines   .start(lines);
+        new.polygons.start(polygons);
+    }
+
+    /// Ends a current group.
+    fn end(&mut self) {
+        match self.current {
+            Some(ref current) => {
+                let (points, lines, polygons) = self.counter.get();
+
+                let end = &mut self.result[*current];
+                end.points  .end(points);
+                end.lines   .end(lines);
+                end.polygons.end(polygons);
+            }
+            None => ()
+        }
+    }
+}
+
+
+/// Custom trait to interface `HashMap` and `VecMap`.
+trait Map<K> : ::std::ops::IndexMut<K, Output=Group> {
+    /// Interface of `HashMap` and `VecMap`'s `insert` function.
+    fn insert(&mut self, K, Group) -> Option<Group>;
+}
+
+impl<K, S, H> Map<K> for HashMap<K, Group, S> where
+    K: Eq + Hash<H>,
+    S: ::std::collections::hash_state::HashState<Hasher=H>,
+    H: Hasher<Output=u64>
+{
+    fn insert(&mut self, k: K, v: Group) -> Option<Group> {
+        self.insert(k, v)
+    }
+}
+
+impl Map<usize> for VecMap<Group> {
+    fn insert(&mut self, k: usize, v: Group) -> Option<Group> {
+        self.insert(k, v)
+    }
+}
+
+
+/// Custom trait for `Vec<Range>`.
+trait RangeVec {
+    /// Starts new range
+    fn start(&mut self, usize);
+
+    /// Tie up the loose end of the `Vec<Range>`
+    fn end(&mut self, usize);
+}
+
+/// Constant which is used to represent undefined bound of range.
+static UNDEFINED: usize = ::std::usize::MAX;
+
+impl RangeVec for Vec<Range> {
+    fn start(&mut self, start: usize) {
+        self.push(Range {
+            start: start,
+            end: UNDEFINED
+        })
+    }
+
+    fn end(&mut self, end: usize) {
+        let len = self.len();
+        let mut last = self[len - 1];
+        assert_eq!(last.end, UNDEFINED);
+
+        if last.start != end {
+            last.end = end;
+        } else {
+            self.pop();
+        }
+    }
+}
+
+
+/// Low-level Rust binding for `obj` format.
 pub struct Obj {
     pub name: String,
     pub material_libraries: Vec<String>,
@@ -269,13 +399,13 @@ pub struct Obj {
 
 pub type Point = usize;
 
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub enum Line {
     P([u32; 2]),
     PT([(u32, u32); 2])
 }
 
-#[derive(PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Show)]
 pub enum Polygon {
     P(Vec<u32>),
     PT(Vec<(u32, u32)>),
@@ -283,23 +413,15 @@ pub enum Polygon {
     PTN(Vec<(u32, u32, u32)>)
 }
 
+#[derive(Clone)]
 pub struct Group {
     pub points: Vec<Range>,
     pub lines: Vec<Range>,
     pub polygons: Vec<Range>
 }
 
-impl Group {
-    fn new() -> Self {
-        Group {
-            points: Vec::new(),
-            lines: Vec::new(),
-            polygons: Vec::new()
-        }
-    }
-}
-
-#[derive(Copy)]
+/// Range struct which represent `[start, end)`.
+#[derive(Clone, Copy)]
 pub struct Range {
     pub start: usize,
     pub end: usize
