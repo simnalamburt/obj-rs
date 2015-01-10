@@ -13,19 +13,19 @@ fn fixture(filename: &str) -> obj::obj::Obj {
     obj::obj(&mut input)
 }
 
-macro_rules! eq {
+macro_rules! test {
     ($($lhs:expr { $($x:expr, $y:expr, $z:expr, $w:expr;)* })*) => ({
         $({
             let mut index = 0us;
             $(
                 let f32x4(x, y, z, w) = $lhs[index];
-                assert_eq!(x, stringify!($x).parse().unwrap());
-                assert_eq!(y, stringify!($y).parse().unwrap());
-                assert_eq!(z, stringify!($z).parse().unwrap());
-                assert_eq!(w, stringify!($w).parse().unwrap());
+                eq!(x, stringify!($x).parse().unwrap(), stringify!($lhs[index].x));
+                eq!(y, stringify!($y).parse().unwrap(), stringify!($lhs[index].x));
+                eq!(z, stringify!($z).parse().unwrap(), stringify!($lhs[index].x));
+                eq!(w, stringify!($w).parse().unwrap(), stringify!($lhs[index].x));
                 index += 1;
             )*
-            assert_eq!($lhs.len(), index);
+            eq!($lhs.len(), index);
         })*
     });
 
@@ -33,15 +33,32 @@ macro_rules! eq {
         $({
             let mut index = 0us;
             $(
-                assert_eq!($lhs[index], Polygon::$kind($elem));
+                eq!($lhs[index], Polygon::$kind($elem));
                 index += 1;
             )*
-            assert_eq!($lhs.len(), index);
+            eq!($lhs.len(), index);
         })*
     });
 
     ($($lhs:expr, $rhs:expr)*) => ({
-        $(assert_eq!($lhs, $rhs);)*
+        $(eq!($lhs, $rhs);)*
+    });
+}
+
+macro_rules! eq {
+    ($lhs:expr, $rhs:expr) => (eq!($lhs, $rhs, stringify!($lhs)));
+
+    ($lhs:expr, $rhs:expr, $exp:expr) => ({
+        let left = &($lhs);
+        let right = &($rhs);
+
+        if !((*left == *right) && (*right == *left)) {
+            use std::io::stdio::stderr;
+
+            let _ = writeln!(&mut stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
+                     but it was \x1b[33m{:?}\x1b[0m", $exp, *left, *right);
+            panic!($exp);
+        }
     });
 }
 
@@ -49,7 +66,7 @@ macro_rules! eq {
 fn cube() {
     let obj = fixture("cube.obj");
 
-    eq! {
+    test! {
         obj.name,                       "Cube".to_string()
         obj.material_libraries,         vec![ "cube.mtl" ]
 
@@ -68,7 +85,7 @@ fn cube() {
         obj.merging_groups.len(),       0
     };
 
-    eq! {
+    test! {
         obj.vertices {
             1.000000, -1.000000, -1.000000, 1.0;
             1.000000, -1.000000,  1.000000, 1.0;
@@ -98,7 +115,7 @@ fn cube() {
         }
     };
 
-    eq! {
+    test! {
         obj.polygons {
             PT  vec![ (1, 1), (2, 2), (3, 3), (4, 4)   ]
             PT  vec![ (5, 5), (8, 6), (7, 7), (6, 8)   ]
@@ -109,7 +126,7 @@ fn cube() {
         }
     };
 
-    eq! {
+    test! {
         obj.groups["default".to_string()].points.len(),         0
         obj.groups["default".to_string()].lines.len(),          0
         obj.groups["default".to_string()].polygons.len(),       1
@@ -128,7 +145,7 @@ fn cube() {
 fn dome() {
     let obj = fixture("dome.obj");
 
-    eq! {
+    test! {
         obj.name,                       "Dome".to_string()
         obj.material_libraries,         vec![ "dome.mtl" ]
 
@@ -147,7 +164,7 @@ fn dome() {
         obj.merging_groups.len(),       0
     };
 
-    eq! {
+    test! {
         obj.vertices {
            -0.382683,  0.923880,  0.000000, 1.0;
            -0.707107,  0.707107,  0.000000, 1.0;
@@ -185,7 +202,7 @@ fn dome() {
         }
     };
 
-    eq! {
+    test! {
         obj.polygons {
             P   vec!(4, 3, 7)
             P   vec!(3, 2, 6)
@@ -252,7 +269,7 @@ fn dome() {
         }
     };
 
-    eq! {
+    test! {
         obj.groups["default".to_string()].points.len(),         0
         obj.groups["default".to_string()].lines.len(),          0
         obj.groups["default".to_string()].polygons.len(),       1
