@@ -1,4 +1,5 @@
 #![experimental]
+#![allow(unstable)]
 
 pub use obj::obj;
 pub use mtl::mtl;

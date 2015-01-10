@@ -7,14 +7,13 @@ pub fn lex<T, F>(input: &mut T, mut callback: F) -> Option<IoError>
     for maybe_line in input.lines() {
         match maybe_line {
             Ok(line) => {
-                let line = line.as_slice();
-                let line = line.split('#').next().unwrap();
+                let line = &line.split('#').next().unwrap();
 
                 let mut words = line.words();
                 match words.next() {
                     Some(stmt) => {
                         let args: Vec<&str> = words.collect();
-                        let ret = callback(stmt, args.as_slice());
+                        let ret = callback(stmt, &args[]);
 
                         if ret.is_some() {
                             unimplemented!()
@@ -63,7 +62,7 @@ mod bench {
         b.iter(|| {
             let words = "1.00 2.00 3.00".words();
             let args: Vec<&str> = words.collect();
-            let args = args.as_slice();
+            let args = &args[];
 
             args.iter().map(|&input| input.parse::<f32>().unwrap()).collect::<Vec<f32>>();
         })

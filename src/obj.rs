@@ -14,15 +14,15 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
     // TODO : start_group, start_material
     let mut current_group = DEFAULT_GROUP.to_string();
     let mut current_material = DEFAULT_MATERIAL.to_string();
-    let mut current_smooth = 0u;
-    let mut current_merge = 0u;
+    let mut current_smooth = 0us;
+    let mut current_merge = 0us;
 
     lex(input, |stmt, args| {
         macro_rules! f {
-            ($args:ident) => { $args.iter().map(|&input| n(input)).collect::<Vec<f32>>().as_slice() }
+            ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[] })
         }
         macro_rules! s {
-            ($param:ident) => { $param.split('/').collect::<Vec<&str>>().as_slice() }
+            ($param:ident) => { &$param.split('/').collect::<Vec<&str>>()[] }
         }
 
         match stmt {
@@ -90,7 +90,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                 let first = args.next().unwrap();
 
                 macro_rules! m {
-                    { $($pat:pat => $exp:expr : $name:ident),* } => (
+                    { $($name:ident $pat:pat => $exp:expr)* } => (
                         // First, detect the type of the vertices with the first argument
                         // Then apply it to the rest of the arguments
                         match s!(first) {
@@ -112,10 +112,10 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
                 }
 
                 obj.polygons.push(m! {
-                    [p]         => (n(p)): P,
-                    [p, t]      => (n(p), n(t)): PT,
-                    [p, "", u]  => (n(p), n(u)): PN,
-                    [p, t, u]   => (n(p), n(t), n(u)): PTN
+                    P   [p]        => (n(p))
+                    PT  [p, t]     => (n(p), n(t))
+                    PN  [p, "", u] => (n(p), n(u))
+                    PTN [p, t, u]  => (n(p), n(t), n(u))
                 });
             }
             "curv" => unimplemented!(),
@@ -135,7 +135,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
 
             // Grouping
             "g" => match args {
-                [name] if name != current_group.as_slice() => {
+                [name] if name != &current_group[] => {
                     // TODO : end_group, start_group
                     current_group = name.to_string();
                 }
@@ -143,7 +143,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             },
             "s" => {
                 let smooth = match args {
-                    ["off"] => 0u,
+                    ["off"] => 0us,
                     [param] => n(param),
                     _ => error!(WrongNumberOfArguments)
                 };
@@ -154,7 +154,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             }
             "mg" => {
                 let merge = match args {
-                    ["off"] => 0u,
+                    ["off"] => 0us,
                     [param] => n(param),
                     _ => error!(WrongNumberOfArguments)
                 };
@@ -175,7 +175,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] if material != current_material.as_slice() => {
+                [material] if material != &current_material[] => {
                     // TODO : end_material, start_material
                     current_material = material.to_string();
                 },
@@ -183,7 +183,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
             },
             "mtllib" => {
                 let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
-                obj.material_libraries.push_all(paths.as_slice());
+                obj.material_libraries.push_all(&paths[]);
             }
             "shadow_obj" => unimplemented!(),
             "trace_obj" => unimplemented!(),
@@ -257,7 +257,7 @@ impl Obj {
     }
 }
 
-pub type Point = uint;
+pub type Point = usize;
 
 #[derive(Copy)]
 pub enum Line {
@@ -291,6 +291,6 @@ impl Group {
 
 #[derive(Copy)]
 pub struct Range {
-    pub start: uint,
-    pub end: uint
+    pub start: usize,
+    pub end: usize
 }
