@@ -56,7 +56,7 @@ macro_rules! eq {
             use std::io::stdio::stderr;
 
             let _ = writeln!(&mut stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
-                     but it was \x1b[33m{:?}\x1b[0m", $exp, *left, *right);
+                     but it was \x1b[33m{:?}\x1b[0m", $exp, *right, *left);
             panic!($exp);
         }
     });
