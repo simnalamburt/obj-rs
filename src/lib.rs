@@ -1,5 +1,4 @@
-#![experimental]
-#![allow(unstable)]
+#![feature(core, collections, io)]
 
 pub use obj::obj;
 pub use mtl::mtl;

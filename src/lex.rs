@@ -1,4 +1,4 @@
-use std::io::IoError;
+use std::old_io::IoError;
 use error::ParseError;
 
 pub fn lex<T, F>(input: &mut T, mut callback: F) -> Option<IoError>

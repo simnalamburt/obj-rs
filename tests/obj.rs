@@ -1,8 +1,9 @@
-#![allow(unstable)]
+#![feature(io, path, collections)]
 
 extern crate obj;
 
-use std::io::{BufferedReader, File};
+use std::old_io::{BufferedReader, File};
+use std::old_io::stdio::stderr;
 use std::simd::f32x4;
 use obj::obj::Polygon;
 
@@ -53,8 +54,6 @@ macro_rules! eq {
         let right = &($rhs);
 
         if !((*left == *right) && (*right == *left)) {
-            use std::io::stdio::stderr;
-
             let _ = writeln!(&mut stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
                      but it was \x1b[33m{:?}\x1b[0m", $exp, *right, *left);
             panic!($exp);
