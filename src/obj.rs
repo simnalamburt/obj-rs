@@ -1,4 +1,3 @@
-use std::hash::*;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use lex::lex;
@@ -273,34 +272,50 @@ impl Counter {
 
 /// Helper for creating `groups`, `meshes`, `smoothing_groups` and `merging_groups` member of
 /// `Obj`.
-struct GroupBuilder<'a, T, K> where T: Map<K>, K: Eq {
+struct GroupBuilder<'a, T, K> {
     counter: &'a Counter,
     current: Option<K>, // Some(K) if some group has been started
                         // None    otherwise
     result: T
 }
 
-impl<'a, T, K> GroupBuilder<'a, T, K> where T: Map<K>, K: Eq {
+impl<'a, T, K> GroupBuilder<'a, T, K> where
+    T: Map<K, Group>,
+    K: Clone + Key
+{
     /// Starts a group whose name is `input`.
     fn start(&mut self, input: K) {
         let (points, lines, polygons) = self.counter.get();
 
         match self.current {
-            Some(ref current) => {
-                if *current == input { return }
+            Some(ref current) if *current != input => {
+                let is_empty = {
+                    let old = &mut self.result[*current];
+                    old.points  .end(points);
+                    old.lines   .end(lines);
+                    old.polygons.end(polygons);
 
-                let old = &mut self.result[*current];
-                old.points  .end(points);
-                old.lines   .end(lines);
-                old.polygons.end(polygons);
+                    old.points.is_empty() && old.lines.is_empty() && old.polygons.is_empty()
+                };
+
+                if is_empty {
+                    let result = self.result.remove(current);
+                    assert!(result.is_some());
+                }
             }
+            Some(_) => return,
             None => ()
         }
 
-        let new = &mut self.result[input];
-        new.points  .start(points);
-        new.lines   .start(lines);
-        new.polygons.start(polygons);
+        let mut group = Group::new();
+        group.points   .start(points);
+        group.lines    .start(lines);
+        group.polygons .start(polygons);
+
+        self.current = Some(input.clone());
+
+        let result = self.result.insert(input, group);
+        assert!(result.is_none());
     }
 
     /// Ends a current group.
@@ -308,39 +323,61 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where T: Map<K>, K: Eq {
         match self.current {
             Some(ref current) => {
                 let (points, lines, polygons) = self.counter.get();
-
-                let end = &mut self.result[*current];
-                end.points  .end(points);
-                end.lines   .end(lines);
-                end.polygons.end(polygons);
+                let old = &mut self.result[*current];
+                old.points  .end(points);
+                old.lines   .end(lines);
+                old.polygons.end(polygons);
             }
-            None => ()
+            None => return
         }
+
+        self.current = None;
     }
 }
 
 
 /// Custom trait to interface `HashMap` and `VecMap`.
-trait Map<K> : ::std::ops::IndexMut<K, Output=Group> {
-    /// Interface of `HashMap` and `VecMap`'s `insert` function.
-    fn insert(&mut self, K, Group) -> Option<Group>;
+trait Map<K: Key, V: ?Sized> : ::std::ops::IndexMut<K, Output=V> {
+    /// Interface of `insert` function.
+    fn insert(&mut self, K, V) -> Option<V>;
+    /// Interface of `get_mut` function.
+    fn get_mut(&mut self, k: &K) -> Option<&mut V>;
+    /// Interface of `remove` function.
+    fn remove(&mut self, k: &K) -> Option<V>;
 }
 
-impl<K, S, H> Map<K> for HashMap<K, Group, S> where
-    K: Eq + Hash<H>,
-    S: ::std::collections::hash_state::HashState<Hasher=H>,
-    H: Hasher<Output=u64>
-{
-    fn insert(&mut self, k: K, v: Group) -> Option<Group> {
+impl<V> Map<String, V> for HashMap<String, V> {
+    fn insert(&mut self, k: String, v: V) -> Option<V> {
         self.insert(k, v)
+    }
+
+    fn get_mut(&mut self, k: &String) -> Option<&mut V> {
+        self.get_mut(k)
+    }
+
+    fn remove(&mut self, k: &String) -> Option<V> {
+        self.remove(k)
     }
 }
 
-impl Map<usize> for VecMap<Group> {
-    fn insert(&mut self, k: usize, v: Group) -> Option<Group> {
+impl<V> Map<usize, V> for VecMap<V> {
+    fn insert(&mut self, k: usize, v: V) -> Option<V> {
         self.insert(k, v)
     }
+
+    fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
+        self.get_mut(k)
+    }
+
+    fn remove(&mut self, k: &usize) -> Option<V> {
+        self.remove(k)
+    }
 }
+
+trait Key : Eq {}
+
+impl Key for String {}
+impl Key for usize {}
 
 
 /// Custom trait for `Vec<Range>`.
@@ -364,12 +401,10 @@ impl RangeVec for Vec<Range> {
     }
 
     fn end(&mut self, end: usize) {
-        let len = self.len();
-        let mut last = self[len - 1];
-        assert_eq!(last.end, UNDEFINED);
-
-        if last.start != end {
-            last.end = end;
+        let last = self.len() - 1;
+        assert_eq!(self[last].end, UNDEFINED);
+        if self[last].start != end {
+            self[last].end = end;
         } else {
             self.pop();
         }
@@ -413,15 +448,25 @@ pub enum Polygon {
     PTN(Vec<(u32, u32, u32)>)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Group {
     pub points: Vec<Range>,
     pub lines: Vec<Range>,
     pub polygons: Vec<Range>
 }
 
+impl Group {
+    fn new() -> Self {
+        Group {
+            points: Vec::new(),
+            lines: Vec::new(),
+            polygons: Vec::new()
+        }
+    }
+}
+
 /// Range struct which represent `[start, end)`.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Range {
     pub start: usize,
     pub end: usize
