@@ -1,7 +1,8 @@
 obj-rs [![][version-i]][crates] [![][buildstat-i]][travis]
 ========
 
-[Wavefront obj][obj] parser for **[Rust][rust]**. It handles both `.obj` and `.mtl`.
+[Wavefront obj][obj] parser for **[Rust][rust]**. It handles both `.obj` and
+`.mtl` formats.
 
 --------
 

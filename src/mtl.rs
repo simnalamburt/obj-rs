@@ -1,7 +1,10 @@
+//! Parses `.mtl` format which stores material data
+
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
-pub fn load_mtl<T: Buffer>(input: &mut T) {
+/// Parses a wavefront `.obj` format *(incomplete)*
+pub fn load_mtl<T: Buffer>(input: &mut T) -> Mtl {
     lex(input, |stmt, _| {
         match stmt {
             // Material name statement
@@ -39,4 +42,10 @@ pub fn load_mtl<T: Buffer>(input: &mut T) {
 
         None
     });
+
+    Mtl
 }
+
+/// Low-level Rust binding for `.mtl` format *(incomplete)*.
+#[derive(Copy)]
+pub struct Mtl;

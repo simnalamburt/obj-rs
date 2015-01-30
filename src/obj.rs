@@ -1,9 +1,11 @@
+//! Parses `.obj` format which stores 3D mesh data
+
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
-/// Parses a wavefront `.obj` file
+/// Parses a wavefront `.obj` format
 pub fn load_obj<T: Buffer>(mut input: T) -> Obj {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
@@ -374,6 +376,7 @@ impl<V> Map<usize, V> for VecMap<V> {
     }
 }
 
+/// A trait which should be implemented by a type passed into `Key` of `Map`.
 trait Key : Eq {}
 
 impl Key for String {}
@@ -412,46 +415,72 @@ impl RangeVec for Vec<Range> {
 }
 
 
-/// Low-level Rust binding for `obj` format.
+/// Low-level Rust binding for `.obj` format.
 pub struct Obj {
+    /// Name of the object.
     pub name: String,
+    /// `.mtl` files which required by this object.
     pub material_libraries: Vec<String>,
 
+    /// Position vectors of each vertex.
     pub vertices: Vec<f32x4>,
+    /// Texture coordinates of each vertex.
     pub tex_coords: Vec<f32x4>,
+    /// Normal vectors of each vertex.
     pub normals: Vec<f32x4>,
+    /// Parametric vertices.
     pub param_vertices: Vec<f32x4>,
 
+    /// Points which stores the index data of position vectors.
     pub points: Vec<Point>,
+    /// Lines which store the index data of vectors.
     pub lines: Vec<Line>,
+    /// Polygons which store the index data of vectors.
     pub polygons: Vec<Polygon>,
 
+    /// Groups of multiple geometries.
     pub groups: HashMap<String, Group>,
+    /// Geometries which consist in a same material.
     pub meshes: HashMap<String, Group>,
+    /// Smoothing groups.
     pub smoothing_groups: VecMap<Group>,
+    /// Merging groups.
     pub merging_groups: VecMap<Group>
 }
 
+/// The `Point` type which stores the index of the position vector.
 pub type Point = usize;
 
+/// The `Line` type.
 #[derive(Clone, Copy)]
 pub enum Line {
+    /// A line which contains only the position data of both ends
     P([u32; 2]),
+    /// A line which contains both position and texture coordinate data of both ends
     PT([(u32, u32); 2])
 }
 
+/// The `Polygon` type.
 #[derive(Clone, PartialEq, Eq, Show)]
 pub enum Polygon {
+    /// A polygon which contains only the position data of each vertex.
     P(Vec<u32>),
+    /// A polygon which contains both position and texture coordinate data of each vertex.
     PT(Vec<(u32, u32)>),
+    /// A polygon which contains both position and normal data of each vertex.
     PN(Vec<(u32, u32)>),
+    /// A polygon which contains all position, texture coordinate and normal data of each vertex.
     PTN(Vec<(u32, u32, u32)>)
 }
 
+/// A group which contains multiple range of points, lines and polygons
 #[derive(Clone, Debug)]
 pub struct Group {
+    /// Multiple range of points
     pub points: Vec<Range>,
+    /// Multiple range of lines
     pub lines: Vec<Range>,
+    /// Multiple range of polygons
     pub polygons: Vec<Range>
 }
 
@@ -465,9 +494,11 @@ impl Group {
     }
 }
 
-/// Range struct which represent `[start, end)`.
+/// A struct which represent `[start, end)` range.
 #[derive(Clone, Copy, Debug)]
 pub struct Range {
+    /// The lower bound of the range (inclusive).
     pub start: usize,
+    /// The upper bound of the range (exclusive).
     pub end: usize
 }

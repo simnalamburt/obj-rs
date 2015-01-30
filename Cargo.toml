@@ -2,7 +2,7 @@
 name = "obj-rs"
 version = "0.2.0"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-description   = "A parser for wavefront '.obj' and '.mtl' file format."
+description   = "Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats."
 documentation = "https://simnalamburt.github.io/obj-rs"
 homepage      = "https://github.com/simnalamburt/obj-rs"
 repository    = "https://github.com/simnalamburt/obj-rs"

@@ -1,3 +1,5 @@
+//! Contains helper structs for error handling
+
 #[derive(Copy)]
 pub struct ParseError {
     pub kind: ParseErrorKind,
