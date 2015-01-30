@@ -13,5 +13,5 @@ obj-rs [![][version-i]][crates] [![][buildstat-i]][travis]
 [crates]:            //crates.io/crates/obj-rs
 [travis]:            //travis-ci.org/simnalamburt/obj-rs
 
-[version-i]:   https://img.shields.io/badge/cargo-v0.2.0-yellow.svg?style=flat
+[version-i]:   https://img.shields.io/badge/cargo-v0.2.1-yellow.svg?style=flat
 [buildstat-i]: https://img.shields.io/travis/simnalamburt/obj-rs/master.svg?style=flat

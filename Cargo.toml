@@ -1,6 +1,6 @@
 [package]
 name = "obj-rs"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 description   = "Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats."
 documentation = "https://simnalamburt.github.io/obj-rs"
