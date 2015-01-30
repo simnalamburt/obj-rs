@@ -1,4 +1,5 @@
 #![feature(core, collections, io)]
+#![cfg_attr(test, feature(test))]
 
 pub use obj::obj;
 pub use mtl::mtl;
