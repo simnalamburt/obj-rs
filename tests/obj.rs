@@ -127,17 +127,17 @@ fn cube() {
     };
 
     test! {
-        obj.groups["default".to_string()].points.len(),         0
-        obj.groups["default".to_string()].lines.len(),          0
-        obj.groups["default".to_string()].polygons.len(),       1
-        obj.groups["default".to_string()].polygons[0].start,    0
-        obj.groups["default".to_string()].polygons[0].end,      6
+        obj.groups.get("default").unwrap().points.len(),        0
+        obj.groups.get("default").unwrap().lines.len(),         0
+        obj.groups.get("default").unwrap().polygons.len(),      1
+        obj.groups.get("default").unwrap().polygons[0].start,   0
+        obj.groups.get("default").unwrap().polygons[0].end,     6
 
-        obj.meshes[String::new()].points.len(),                 0
-        obj.meshes[String::new()].lines.len(),                  0
-        obj.meshes[String::new()].polygons.len(),               1
-        obj.meshes[String::new()].polygons[0].start,            0
-        obj.meshes[String::new()].polygons[0].end,              6
+        obj.meshes.get("Material").unwrap().points.len(),       0
+        obj.meshes.get("Material").unwrap().lines.len(),        0
+        obj.meshes.get("Material").unwrap().polygons.len(),     1
+        obj.meshes.get("Material").unwrap().polygons[0].start,  0
+        obj.meshes.get("Material").unwrap().polygons[0].end,    6
     };
 }
 
@@ -270,17 +270,17 @@ fn dome() {
     };
 
     test! {
-        obj.groups["default".to_string()].points.len(),         0
-        obj.groups["default".to_string()].lines.len(),          0
-        obj.groups["default".to_string()].polygons.len(),       1
-        obj.groups["default".to_string()].polygons[0].start,    0
-        obj.groups["default".to_string()].polygons[0].end,      62
+        obj.groups.get("default").unwrap().points.len(),        0
+        obj.groups.get("default").unwrap().lines.len(),         0
+        obj.groups.get("default").unwrap().polygons.len(),      1
+        obj.groups.get("default").unwrap().polygons[0].start,   0
+        obj.groups.get("default").unwrap().polygons[0].end,     62
 
-        obj.meshes[String::new()].points.len(),                 0
-        obj.meshes[String::new()].lines.len(),                  0
-        obj.meshes[String::new()].polygons.len(),               1
-        obj.meshes[String::new()].polygons[0].start,            0
-        obj.meshes[String::new()].polygons[0].end,              62
+        obj.meshes.get("None").unwrap().points.len(),           0
+        obj.meshes.get("None").unwrap().lines.len(),            0
+        obj.meshes.get("None").unwrap().polygons.len(),         1
+        obj.meshes.get("None").unwrap().polygons[0].start,      0
+        obj.meshes.get("None").unwrap().polygons[0].end,        62
 
         obj.smoothing_groups[1].points.len(),                   0
         obj.smoothing_groups[1].lines.len(),                    0
