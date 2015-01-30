@@ -1,6 +1,6 @@
 [package]
 name = "obj-rs"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 description   = "A parser for wavefront '.obj' and '.mtl' file format."
 documentation = "https://simnalamburt.github.io/obj-rs"
