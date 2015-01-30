@@ -4,7 +4,7 @@ use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` file
-pub fn obj<T: Buffer>(input: &mut T) -> Obj {
+pub fn obj<T: Buffer>(mut input: T) -> Obj {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 
@@ -23,7 +23,7 @@ pub fn obj<T: Buffer>(input: &mut T) -> Obj {
     let mut smoothing_builder   = counter.vec_map();
     let mut merging_builder     = counter.vec_map();
 
-    lex(input, |stmt, args| {
+    lex(&mut input, |stmt, args| {
         macro_rules! f {
             ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[] })
         }

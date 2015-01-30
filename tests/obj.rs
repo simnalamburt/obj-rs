@@ -9,9 +9,9 @@ use obj::obj::Polygon;
 
 fn fixture(filename: &str) -> obj::obj::Obj {
     let path = Path::new("tests").join("fixtures").join(filename);
-    let mut input = BufferedReader::new(File::open(&path));
+    let input = BufferedReader::new(File::open(&path));
 
-    obj::obj(&mut input)
+    obj::obj(input)
 }
 
 macro_rules! test {
