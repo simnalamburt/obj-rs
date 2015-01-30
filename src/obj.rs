@@ -4,7 +4,7 @@ use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` file
-pub fn obj<T: Buffer>(mut input: T) -> Obj {
+pub fn load_obj<T: Buffer>(mut input: T) -> Obj {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 

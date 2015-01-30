@@ -1,8 +1,8 @@
 #![feature(core, collections, io)]
 #![cfg_attr(test, feature(test))]
 
-pub use obj::obj;
-pub use mtl::mtl;
+pub use obj::load_obj;
+pub use mtl::load_mtl;
 
 #[macro_use]
 pub mod error;

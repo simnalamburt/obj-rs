@@ -5,13 +5,13 @@ extern crate obj;
 use std::old_io::{BufferedReader, File};
 use std::old_io::stdio::stderr;
 use std::simd::f32x4;
-use obj::obj::Polygon;
+use obj::load_obj;
 
 fn fixture(filename: &str) -> obj::obj::Obj {
     let path = Path::new("tests").join("fixtures").join(filename);
     let input = BufferedReader::new(File::open(&path));
 
-    obj::obj(input)
+    load_obj(input)
 }
 
 macro_rules! test {
@@ -34,7 +34,7 @@ macro_rules! test {
         $({
             let mut index = 0us;
             $(
-                eq!($lhs[index], Polygon::$kind($elem));
+                eq!($lhs[index], obj::obj::Polygon::$kind($elem));
                 index += 1;
             )*
             eq!($lhs.len(), index);

@@ -1,7 +1,7 @@
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
-pub fn mtl<T: Buffer>(input: &mut T) {
+pub fn load_mtl<T: Buffer>(input: &mut T) {
     lex(input, |stmt, _| {
         match stmt {
             // Material name statement
