@@ -186,8 +186,8 @@ pub fn load_obj<T: Buffer>(mut input: T) -> Obj {
 
         fn n<T: ::std::str::FromStr>(input: &str) -> T {
             match input.parse() {
-                Some(number) => number,
-                None => unimplemented!()
+                Ok(number) => number,
+                Err(_)=> unimplemented!()
             }
         }
 
@@ -461,7 +461,7 @@ pub enum Line {
 }
 
 /// The `Polygon` type.
-#[derive(Clone, PartialEq, Eq, Show)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum Polygon {
     /// A polygon which contains only the position data of each vertex.
     P(Vec<u32>),
