@@ -1,13 +1,15 @@
-use std::old_io::IoError;
+use std::io;
 use error::ParseError;
 
-pub fn lex<T, F>(input: &mut T, mut callback: F) -> Option<IoError>
-    where T: Buffer, F: FnMut(&str, &[&str]) -> Option<ParseError>
+pub fn lex<T, F>(input: T, mut callback: F) -> Option<io::Error>
+    where T: io::BufRead, F: FnMut(&str, &[&str]) -> Option<ParseError>
 {
+    use std::io::prelude::*;
+
     for maybe_line in input.lines() {
         match maybe_line {
             Ok(line) => {
-                let line = &line.split('#').next().unwrap();
+                let line = line.split('#').next().unwrap();
 
                 let mut words = line.words();
                 match words.next() {

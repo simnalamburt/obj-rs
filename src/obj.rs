@@ -1,12 +1,13 @@
 //! Parses `.obj` format which stores 3D mesh data
 
+use std::io;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` format
-pub fn load_obj<T: Buffer>(mut input: T) -> Obj {
+pub fn load_obj<T: io::BufRead>(input: T) -> Obj {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 
@@ -25,7 +26,7 @@ pub fn load_obj<T: Buffer>(mut input: T) -> Obj {
     let mut smoothing_builder   = counter.vec_map();
     let mut merging_builder     = counter.vec_map();
 
-    lex(&mut input, |stmt, args| {
+    lex(input, |stmt, args| {
         macro_rules! f {
             ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[] })
         }

@@ -1,10 +1,11 @@
 //! Parses `.mtl` format which stores material data
 
+use std::io;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` format *(incomplete)*
-pub fn load_mtl<T: Buffer>(input: &mut T) -> Mtl {
+pub fn load_mtl<T: io::BufRead>(input: T) -> Mtl {
     lex(input, |stmt, _| {
         match stmt {
             // Material name statement

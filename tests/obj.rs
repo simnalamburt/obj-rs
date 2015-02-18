@@ -1,17 +1,22 @@
-#![feature(io, path, collections)]
+#![feature(core, path, fs, io)]
 
 extern crate obj;
 
-use std::old_io::{BufferedReader, File};
-use std::old_io::stdio::stderr;
 use std::simd::f32x4;
-use obj::load_obj;
 
-fn fixture(filename: &str) -> obj::obj::Obj {
+fn fixture(filename: &str) -> obj::Obj {
+    use std::path::Path;
+    use std::fs::File;
+    use std::io::BufReader;
+
     let path = Path::new("tests").join("fixtures").join(filename);
-    let input = BufferedReader::new(File::open(&path));
+    let file = match File::open(&path) {
+        Ok(f) => f,
+        Err(e) => panic!("Failed to open \"{}\". \x1b[31m{}\x1b[0m", path.to_string_lossy(), e)
+    };
+    let input = BufReader::new(file);
 
-    load_obj(input)
+    obj::load_obj(input)
 }
 
 macro_rules! test {
@@ -54,7 +59,7 @@ macro_rules! eq {
         let right = &($rhs);
 
         if !((*left == *right) && (*right == *left)) {
-            let _ = writeln!(&mut stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
+            let _ = writeln!(&mut std::old_io::stdio::stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
                      but it was \x1b[33m{:?}\x1b[0m", $exp, *right, *left);
             panic!($exp);
         }
