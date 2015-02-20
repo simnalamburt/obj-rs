@@ -28,10 +28,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
 
     try!(lex(input, |stmt, args| {
         macro_rules! f {
-            ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[] })
+            ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[..] })
         }
         macro_rules! s {
-            ($param:ident) => { &$param.split('/').collect::<Vec<&str>>()[] }
+            ($param:ident) => { &$param.split('/').collect::<Vec<&str>>()[..] }
         }
 
         match stmt {
@@ -170,7 +170,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
             },
             "mtllib" => {
                 let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
-                material_libraries.push_all(&paths[]);
+                material_libraries.push_all(&paths[..]);
             }
             "shadow_obj" => unimplemented!(),
             "trace_obj" => unimplemented!(),

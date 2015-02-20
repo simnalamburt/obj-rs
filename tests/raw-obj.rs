@@ -24,7 +24,7 @@ fn fixture(filename: &str) -> raw::Obj {
 macro_rules! test {
     ($($lhs:expr { $($x:expr, $y:expr, $z:expr, $w:expr;)* })*) => ({
         $({
-            let mut index = 0us;
+            let mut index = 0usize;
             $(
                 let f32x4(x, y, z, w) = $lhs[index];
                 eq!(x, stringify!($x).parse().unwrap(), stringify!($lhs[index].x));
@@ -39,7 +39,7 @@ macro_rules! test {
 
     ($($lhs:expr { $($kind:ident $elem:expr)* })*) => ({
         $({
-            let mut index = 0us;
+            let mut index = 0usize;
             $(
                 eq!($lhs[index], obj::raw::object::Polygon::$kind($elem));
                 index += 1;

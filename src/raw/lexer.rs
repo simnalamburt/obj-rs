@@ -53,7 +53,7 @@ mod bench {
         b.iter(|| {
             let words = "1.00 2.00 3.00".words();
             let args: Vec<&str> = words.collect();
-            let args = &args[];
+            let args = &args[..];
 
             args.iter().map(|&input| input.parse().unwrap()).collect::<Vec<f32>>();
         })
