@@ -157,11 +157,7 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
                 [param] => merging_builder.start(n(param)),
                 _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
-            "o" => {
-                if !name.is_empty() { unimplemented!() }
-
-                name = args.connect(" ");
-            }
+            "o" => name = args.connect(" "),
 
             // Display / render attributes
             "bevel" => unimplemented!(),
