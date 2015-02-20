@@ -1,14 +1,13 @@
 //! Parses `.obj` format which stores 3D mesh data
 
-use std::io::Result;
 use std::io::prelude::*;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
+use error::ObjResult;
 use lex::lex;
-use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` format
-pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
+pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 
@@ -40,23 +39,23 @@ pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
             "v" => vertices.push(match f!(args) {
                 [x, y, z, w] => f32x4(x, y, z, w),
                 [x, y, z] => f32x4(x, y, z, 1.0),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments")
             }),
             "vt" => tex_coords.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 0.0, 0.0),
                 [u] => f32x4(u, 0.0, 0.0, 0.0),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
             }),
             "vn" => normals.push(match f!(args) {
                 [x, y, z] => f32x4(x, y, z, 0.0),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected 3 arguments")
             }),
             "vp" => param_vertices.push(match f!(args) {
                 [u, v, w] => f32x4(u, v, w, 0.0),
                 [u, v] => f32x4(u, v, 1.0, 0.0),
                 [u] => f32x4(u, 0.0, 1.0, 0.0),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
             }),
 
             // Free-form curve / surface attributes
@@ -151,12 +150,12 @@ pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
             "s" => match args {
                 ["off"] | ["0"] => smoothing_builder.end(),
                 [param] => smoothing_builder.start(n(param)),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
             "mg" => match args {
                 ["off"] | ["0"] => merging_builder.end(),
                 [param] => merging_builder.start(n(param)),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
             "o" => {
                 if !name.is_empty() { unimplemented!() }
@@ -171,7 +170,7 @@ pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
             "lod" => unimplemented!(),
             "usemtl" => match args {
                 [material] => mesh_builder.start(material.to_string()),
-                _ => error!(WrongNumberOfArguments)
+                _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
             "mtllib" => {
                 let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
@@ -183,7 +182,7 @@ pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
             "stech" => unimplemented!(),
 
             // Unexpected statement
-            _ => error!(UnexpectedStatement)
+            _ => error!(UnexpectedStatement, "Received unknown statement")
         }
 
         fn n<T: ::std::str::FromStr>(input: &str) -> T {
@@ -193,7 +192,7 @@ pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
             }
         }
 
-        None
+        Ok(())
     }));
 
     group_builder.end();

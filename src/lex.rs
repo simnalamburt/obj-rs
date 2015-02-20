@@ -1,9 +1,8 @@
-use std::io::Result;
 use std::io::prelude::*;
-use error::ParseError;
+use error::ObjResult;
 
-pub fn lex<T, F>(input: T, mut callback: F) -> Result<()>
-    where T: BufRead, F: FnMut(&str, &[&str]) -> Option<ParseError>
+pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
+    where T: BufRead, F: FnMut(&str, &[&str]) -> ObjResult<()>
 {
     for line in input.lines() {
         let line = try!(line);
@@ -13,10 +12,7 @@ pub fn lex<T, F>(input: T, mut callback: F) -> Result<()>
         match words.next() {
             Some(stmt) => {
                 let args: Vec<&str> = words.collect();
-                match callback(stmt, &args[..]) {
-                    Some(_) => unimplemented!(),
-                    None => ()
-                }
+                try!(callback(stmt, &args[..]))
             }
             None => ()
         }
@@ -27,8 +23,6 @@ pub fn lex<T, F>(input: T, mut callback: F) -> Result<()>
 
 #[test]
 fn test_lex() {
-    use error::{parse_error, ParseErrorKind};
-
     let input = r#"
    statement0      arg0  arg1	arg2#argX   argX
 statement1 arg0    arg1
@@ -41,9 +35,9 @@ statement2 Hello, world!
             "statement0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
             "statement1" => assert_eq!(args, ["arg0", "arg1"]),
             "statement2" => assert_eq!(args, ["Hello,", "world!"]),
-            _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
+            _ => error!(UnexpectedStatement, "Text failed")
         }
-        None
+        Ok(())
     }).unwrap();
 }
 

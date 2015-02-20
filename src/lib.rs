@@ -6,7 +6,7 @@
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]
 
-#[macro_use] mod error;
+#[macro_use] pub mod error;
 mod lex;
 pub mod obj;
 pub mod mtl;

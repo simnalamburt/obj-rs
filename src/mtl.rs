@@ -1,12 +1,11 @@
 //! Parses `.mtl` format which stores material data
 
-use std::io::Result;
 use std::io::prelude::*;
+use error::ObjResult;
 use lex::lex;
-use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` format *(incomplete)*
-pub fn load_mtl<T: BufRead>(input: T) -> Result<Mtl> {
+pub fn load_mtl<T: BufRead>(input: T) -> ObjResult<Mtl> {
     try!(lex(input, |stmt, _| {
         match stmt {
             // Material name statement
@@ -39,10 +38,10 @@ pub fn load_mtl<T: BufRead>(input: T) -> Result<Mtl> {
             "refl" => unimplemented!(),
 
             // Unexpected statement
-            _ => error!(UnexpectedStatement)
+            _ => error!(UnexpectedStatement, "Received unknown statement")
         }
 
-        None
+        Ok(())
     }));
 
     Ok(Mtl)
