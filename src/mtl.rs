@@ -1,12 +1,13 @@
 //! Parses `.mtl` format which stores material data
 
-use std::io;
+use std::io::Result;
+use std::io::prelude::*;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` format *(incomplete)*
-pub fn load_mtl<T: io::BufRead>(input: T) -> Mtl {
-    lex(input, |stmt, _| {
+pub fn load_mtl<T: BufRead>(input: T) -> Result<Mtl> {
+    try!(lex(input, |stmt, _| {
         match stmt {
             // Material name statement
             "newmtl" => unimplemented!(),
@@ -42,9 +43,9 @@ pub fn load_mtl<T: io::BufRead>(input: T) -> Mtl {
         }
 
         None
-    });
+    }));
 
-    Mtl
+    Ok(Mtl)
 }
 
 /// Low-level Rust binding for `.mtl` format *(incomplete)*.

@@ -1,33 +1,28 @@
-use std::io;
+use std::io::Result;
+use std::io::prelude::*;
 use error::ParseError;
 
-pub fn lex<T, F>(input: T, mut callback: F) -> Option<io::Error>
-    where T: io::BufRead, F: FnMut(&str, &[&str]) -> Option<ParseError>
+pub fn lex<T, F>(input: T, mut callback: F) -> Result<()>
+    where T: BufRead, F: FnMut(&str, &[&str]) -> Option<ParseError>
 {
-    use std::io::prelude::*;
+    for line in input.lines() {
+        let line = try!(line);
+        let line = line.split('#').next().unwrap();
 
-    for maybe_line in input.lines() {
-        match maybe_line {
-            Ok(line) => {
-                let line = line.split('#').next().unwrap();
-
-                let mut words = line.words();
-                match words.next() {
-                    Some(stmt) => {
-                        let args: Vec<&str> = words.collect();
-                        let ret = callback(stmt, &args[]);
-
-                        if ret.is_some() {
-                            unimplemented!()
-                        }
-                    }
-                    None => {}
+        let mut words = line.words();
+        match words.next() {
+            Some(stmt) => {
+                let args: Vec<&str> = words.collect();
+                match callback(stmt, &args[..]) {
+                    Some(_) => unimplemented!(),
+                    None => ()
                 }
             }
-            Err(e) => { return Some(e); }
+            None => ()
         }
     }
-    None
+
+    Ok(())
 }
 
 #[test]
@@ -49,7 +44,7 @@ statement2 Hello, world!
             _ => return Some(parse_error(ParseErrorKind::UnexpectedStatement))
         }
         None
-    });
+    }).unwrap();
 }
 
 #[cfg(test)]
@@ -66,7 +61,7 @@ mod bench {
             let args: Vec<&str> = words.collect();
             let args = &args[];
 
-            args.iter().map(|&input| input.parse::<f32>().unwrap()).collect::<Vec<f32>>();
+            args.iter().map(|&input| input.parse().unwrap()).collect::<Vec<f32>>();
         })
     }
 
@@ -75,7 +70,7 @@ mod bench {
         b.iter(|| {
             let words = "1.00 2.00 3.00".words();
 
-            words.map(|input| input.parse::<f32>().unwrap()).collect::<Vec<f32>>();
+            words.map(|input| input.parse().unwrap()).collect::<Vec<f32>>();
         })
     }
 }

@@ -2,10 +2,9 @@
 //!
 //! [obj]: //en.wikipedia.org/wiki/Wavefront_.obj_file
 
-#![deny(warnings, missing_docs)]
-
-#![feature(core, collections, io)]
+#![feature(core, io, collections, str_words)]
 #![cfg_attr(test, feature(test))]
+#![deny(warnings, missing_docs)]
 
 #[macro_use] mod error;
 mod lex;

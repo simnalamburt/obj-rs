@@ -1,13 +1,14 @@
 //! Parses `.obj` format which stores 3D mesh data
 
-use std::io;
+use std::io::Result;
+use std::io::prelude::*;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use lex::lex;
 use error::{parse_error, ParseErrorKind};
 
 /// Parses a wavefront `.obj` format
-pub fn load_obj<T: io::BufRead>(input: T) -> Obj {
+pub fn load_obj<T: BufRead>(input: T) -> Result<Obj> {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 
@@ -26,7 +27,7 @@ pub fn load_obj<T: io::BufRead>(input: T) -> Obj {
     let mut smoothing_builder   = counter.vec_map();
     let mut merging_builder     = counter.vec_map();
 
-    lex(input, |stmt, args| {
+    try!(lex(input, |stmt, args| {
         macro_rules! f {
             ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[] })
         }
@@ -193,14 +194,14 @@ pub fn load_obj<T: io::BufRead>(input: T) -> Obj {
         }
 
         None
-    });
+    }));
 
     group_builder.end();
     mesh_builder.end();
     smoothing_builder.end();
     merging_builder.end();
 
-    Obj {
+    Ok(Obj {
         name: name,
         material_libraries: material_libraries,
 
@@ -217,7 +218,7 @@ pub fn load_obj<T: io::BufRead>(input: T) -> Obj {
         meshes: mesh_builder.result,
         smoothing_groups: smoothing_builder.result,
         merging_groups: merging_builder.result
-    }
+    })
 }
 
 

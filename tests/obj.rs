@@ -1,4 +1,5 @@
 #![feature(core, path, fs, io)]
+#![feature(old_io)]
 
 extern crate obj;
 
@@ -16,7 +17,7 @@ fn fixture(filename: &str) -> obj::Obj {
     };
     let input = BufReader::new(file);
 
-    obj::load_obj(input)
+    obj::load_obj(input).unwrap()
 }
 
 macro_rules! test {
