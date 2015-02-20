@@ -1,13 +1,13 @@
 //! Parses `.obj` format which stores 3D mesh data
 
-use std::io::prelude::*;
+use std::io::BufRead;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use error::ObjResult;
 use raw::lexer::lex;
 
 /// Parses a wavefront `.obj` format
-pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
+pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 
@@ -196,7 +196,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
     smoothing_builder.end();
     merging_builder.end();
 
-    Ok(Obj {
+    Ok(RawObj {
         name: name,
         material_libraries: material_libraries,
 
@@ -413,7 +413,7 @@ impl RangeVec for Vec<Range> {
 
 
 /// Low-level Rust binding for `.obj` format.
-pub struct Obj {
+pub struct RawObj {
     /// Name of the object.
     pub name: String,
     /// `.mtl` files which required by this object.

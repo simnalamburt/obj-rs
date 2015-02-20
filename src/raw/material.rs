@@ -5,7 +5,7 @@ use error::ObjResult;
 use raw::lexer::lex;
 
 /// Parses a wavefront `.obj` format *(incomplete)*
-pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<Mtl> {
+pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
     try!(lex(input, |stmt, _| {
         match stmt {
             // Material name statement
@@ -44,9 +44,9 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<Mtl> {
         Ok(())
     }));
 
-    Ok(Mtl)
+    Ok(RawMtl)
 }
 
 /// Low-level Rust binding for `.mtl` format *(incomplete)*.
 #[derive(Copy)]
-pub struct Mtl;
+pub struct RawMtl;
