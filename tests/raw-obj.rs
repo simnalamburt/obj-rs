@@ -4,8 +4,9 @@
 extern crate obj;
 
 use std::simd::f32x4;
+use obj::raw;
 
-fn fixture(filename: &str) -> obj::Obj {
+fn fixture(filename: &str) -> raw::Obj {
     use std::path::Path;
     use std::fs::File;
     use std::io::BufReader;
@@ -17,7 +18,7 @@ fn fixture(filename: &str) -> obj::Obj {
     };
     let input = BufReader::new(file);
 
-    obj::load_obj(input).unwrap()
+    raw::parse_obj(input).unwrap()
 }
 
 macro_rules! test {
@@ -40,7 +41,7 @@ macro_rules! test {
         $({
             let mut index = 0us;
             $(
-                eq!($lhs[index], obj::obj::Polygon::$kind($elem));
+                eq!($lhs[index], obj::raw::object::Polygon::$kind($elem));
                 index += 1;
             )*
             eq!($lhs.len(), index);

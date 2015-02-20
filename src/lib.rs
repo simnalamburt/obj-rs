@@ -7,9 +7,4 @@
 #![deny(warnings, missing_docs)]
 
 #[macro_use] pub mod error;
-mod lex;
-pub mod obj;
-pub mod mtl;
-
-pub use obj::{load_obj, Obj};
-pub use mtl::{load_mtl, Mtl};
+pub mod raw;

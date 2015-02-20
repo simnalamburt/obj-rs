@@ -2,10 +2,10 @@
 
 use std::io::prelude::*;
 use error::ObjResult;
-use lex::lex;
+use raw::lexer::lex;
 
 /// Parses a wavefront `.obj` format *(incomplete)*
-pub fn load_mtl<T: BufRead>(input: T) -> ObjResult<Mtl> {
+pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<Mtl> {
     try!(lex(input, |stmt, _| {
         match stmt {
             // Material name statement

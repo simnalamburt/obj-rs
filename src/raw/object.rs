@@ -4,10 +4,10 @@ use std::io::prelude::*;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use error::ObjResult;
-use lex::lex;
+use raw::lexer::lex;
 
 /// Parses a wavefront `.obj` format
-pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
+pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
     let mut name = String::new();
     let mut material_libraries = Vec::new();
 
