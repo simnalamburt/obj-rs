@@ -1,5 +1,6 @@
 //! Parses `.obj` format which stores 3D mesh data
 
+use std::str::FromStr;
 use std::io::BufRead;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
@@ -94,6 +95,8 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "p" => unimplemented!(),
             "l" => unimplemented!(),
             "f" => {
+                use std::num::Int;
+
                 if args.len() < 3 { unimplemented!() }
                 let mut args = args.iter();
                 let first = args.next().unwrap();
@@ -121,11 +124,13 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 }
 
                 polygons.push(m! {
-                    P   [p]        => (n(p))
-                    PT  [p, t]     => (n(p), n(t))
-                    PN  [p, "", u] => (n(p), n(u))
-                    PTN [p, t, u]  => (n(p), n(t), n(u))
+                    P   [p]        => (i(p))
+                    PT  [p, t]     => (i(p), i(t))
+                    PN  [p, "", u] => (i(p), i(u))
+                    PTN [p, t, u]  => (i(p), i(t), i(u))
                 });
+
+                fn i<T: FromStr + Int>(input: &str) -> T { n::<T>(input) - Int::one() }
             }
             "curv" => unimplemented!(),
             "curv2" => unimplemented!(),
@@ -184,7 +189,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             _ => error!(UnexpectedStatement, "Received unknown statement")
         }
 
-        fn n<T: ::std::str::FromStr>(input: &str) -> T {
+        fn n<T: FromStr>(input: &str) -> T {
             match input.parse() {
                 Ok(number) => number,
                 Err(_)=> unimplemented!()

@@ -17,4 +17,7 @@ fn dome() {
     assert_eq!(obj.name, Some("Dome".to_string()));
     assert_eq!(obj.vertices[0], v!(-0.382683, 0.923880, 0.000000));
     assert_eq!(obj.vertices[1], v!(-0.707107, 0.707107, 0.000000));
+    assert_eq!(obj.indices[0], 3);
+    assert_eq!(obj.indices[1], 2);
+    assert_eq!(obj.indices[2], 6);
 }
