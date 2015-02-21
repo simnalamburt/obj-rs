@@ -11,4 +11,6 @@ fn cube() {
     let obj = obj::load_obj(BufReader::new(file)).unwrap();
 
     assert_eq!(obj.name, Some("Cube".to_string()));
+    assert_eq!(obj.vertices[0], (1.0, -1.0, -1.0));
+    assert_eq!(obj.vertices[1], (1.0, -1.0, 1.0));
 }
