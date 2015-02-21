@@ -20,7 +20,20 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
 
     Ok(Obj {
         name: raw.name,
-        vertices: raw.vertices.into_iter().map(|f32x4(x, y, z, _)| (x, y, z)).collect()
+        vertices: raw.vertices.into_iter().map(|f32x4(x, y, z, _)| (x, y, z)).collect(),
+        indices: {
+            let mut buffer = Vec::new();
+            for polygon in raw.polygons.into_iter() {
+                use raw::object::Polygon::*;
+                match polygon {
+                    P(ref indices) if indices.len() == 3 => {
+                        buffer.push_all(&indices[..]);
+                    }
+                    _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
+                }
+            }
+            buffer
+        }
     })
 }
 
@@ -30,4 +43,6 @@ pub struct Obj {
     pub name: Option<String>,
     /// Vertex buffer of the model
     pub vertices: Vec<(f32, f32, f32)>,
+    /// Index buffer of the model
+    pub indices: Vec<u32>,
 }
