@@ -8,3 +8,22 @@
 
 #[macro_use] pub mod error;
 pub mod raw;
+
+use std::io::BufRead;
+use error::ObjResult;
+use raw::parse_obj;
+
+/// Load a wavefront `.obj` format into rust and OpenGL friendly format
+pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
+    let raw = try!(parse_obj(input));
+
+    Ok(Obj {
+        name: raw.name
+    })
+}
+
+/// 3D Model object
+pub struct Obj {
+    /// Name of the model
+    pub name: String
+}
