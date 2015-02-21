@@ -8,7 +8,7 @@ use raw::lexer::lex;
 
 /// Parses a wavefront `.obj` format
 pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
-    let mut name = String::new();
+    let mut name = None;
     let mut material_libraries = Vec::new();
 
     let mut vertices = Vec::new();
@@ -157,7 +157,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 [param] => merging_builder.start(n(param)),
                 _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
-            "o" => name = args.connect(" "),
+            "o" => name = match args {
+                [] => None,
+                args => Some(args.connect(" "))
+            },
 
             // Display / render attributes
             "bevel" => unimplemented!(),
@@ -294,7 +297,7 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
                     old.lines   .end(lines);
                     old.polygons.end(polygons);
 
-                    old.points.is_empty() && old.lines.is_empty() && old.polygons.is_empty()
+                    old.is_empty()
                 };
 
                 if is_empty {
@@ -321,11 +324,20 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
     fn end(&mut self) {
         match self.current {
             Some(ref current) => {
-                let (points, lines, polygons) = self.counter.get();
-                let old = &mut self.result[*current];
-                old.points  .end(points);
-                old.lines   .end(lines);
-                old.polygons.end(polygons);
+                let is_empty = {
+                    let (points, lines, polygons) = self.counter.get();
+                    let old = &mut self.result[*current];
+                    old.points  .end(points);
+                    old.lines   .end(lines);
+                    old.polygons.end(polygons);
+
+                    old.is_empty()
+                };
+
+                if is_empty {
+                    let result = self.result.remove(current);
+                    assert!(result.is_some());
+                }
             }
             None => return
         }
@@ -415,7 +427,7 @@ impl RangeVec for Vec<Range> {
 /// Low-level Rust binding for `.obj` format.
 pub struct RawObj {
     /// Name of the object.
-    pub name: String,
+    pub name: Option<String>,
     /// `.mtl` files which required by this object.
     pub material_libraries: Vec<String>,
 
@@ -488,6 +500,10 @@ impl Group {
             lines: Vec::new(),
             polygons: Vec::new()
         }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.points.is_empty() && self.lines.is_empty() && self.polygons.is_empty()
     }
 }
 

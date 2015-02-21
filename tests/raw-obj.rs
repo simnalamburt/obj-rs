@@ -4,9 +4,9 @@
 extern crate obj;
 
 use std::simd::f32x4;
-use obj::raw;
+use obj::raw::{RawObj, parse_obj};
 
-fn fixture(filename: &str) -> raw::Obj {
+fn fixture(filename: &str) -> RawObj {
     use std::path::Path;
     use std::fs::File;
     use std::io::BufReader;
@@ -18,7 +18,7 @@ fn fixture(filename: &str) -> raw::Obj {
     };
     let input = BufReader::new(file);
 
-    raw::parse_obj(input).unwrap()
+    parse_obj(input).unwrap()
 }
 
 macro_rules! test {
@@ -69,11 +69,35 @@ macro_rules! eq {
 }
 
 #[test]
+fn empty() {
+    let obj = fixture("empty.obj");
+
+    test! {
+        obj.name,                       None
+        obj.material_libraries,         Vec::<String>::new()
+
+        obj.vertices.len(),             0
+        obj.tex_coords.len(),           0
+        obj.normals.len(),              0
+        obj.param_vertices.len(),       0
+
+        obj.points.len(),               0
+        obj.lines.len(),                0
+        obj.polygons.len(),             0
+
+        obj.groups.len(),               0
+        obj.meshes.len(),               0
+        obj.smoothing_groups.len(),     0
+        obj.merging_groups.len(),       0
+    }
+}
+
+#[test]
 fn cube() {
     let obj = fixture("cube.obj");
 
     test! {
-        obj.name,                       "Cube".to_string()
+        obj.name,                       Some("Cube".to_string())
         obj.material_libraries,         vec![ "cube.mtl" ]
 
         obj.vertices.len(),             8
@@ -152,7 +176,7 @@ fn dome() {
     let obj = fixture("dome.obj");
 
     test! {
-        obj.name,                       "Dome".to_string()
+        obj.name,                       Some("Dome".to_string())
         obj.material_libraries,         vec![ "dome.mtl" ]
 
         obj.vertices.len(),             33

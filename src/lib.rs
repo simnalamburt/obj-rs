@@ -25,5 +25,5 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
 /// 3D Model object
 pub struct Obj {
     /// Name of the model
-    pub name: String
+    pub name: Option<String>
 }
