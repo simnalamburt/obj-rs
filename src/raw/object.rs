@@ -1,11 +1,31 @@
 //! Parses `.obj` format which stores 3D mesh data
 
 use std::str::FromStr;
+use std::num::Int;
 use std::io::BufRead;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use error::ObjResult;
 use raw::lexer::lex;
+
+fn n<T: FromStr>(input: &str) -> T {
+    match input.parse() {
+        Ok(number) => number,
+        Err(_)=> unimplemented!()
+    }
+}
+
+fn i<T: FromStr + Int>(input: &str) -> T { n::<T>(input) - Int::one() }
+
+/// Parses &[&str] into &[f32]
+macro_rules! f {
+    ($args:ident) => ( &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[..] )
+}
+
+/// Splits a string with '/'
+macro_rules! s {
+    ($param:ident) => ( &$param.split('/').collect::<Vec<&str>>()[..] )
+}
 
 /// Parses a wavefront `.obj` format
 pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
@@ -28,13 +48,6 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut merging_builder     = counter.vec_map();
 
     try!(lex(input, |stmt, args| {
-        macro_rules! f {
-            ($args:ident) => ({ &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[..] })
-        }
-        macro_rules! s {
-            ($param:ident) => { &$param.split('/').collect::<Vec<&str>>()[..] }
-        }
-
         match stmt {
             // Vertex data
             "v" => vertices.push(match f!(args) {
@@ -95,42 +108,35 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "p" => unimplemented!(),
             "l" => unimplemented!(),
             "f" => {
-                use std::num::Int;
-
                 if args.len() < 3 { unimplemented!() }
+
                 let mut args = args.iter();
                 let first = args.next().unwrap();
 
                 macro_rules! m {
-                    { $($name:ident $pat:pat => $exp:expr)* } => (
-                        // First, detect the type of the vertices with the first argument
-                        // Then apply it to the rest of the arguments
+                    { $($pat:pat => $name:ident[$exp:expr]),* } => (
                         match s!(first) {
-                            $(
-                                $pat => Polygon::$name({
-                                    let mut polygon = vec![ $exp ];
-                                    for param in args {
-                                        match s!(param) {
-                                            $pat => polygon.push($exp),
-                                            _ => unimplemented!()
-                                        }
+                            $($pat => Polygon::$name({
+                                let mut polygon = vec![ $exp ];
+                                for param in args {
+                                    match s!(param) {
+                                        $pat => polygon.push($exp),
+                                        _ => unimplemented!()
                                     }
-                                    polygon
-                                }),
-                            )*
+                                }
+                                polygon
+                            }),)*
                             _ => unimplemented!()
                         }
                     )
                 }
 
                 polygons.push(m! {
-                    P   [p]        => (i(p))
-                    PT  [p, t]     => (i(p), i(t))
-                    PN  [p, "", u] => (i(p), i(u))
-                    PTN [p, t, u]  => (i(p), i(t), i(u))
+                    [p]        => P[i(p)],
+                    [p, t]     => PT[(i(p), i(t))],
+                    [p, "", u] => PN[(i(p), i(u))],
+                    [p, t, u]  => PTN[(i(p), i(t), i(u))]
                 });
-
-                fn i<T: FromStr + Int>(input: &str) -> T { n::<T>(input) - Int::one() }
             }
             "curv" => unimplemented!(),
             "curv2" => unimplemented!(),
@@ -187,13 +193,6 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
             // Unexpected statement
             _ => error!(UnexpectedStatement, "Received unknown statement")
-        }
-
-        fn n<T: FromStr>(input: &str) -> T {
-            match input.parse() {
-                Ok(number) => number,
-                Err(_)=> unimplemented!()
-            }
         }
 
         Ok(())
