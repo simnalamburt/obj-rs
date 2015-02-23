@@ -25,11 +25,13 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
             let mut buffer = Vec::new();
             for polygon in raw.polygons.into_iter() {
                 use raw::object::Polygon::*;
-                match polygon {
-                    P(ref indices) if indices.len() == 3 => {
-                        buffer.push_all(&indices[..]);
-                    }
+                let indices = match polygon {
+                    P(ref i) if i.len() == 3 => i,
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
+                };
+                for &index in indices.iter() {
+                    assert!(index <= std::u16::MAX as u32);
+                    buffer.push(index as u16)
                 }
             }
             buffer
@@ -44,5 +46,5 @@ pub struct Obj {
     /// Vertex buffer of the model
     pub vertices: Vec<(f32, f32, f32)>,
     /// Index buffer of the model
-    pub indices: Vec<u32>,
+    pub indices: Vec<u16>,
 }
