@@ -6,12 +6,12 @@
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]
 
-#[macro_use] pub mod error;
+#[macro_use] mod error;
 pub mod raw;
 
 use std::io::BufRead;
 use std::simd::f32x4;
-use error::ObjResult;
+pub use error::ObjResult;
 use raw::parse_obj;
 
 /// Load a wavefront `.obj` format into rust and OpenGL friendly format
