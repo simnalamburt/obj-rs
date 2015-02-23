@@ -15,8 +15,10 @@ pub mod raw;
 
 use std::io::BufRead;
 use std::simd::f32x4;
+use std::u16;
 pub use error::ObjResult;
 use raw::parse_obj;
+use raw::object::Polygon::*;
 
 /// Load a wavefront `.obj` format into rust and OpenGL friendly format
 pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
@@ -26,16 +28,22 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
         name: raw.name,
         vertices: raw.vertices.into_iter().map(|f32x4(x, y, z, _)| Vertex { position: [x, y, z] }).collect(),
         indices: {
-            let mut buffer = Vec::new();
+            let mut buffer = Vec::with_capacity(raw.polygons.len() * 3);
             for polygon in raw.polygons.into_iter() {
-                use raw::object::Polygon::*;
-                let indices = match polygon {
-                    P(ref i) if i.len() == 3 => i,
+                match polygon {
+                    P(ref vec) if vec.len() == 3 => for &idx in vec.iter() {
+                        assert!(idx <= u16::MAX as u32);
+                        buffer.push(idx as u16)
+                    },
+                    PT(ref vec) | PN(ref vec) if vec.len() == 3 => for &(idx, _) in vec.iter() {
+                        assert!(idx <= u16::MAX as u32);
+                        buffer.push(idx as u16)
+                    },
+                    PTN(ref vec) if vec.len() == 3 => for &(idx, _, _) in vec.iter() {
+                        assert!(idx <= u16::MAX as u32);
+                        buffer.push(idx as u16)
+                    },
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
-                };
-                for &index in indices.iter() {
-                    assert!(index <= std::u16::MAX as u32);
-                    buffer.push(index as u16)
                 }
             }
             buffer
