@@ -2,9 +2,13 @@
 //!
 //! [obj]: //en.wikipedia.org/wiki/Wavefront_.obj_file
 
-#![feature(core, io, collections, str_words)]
+#![feature(core, plugin, io, collections, str_words)]
+#![cfg_attr(feature = "glium-support", plugin(glium_macros))]
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]
+
+#[cfg(feature = "glium-support")]
+extern crate glium;
 
 #[macro_use] mod error;
 pub mod raw;
@@ -20,7 +24,7 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
 
     Ok(Obj {
         name: raw.name,
-        vertices: raw.vertices.into_iter().map(|f32x4(x, y, z, _)| (x, y, z)).collect(),
+        vertices: raw.vertices.into_iter().map(|f32x4(x, y, z, _)| Vertex { position: [x, y, z] }).collect(),
         indices: {
             let mut buffer = Vec::new();
             for polygon in raw.polygons.into_iter() {
@@ -39,12 +43,20 @@ pub fn load_obj<T: BufRead>(input: T) -> ObjResult<Obj> {
     })
 }
 
-/// 3D Model object
+/// 3D model object
 pub struct Obj {
     /// Name of the model
     pub name: Option<String>,
     /// Vertex buffer of the model
-    pub vertices: Vec<(f32, f32, f32)>,
+    pub vertices: Vec<Vertex>,
     /// Index buffer of the model
     pub indices: Vec<u16>,
+}
+
+/// Vertex data type of `Obj`
+#[derive(Copy, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "glium-support", vertex_format)]
+pub struct Vertex {
+    /// Position vector of a vertex
+    pub position: [f32; 3]
 }

@@ -4,8 +4,9 @@ obj-rs [![cargo-i][]][cargo-a] [![travis-i][]][travis-a]
 [Wavefront obj][obj] parser for **[Rust][]**. It handles both `.obj` and `.mtl` formats.
 
 ```toml
-[dependencies]
-obj-rs = "*"
+[dependencies.obj-rs]
+git = "https://github.com/simnalamburt/obj-rs"
+features = ["glium"]
 ```
 
 --------

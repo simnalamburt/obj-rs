@@ -6,7 +6,9 @@ use std::fs::File;
 use std::io::BufReader;
 
 macro_rules! v {
-    ($($x:expr),*) => ( ($(stringify!($x).parse::<f32>().unwrap()),*) )
+    ($($x:expr),*) => ({
+        obj::Vertex { position: [$(stringify!($x).parse::<f32>().unwrap()),*] }
+    })
 }
 
 #[test]
