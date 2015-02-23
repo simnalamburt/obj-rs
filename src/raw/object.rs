@@ -1,33 +1,35 @@
 //! Parses `.obj` format which stores 3D mesh data
 
-use std::str::FromStr;
-use std::num::Int;
 use std::io::BufRead;
 use std::collections::{HashMap, VecMap};
 use std::simd::f32x4;
 use error::ObjResult;
 use raw::lexer::lex;
 
-fn n<T: FromStr>(input: &str) -> T {
-    match input.parse() {
-        Ok(number) => number,
-        Err(_)=> unimplemented!()
-    }
+/// Parses a string into number.
+macro_rules! n {
+    ($input:expr) => ( try!($input.parse()) )
 }
 
-fn i<T: FromStr + Int>(input: &str) -> T { n::<T>(input) - Int::one() }
-
-/// Parses &[&str] into &[f32]
+/// Parses &[&str] into &[f32].
 macro_rules! f {
-    ($args:ident) => ( &$args.iter().map(|&input| n(input)).collect::<Vec<f32>>()[..] )
+    ($args:expr) => (
+        &{
+            let mut ret = Vec::new();
+            for &arg in $args.iter() {
+                ret.push(try!(arg.parse::<f32>()))
+            }
+            ret
+        }[..]
+    )
 }
 
-/// Splits a string with '/'
+/// Splits a string with '/'.
 macro_rules! s {
     ($param:ident) => ( &$param.split('/').collect::<Vec<&str>>()[..] )
 }
 
-/// Parses a wavefront `.obj` format
+/// Parses a wavefront `.obj` format.
 pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut name = None;
     let mut material_libraries = Vec::new();
@@ -76,15 +78,9 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "cstype" => {
                 let _rational: bool;
                 let geometry = match args {
-                    ["rat", ty] => {
-                        _rational = true;
-                        ty
-                    }
-                    [ty] => {
-                        _rational = false;
-                        ty
-                    }
-                    _ => unimplemented!()
+                    ["rat", ty] => { _rational = true; ty }
+                    [ty] => { _rational = false; ty }
+                    _ => error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format")
                 };
 
                 match geometry {
@@ -93,13 +89,13 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     "bspline" => unimplemented!(),
                     "cardinal" => unimplemented!(),
                     "taylor" => unimplemented!(),
-                    _ => unimplemented!()
+                    _ => error!(WrongTypeOfArguments, "Expected one of 'bmatrix', 'bezier', 'bspline', 'cardinal' and 'taylor'")
                 }
             }
             "deg" => match f!(args) {
                 [_deg_u, _deg_v]  => unimplemented!(),
                 [_deg_u] => unimplemented!(),
-                _ => unimplemented!(),
+                _ => error!(WrongNumberOfArguments, "Expected 1 or 2 arguments")
             },
             "bmat" => unimplemented!(),
             "step" => unimplemented!(),
@@ -108,7 +104,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "p" => unimplemented!(),
             "l" => unimplemented!(),
             "f" => {
-                if args.len() < 3 { unimplemented!() }
+                if args.len() < 3 { error!(WrongNumberOfArguments, "Expected at least 3 arguments") }
 
                 let mut args = args.iter();
                 let first = args.next().unwrap();
@@ -126,16 +122,16 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                                 }
                                 polygon
                             }),)*
-                            _ => unimplemented!()
+                            _ => error!(WrongTypeOfArguments, "Expected '#', '#/#', '#//#' or '#/#/#' format")
                         }
                     )
                 }
 
                 polygons.push(m! {
-                    [p]        => P[i(p)],
-                    [p, t]     => PT[(i(p), i(t))],
-                    [p, "", u] => PN[(i(p), i(u))],
-                    [p, t, u]  => PTN[(i(p), i(t), i(u))]
+                    [p]        => P[n!(p) - 1],
+                    [p, t]     => PT[(n!(p) - 1, n!(t) - 1)],
+                    [p, "", u] => PN[(n!(p) - 1, n!(u) - 1)],
+                    [p, t, u]  => PTN[(n!(p) - 1, n!(t) - 1, n!(u) - 1)]
                 });
             }
             "curv" => unimplemented!(),
@@ -156,16 +152,16 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             // Grouping
             "g" => match args {
                 [name] => group_builder.start(name.to_string()),
-                _ => unimplemented!()
+                _ => error!(WrongNumberOfArguments, "Expected group name parameter, but nothing has been supplied")
             },
             "s" => match args {
                 ["off"] | ["0"] => smoothing_builder.end(),
-                [param] => smoothing_builder.start(n(param)),
+                [param] => smoothing_builder.start(n!(param)),
                 _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
             "mg" => match args {
                 ["off"] | ["0"] => merging_builder.end(),
-                [param] => merging_builder.start(n(param)),
+                [param] => merging_builder.start(n!(param)),
                 _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
             },
             "o" => name = match args {
