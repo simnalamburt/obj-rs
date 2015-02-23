@@ -12,7 +12,7 @@ obj-rs = "*"
 
 [BSD 2-Clause](LICENSE.md)
 
-[cargo-i]: https://img.shields.io/badge/cargo-v0.3.0-yellow.svg?style=flat
+[cargo-i]: https://img.shields.io/badge/cargo-v0.4.0-yellowgreen.svg?style=flat
 [cargo-a]: https://crates.io/crates/obj-rs
 [travis-i]: https://travis-ci.org/simnalamburt/obj-rs.svg?branch=master
 [travis-a]: https://travis-ci.org/simnalamburt/obj-rs
