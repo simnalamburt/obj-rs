@@ -244,15 +244,8 @@ impl Counter {
 
     /// Creates a `HashMap<String, Group>` builder which references `self` as counter.
     fn hash_map<'a>(&'a self, input: String) -> GroupBuilder<'a, HashMap<String, Group>, String> {
-        let mut init = Vec::with_capacity(1);
-        init.start(0);
-
         let mut result = HashMap::with_capacity(1);
-        result.insert(input.clone(), Group {
-            points:     init.clone(),
-            lines:      init.clone(),
-            polygons:   init
-        });
+        result.insert(input.clone(), Group::new((0, 0, 0)));
 
         GroupBuilder {
             counter: self,
@@ -287,71 +280,72 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
 {
     /// Starts a group whose name is `input`.
     fn start(&mut self, input: K) {
-        let (points, lines, polygons) = self.counter.get();
-
-        match self.current {
-            Some(ref current) => {
-                if *current == input { return }
-
-                let is_empty = {
-                    let old = &mut self.result[*current];
-                    old.points  .end(points);
-                    old.lines   .end(lines);
-                    old.polygons.end(polygons);
-                    old.is_empty()
-                };
-
-                if is_empty {
-                    let result = self.result.remove(&current);
-                    assert!(result.is_some());
-                }
+        let count = self.counter.get();
+        if let Some(ref current) = self.current {
+            if *current == input { return }
+            if self.result[*current].end(count) {
+                let res = self.result.remove(&current);
+                assert!(res.is_some());
             }
-            None => ()
         }
-
         (|| {
-            match self.result.get_mut(&input) {
-                Some(ref mut group) => {
-                    group.points   .start(points);
-                    group.lines    .start(lines);
-                    group.polygons .start(polygons);
-                    return
-                }
-                None => ()
-            }
-
-            let mut group = Group::new();
-            group.points   .start(points);
-            group.lines    .start(lines);
-            group.polygons .start(polygons);
-            assert!(self.result.insert(input.clone(), group).is_none());
+            if let Some(ref mut group) = self.result.get_mut(&input) { group.start(count); return }
+            let res = self.result.insert(input.clone(), Group::new(count));
+            assert!(res.is_none());
         })();
-
         self.current = Some(input);
     }
 
     /// Ends a current group.
     fn end(&mut self) {
-        match self.current {
-            Some(ref current) => {
-                let is_empty = {
-                    let (points, lines, polygons) = self.counter.get();
-                    let old = &mut self.result[*current];
-                    old.points  .end(points);
-                    old.lines   .end(lines);
-                    old.polygons.end(polygons);
-                    old.is_empty()
-                };
-
-                if is_empty {
-                    let result = self.result.remove(current);
-                    assert!(result.is_some());
-                }
+        if let Some(ref current) = self.current {
+            if self.result[*current].end(self.counter.get()) {
+                let result = self.result.remove(current);
+                assert!(result.is_some());
             }
-            None => return
+        } else { return }
+        self.current = None;
+    }
+}
+
+
+/// Constant which is used to represent undefined bound of range.
+const UNDEFINED: usize = ::std::usize::MAX;
+
+impl Group {
+    fn new(count: (usize, usize, usize)) -> Self {
+        let mut ret = Group {
+            points:     Vec::with_capacity(1),
+            lines:      Vec::with_capacity(1),
+            polygons:   Vec::with_capacity(1)
+        };
+        ret.start(count);
+        ret
+    }
+
+    fn start(&mut self, count: (usize, usize, usize)) {
+        self.points.push(Range { start: count.0, end: UNDEFINED });
+        self.lines.push(Range { start: count.1, end: UNDEFINED });
+        self.polygons.push(Range { start: count.2, end: UNDEFINED })
+    }
+
+    /// Closes group, return true if self is empty
+    fn end(&mut self, count: (usize, usize, usize)) -> bool {
+        end(&mut self.points, count.0);
+        end(&mut self.lines, count.1);
+        end(&mut self.polygons, count.2);
+
+        fn end(vec: &mut Vec<Range>, end: usize) {
+            let last = vec.len() - 1;
+            assert_eq!(vec[last].end, UNDEFINED);
+            if vec[last].start != end {
+                vec[last].end = end;
+            } else {
+                vec.pop();
+            }
         }
 
-        self.current = None;
+        self.points.is_empty() && self.lines.is_empty() && self.polygons.is_empty()
     }
 }
 
@@ -383,38 +377,6 @@ trait Key : Eq {}
 
 impl Key for String {}
 impl Key for usize {}
-
-
-/// Custom trait for `Vec<Range>`.
-trait RangeVec {
-    /// Starts new range
-    fn start(&mut self, usize);
-
-    /// Tie up the loose end of the `Vec<Range>`
-    fn end(&mut self, usize);
-}
-
-/// Constant which is used to represent undefined bound of range.
-static UNDEFINED: usize = ::std::usize::MAX;
-
-impl RangeVec for Vec<Range> {
-    fn start(&mut self, start: usize) {
-        self.push(Range {
-            start: start,
-            end: UNDEFINED
-        })
-    }
-
-    fn end(&mut self, end: usize) {
-        let last = self.len() - 1;
-        assert_eq!(self[last].end, UNDEFINED);
-        if self[last].start != end {
-            self[last].end = end;
-        } else {
-            self.pop();
-        }
-    }
-}
 
 
 /// Low-level Rust binding for `.obj` format.
@@ -454,7 +416,7 @@ pub struct RawObj {
 pub type Point = usize;
 
 /// The `Line` type.
-#[derive(Clone, Copy)]
+#[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum Line {
     /// A line which contains only the position data of both ends
     P([u32; 2]),
@@ -463,7 +425,7 @@ pub enum Line {
 }
 
 /// The `Polygon` type.
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Polygon {
     /// A polygon which contains only the position data of each vertex.
     P(Vec<u32>),
@@ -486,22 +448,9 @@ pub struct Group {
     pub polygons: Vec<Range>
 }
 
-impl Group {
-    fn new() -> Self {
-        Group {
-            points: Vec::new(),
-            lines: Vec::new(),
-            polygons: Vec::new()
-        }
-    }
-
-    fn is_empty(&self) -> bool {
-        self.points.is_empty() && self.lines.is_empty() && self.polygons.is_empty()
-    }
-}
 
 /// A struct which represent `[start, end)` range.
-#[derive(Clone, Copy, Debug)]
+#[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub struct Range {
     /// The lower bound of the range (inclusive).
     pub start: usize,
