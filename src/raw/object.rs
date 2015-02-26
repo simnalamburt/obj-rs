@@ -290,34 +290,44 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
         let (points, lines, polygons) = self.counter.get();
 
         match self.current {
-            Some(ref current) if *current != input => {
+            Some(ref current) => {
+                if *current == input { return }
+
                 let is_empty = {
                     let old = &mut self.result[*current];
                     old.points  .end(points);
                     old.lines   .end(lines);
                     old.polygons.end(polygons);
-
                     old.is_empty()
                 };
 
                 if is_empty {
-                    let result = self.result.remove(current);
+                    let result = self.result.remove(&current);
                     assert!(result.is_some());
                 }
             }
-            Some(_) => return,
             None => ()
         }
 
-        let mut group = Group::new();
-        group.points   .start(points);
-        group.lines    .start(lines);
-        group.polygons .start(polygons);
+        (|| {
+            match self.result.get_mut(&input) {
+                Some(ref mut group) => {
+                    group.points   .start(points);
+                    group.lines    .start(lines);
+                    group.polygons .start(polygons);
+                    return
+                }
+                None => ()
+            }
 
-        self.current = Some(input.clone());
+            let mut group = Group::new();
+            group.points   .start(points);
+            group.lines    .start(lines);
+            group.polygons .start(polygons);
+            assert!(self.result.insert(input.clone(), group).is_none());
+        })();
 
-        let result = self.result.insert(input, group);
-        assert!(result.is_none());
+        self.current = Some(input);
     }
 
     /// Ends a current group.
@@ -330,7 +340,6 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
                     old.points  .end(points);
                     old.lines   .end(lines);
                     old.polygons.end(polygons);
-
                     old.is_empty()
                 };
 
@@ -358,31 +367,15 @@ trait Map<K: Key, V: ?Sized> : ::std::ops::IndexMut<K, Output=V> {
 }
 
 impl<V> Map<String, V> for HashMap<String, V> {
-    fn insert(&mut self, k: String, v: V) -> Option<V> {
-        self.insert(k, v)
-    }
-
-    fn get_mut(&mut self, k: &String) -> Option<&mut V> {
-        self.get_mut(k)
-    }
-
-    fn remove(&mut self, k: &String) -> Option<V> {
-        self.remove(k)
-    }
+    fn insert(&mut self, k: String, v: V) -> Option<V> { self.insert(k, v) }
+    fn get_mut(&mut self, k: &String) -> Option<&mut V> { self.get_mut(k) }
+    fn remove(&mut self, k: &String) -> Option<V> { self.remove(k) }
 }
 
 impl<V> Map<usize, V> for VecMap<V> {
-    fn insert(&mut self, k: usize, v: V) -> Option<V> {
-        self.insert(k, v)
-    }
-
-    fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        self.get_mut(k)
-    }
-
-    fn remove(&mut self, k: &usize) -> Option<V> {
-        self.remove(k)
-    }
+    fn insert(&mut self, k: usize, v: V) -> Option<V> { self.insert(k, v) }
+    fn get_mut(&mut self, k: &usize) -> Option<&mut V> { self.get_mut(k) }
+    fn remove(&mut self, k: &usize) -> Option<V> { self.remove(k) }
 }
 
 /// A trait which should be implemented by a type passed into `Key` of `Map`.
