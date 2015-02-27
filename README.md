@@ -9,7 +9,11 @@ git = "https://github.com/simnalamburt/obj-rs"
 features = ["glium"]
 ```
 
---------
+![sample][]
+
+> This sample image is pretty good illustration of current status of **obj-rs**.
+**obj-rs** is currently able to load position data of `obj` but not normal and
+texture data yet.
 
 [BSD 2-Clause](LICENSE.md)
 
@@ -19,3 +23,4 @@ features = ["glium"]
 [travis-a]: https://travis-ci.org/simnalamburt/obj-rs
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Rust]: http://rust-lang.org
+[sample]: http://simnalamburt.github.io/obj-rs/sample.png
