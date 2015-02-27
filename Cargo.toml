@@ -18,6 +18,7 @@ glium-support = ["glium", "glium_macros"]
 
 [dependencies.glium]
 git = "https://github.com/tomaka/glium"
+branch = "tomaka-patch-1"
 default-features = false
 optional = true
 [dependencies.glium_macros]
