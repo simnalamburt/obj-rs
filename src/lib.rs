@@ -1,6 +1,27 @@
-//! [Wavefront obj][obj] parser for Rust. It handles both `.obj` and `.mtl` formats.
-//!
-//! [obj]: //en.wikipedia.org/wiki/Wavefront_.obj_file
+/*!
+
+[Wavefront obj][obj] parser for Rust. It handles both `.obj` and `.mtl` formats. [GitHub][]
+
+```rust
+use std::fs::File;
+use std::io::BufReader;
+use obj::*;
+
+let input = BufReader::new(File::open("tests/fixtures/dome.obj").unwrap());
+let dome: Obj = load_obj(input).unwrap();
+
+// Do whatever you want
+dome.vertices;
+dome.indices;
+```
+
+![sample][]
+
+[obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
+[GitHub]: https://github.com/simnalamburt/obj-rs
+[sample]: http://simnalamburt.github.io/obj-rs/sample.png
+
+*/
 
 #![feature(core, plugin, io, collections, str_words)]
 #![cfg_attr(feature = "glium-support", plugin(glium_macros))]

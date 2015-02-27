@@ -1,12 +1,25 @@
 obj-rs [![cargo-i][]][cargo-a] [![travis-i][]][travis-a]
 ========
 
-[Wavefront obj][obj] parser for **[Rust][]**. It handles both `.obj` and `.mtl` formats.
+[Wavefront obj][obj] parser for **[Rust][]**. It handles both `.obj` and `.mtl`
+formats. [Documentation][docs]
 
 ```toml
 [dependencies.obj-rs]
 git = "https://github.com/simnalamburt/obj-rs"
 features = ["glium"]
+```
+```rust
+use std::fs::File;
+use std::io::BufReader;
+use obj::*;
+
+let input = BufReader::new(File::open("tests/fixtures/dome.obj").unwrap());
+let dome: Obj = load_obj(input).unwrap();
+
+// Do whatever you want
+dome.vertices;
+dome.indices;
 ```
 
 ![sample][]
@@ -23,4 +36,5 @@ texture data yet.
 [travis-a]: https://travis-ci.org/simnalamburt/obj-rs
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Rust]: http://rust-lang.org
+[docs]: https://simnalamburt.github.io/obj-rs
 [sample]: http://simnalamburt.github.io/obj-rs/sample.png

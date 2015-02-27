@@ -13,8 +13,10 @@ macro_rules! v {
 
 #[test]
 fn dome() {
-    let file = File::open("tests/fixtures/dome.obj").unwrap();
-    let obj: obj::Obj = obj::load_obj(BufReader::new(file)).unwrap();
+    use obj::*;
+
+    let input = BufReader::new(File::open("tests/fixtures/dome.obj").unwrap());
+    let obj: Obj = load_obj(input).unwrap();
 
     assert_eq!(obj.name, Some("Dome".to_string()));
     assert_eq!(obj.vertices[0], v!(-0.382683, 0.923880, 0.000000));
