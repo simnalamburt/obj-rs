@@ -57,18 +57,30 @@ pub struct Obj<V = Vertex> {
     pub indices: Vec<u16>,
 }
 
-/// Vertex data type of `Obj`.
-#[derive(Copy, PartialEq, Clone, Debug)]
-#[cfg_attr(feature = "glium-support", vertex_format)]
-pub struct Vertex {
-    /// Position vector of a vertex.
-    pub position: [f32; 3]
+impl<V: FromRawVertex> Obj<V> {
+    fn new(raw: RawObj) -> ObjResult<Self> {
+        let (vertices, indices) = try!(FromRawVertex::process(raw.vertices, raw.polygons));
+
+        Ok(Obj {
+            name: raw.name,
+            vertices: vertices,
+            indices: indices
+        })
+    }
 }
 
 /// Conversion from `RawObj`'s raw data.
 pub trait FromRawVertex {
     /// Build vertex and index buffer from raw object data.
     fn process(vertices: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
+}
+
+/// Vertex data type of `Obj`.
+#[derive(Copy, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "glium-support", vertex_format)]
+pub struct Vertex {
+    /// Position vector of a vertex.
+    pub position: [f32; 3]
 }
 
 impl FromRawVertex for Vertex {
@@ -98,17 +110,5 @@ impl FromRawVertex for Vertex {
             }
             buffer
         }))
-    }
-}
-
-impl<V: FromRawVertex> Obj<V> {
-    fn new(raw: RawObj) -> ObjResult<Self> {
-        let (vertices, indices) = try!(FromRawVertex::process(raw.vertices, raw.polygons));
-
-        Ok(Obj {
-            name: raw.name,
-            vertices: vertices,
-            indices: indices
-        })
     }
 }
