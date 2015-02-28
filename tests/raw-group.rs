@@ -41,7 +41,7 @@ macro_rules! stderr {
 
 #[test]
 fn dup_groupnames() {
-    let input = BufReader::new(File::open("tests/fixtures/dup_groupnames.obj").unwrap());
+    let input = BufReader::new(File::open("tests/fixtures/group.obj").unwrap());
     let raw = match parse_obj(input) {
         Ok(raw) => raw,
         Err(e) => panic!(e)
