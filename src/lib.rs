@@ -112,3 +112,41 @@ impl FromRawVertex for Vertex {
         }))
     }
 }
+
+/// Position data type of `Obj`.
+#[derive(Copy, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "glium-support", vertex_format)]
+pub struct Position {
+    /// Position vector of a vertex.
+    pub position: [f32; 3]
+}
+
+impl FromRawVertex for Position {
+    fn process(vertices: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+        Ok(({
+            vertices.into_iter()
+                .map(|f32x4(x, y, z, _)| Position { position: [x, y, z] })
+                .collect()
+        }, {
+            let mut buffer = Vec::with_capacity(polygons.len() * 3);
+            for polygon in polygons.into_iter() {
+                match polygon {
+                    Polygon::P(ref vec) if vec.len() == 3 => for &idx in vec.iter() {
+                        assert!(idx <= u16::MAX as u32);
+                        buffer.push(idx as u16)
+                    },
+                    Polygon::PT(ref vec) | Polygon::PN(ref vec) if vec.len() == 3 => for &(idx, _) in vec.iter() {
+                        assert!(idx <= u16::MAX as u32);
+                        buffer.push(idx as u16)
+                    },
+                    Polygon::PTN(ref vec) if vec.len() == 3 => for &(idx, _, _) in vec.iter() {
+                        assert!(idx <= u16::MAX as u32);
+                        buffer.push(idx as u16)
+                    },
+                    _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
+                }
+            }
+            buffer
+        }))
+    }
+}
