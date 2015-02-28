@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::BufReader;
 use obj::*;
 
-let input = BufReader::new(File::open("tests/fixtures/dome.obj").unwrap());
+let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
 let dome: Obj = load_obj(input).unwrap();
 
 // Do whatever you want
@@ -23,7 +23,7 @@ dome.indices;
 
 */
 
-#![feature(core, plugin, io, collections, str_words)]
+#![feature(core, plugin, io, collections, str_words, std_misc)]
 #![cfg_attr(feature = "glium-support", plugin(glium_macros))]
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]
@@ -36,10 +36,15 @@ pub mod raw;
 
 use std::io::BufRead;
 use std::simd::f32x4;
-use std::u16;
-pub use error::ObjResult;
+use std::num::cast;
+use std::collections::HashMap;
+use std::collections::hash_map::Entry::*;
+
 use raw::{parse_obj, RawObj};
 use raw::object::Polygon;
+use raw::object::Polygon::*;
+
+pub use error::ObjResult;
 
 /// Load a wavefront `.obj` format into rust and OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex, T: BufRead>(input: T) -> ObjResult<Obj<V>> {
@@ -59,7 +64,7 @@ pub struct Obj<V = Vertex> {
 
 impl<V: FromRawVertex> Obj<V> {
     fn new(raw: RawObj) -> ObjResult<Self> {
-        let (vertices, indices) = try!(FromRawVertex::process(raw.vertices, raw.polygons));
+        let (vertices, indices) = try!(FromRawVertex::process(raw.vertices, raw.normals, raw.polygons));
 
         Ok(Obj {
             name: raw.name,
@@ -72,7 +77,7 @@ impl<V: FromRawVertex> Obj<V> {
 /// Conversion from `RawObj`'s raw data.
 pub trait FromRawVertex {
     /// Build vertex and index buffer from raw object data.
-    fn process(vertices: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
+    fn process(vertices: Vec<f32x4>, normals: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
 }
 
 /// Vertex data type of `Obj`.
@@ -80,36 +85,54 @@ pub trait FromRawVertex {
 #[cfg_attr(feature = "glium-support", vertex_format)]
 pub struct Vertex {
     /// Position vector of a vertex.
-    pub position: [f32; 3]
+    pub position: [f32; 3],
+    /// Normal vertor of a vertex.
+    pub normal: [f32; 3],
 }
 
 impl FromRawVertex for Vertex {
-    fn process(vertices: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
-        Ok(({
-            vertices.into_iter()
-                .map(|f32x4(x, y, z, _)| Vertex { position: [x, y, z] })
-                .collect()
-        }, {
-            let mut buffer = Vec::with_capacity(polygons.len() * 3);
+    fn process(positions: Vec<f32x4>, normals: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+        let mut vb = Vec::with_capacity(polygons.len() * 3);
+        let mut ib = Vec::with_capacity(polygons.len() * 3);
+        {
+            let mut cache = HashMap::new();
+            let mut map = |pi: usize, ni: usize| {
+                // Look up cache
+                let index = match cache.entry((pi, ni)) {
+                    // Cache fail -> make new, store it on cache
+                    Vacant(entry) => {
+                        let p = positions[pi];
+                        let n = normals[ni];
+                        let vertex = Vertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2] };
+
+                        let index = cast(vb.len()).unwrap();
+                        vb.push(vertex);
+                        entry.insert(index);
+                        index
+                    }
+                    // Cache hit -> use it
+                    Occupied(entry) => {
+                        *entry.get()
+                    }
+                };
+                ib.push(index)
+            };
+
             for polygon in polygons.into_iter() {
                 match polygon {
-                    Polygon::P(ref vec) if vec.len() == 3 => for &idx in vec.iter() {
-                        assert!(idx <= u16::MAX as u32);
-                        buffer.push(idx as u16)
-                    },
-                    Polygon::PT(ref vec) | Polygon::PN(ref vec) if vec.len() == 3 => for &(idx, _) in vec.iter() {
-                        assert!(idx <= u16::MAX as u32);
-                        buffer.push(idx as u16)
-                    },
-                    Polygon::PTN(ref vec) if vec.len() == 3 => for &(idx, _, _) in vec.iter() {
-                        assert!(idx <= u16::MAX as u32);
-                        buffer.push(idx as u16)
-                    },
+                    P(_) | PT(_) => error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
+                    PN(ref vec) if vec.len() == 3 => {
+                        for &(pi, ni) in vec.iter() { map(pi, ni) }
+                    }
+                    PTN(ref vec) if vec.len() == 3 => {
+                        for &(pi, _, ni) in vec.iter() { map(pi, ni) }
+                    }
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
                 }
             }
-            buffer
-        }))
+        }
+        vb.shrink_to_fit();
+        Ok((vb, ib))
     }
 }
 
@@ -122,31 +145,26 @@ pub struct Position {
 }
 
 impl FromRawVertex for Position {
-    fn process(vertices: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
-        Ok(({
-            vertices.into_iter()
-                .map(|f32x4(x, y, z, _)| Position { position: [x, y, z] })
-                .collect()
-        }, {
-            let mut buffer = Vec::with_capacity(polygons.len() * 3);
+    fn process(vertices: Vec<f32x4>, _: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+        let vb = vertices.into_iter().map(|v| Position { position: [v.0, v.1, v.2] }).collect();
+        let mut ib = Vec::with_capacity(polygons.len() * 3);
+        {
+            let mut map = |pi| { ib.push(cast(pi).unwrap()) };
             for polygon in polygons.into_iter() {
                 match polygon {
-                    Polygon::P(ref vec) if vec.len() == 3 => for &idx in vec.iter() {
-                        assert!(idx <= u16::MAX as u32);
-                        buffer.push(idx as u16)
-                    },
-                    Polygon::PT(ref vec) | Polygon::PN(ref vec) if vec.len() == 3 => for &(idx, _) in vec.iter() {
-                        assert!(idx <= u16::MAX as u32);
-                        buffer.push(idx as u16)
-                    },
-                    Polygon::PTN(ref vec) if vec.len() == 3 => for &(idx, _, _) in vec.iter() {
-                        assert!(idx <= u16::MAX as u32);
-                        buffer.push(idx as u16)
-                    },
+                    P(ref vec) if vec.len() == 3 => {
+                        for &pi in vec.iter() { map(pi) }
+                    }
+                    PT(ref vec) | PN(ref vec) if vec.len() == 3 => {
+                        for &(pi, _) in vec.iter() { map(pi) }
+                    }
+                    PTN(ref vec) if vec.len() == 3 => {
+                        for &(pi, _, _) in vec.iter() { map(pi) }
+                    }
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
                 }
             }
-            buffer
-        }))
+        }
+        Ok((vb, ib))
     }
 }

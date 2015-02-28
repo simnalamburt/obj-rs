@@ -54,14 +54,16 @@ pub struct LoadError {
 /// A list specifying general categories of load error.
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum LoadErrorKind {
-    /// Met unexpected statement
+    /// Met unexpected statement.
     UnexpectedStatement,
-    /// Received wrong number of arguments
+    /// Received wrong number of arguments.
     WrongNumberOfArguments,
-    /// Received unexpected type of arguments
+    /// Received unexpected type of arguments.
     WrongTypeOfArguments,
-    /// Model should be triangulated first to be loaded properly
-    UntriangulatedModel
+    /// Model should be triangulated first to be loaded properly.
+    UntriangulatedModel,
+    /// Model cannot be transformed into requested form.
+    InsufficientData,
 }
 
 impl LoadError {

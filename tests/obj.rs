@@ -11,23 +11,30 @@ macro_rules! fixture {
 }
 
 #[test]
-fn dome() {
-    let obj: Obj = load_obj(fixture!("dome.obj")).unwrap();
+fn normal_cone() {
+    let obj: Obj = load_obj(fixture!("normal-cone.obj")).unwrap();
 
     macro_rules! v {
-        ($($x:expr),*) => (Vertex { position: [$(stringify!($x).parse::<f32>().unwrap()),*] })
+        (($($p:expr),*), ($($n:expr),*)) => ({
+            Vertex {
+                position: [$(stringify!($p).parse::<f32>().unwrap()),*],
+                normal: [$(stringify!($n).parse::<f32>().unwrap()),*],
+            }
+        })
     }
 
-    assert_eq!(obj.name, Some("Dome".to_string()));
-    assert_eq!(obj.vertices[0], v!(-0.382683, 0.923880, 0.000000));
-    assert_eq!(obj.vertices[1], v!(-0.707107, 0.707107, 0.000000));
-    assert_eq!(obj.indices[0], 3);
-    assert_eq!(obj.indices[1], 2);
-    assert_eq!(obj.indices[2], 6);
+    assert_eq!(obj.name, Some("Cone".to_string()));
+    assert_eq!(obj.vertices.len(), 96);
+    assert_eq!(obj.vertices[0], v!((-0.382682, -1.000000, -0.923880), (-0.259887, 0.445488, -0.856737)));
+    assert_eq!(obj.vertices[1], v!(( 0.000000,  1.000000,  0.000000), (-0.259887, 0.445488, -0.856737)));
+    assert_eq!(obj.indices.len(), 96);
+    assert_eq!(obj.indices[0], 0);
+    assert_eq!(obj.indices[1], 1);
+    assert_eq!(obj.indices[2], 2);
 }
 
 #[test]
-fn dome_position() {
+fn dome() {
     let obj: Obj<Position> = load_obj(fixture!("dome.obj")).unwrap();
 
     macro_rules! p {

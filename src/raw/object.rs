@@ -419,22 +419,22 @@ pub type Point = usize;
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum Line {
     /// A line which contains only the position data of both ends
-    P([u32; 2]),
+    P([usize; 2]),
     /// A line which contains both position and texture coordinate data of both ends
-    PT([(u32, u32); 2])
+    PT([(usize, usize); 2])
 }
 
 /// The `Polygon` type.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Polygon {
     /// A polygon which contains only the position data of each vertex.
-    P(Vec<u32>),
+    P(Vec<usize>),
     /// A polygon which contains both position and texture coordinate data of each vertex.
-    PT(Vec<(u32, u32)>),
+    PT(Vec<(usize, usize)>),
     /// A polygon which contains both position and normal data of each vertex.
-    PN(Vec<(u32, u32)>),
+    PN(Vec<(usize, usize)>),
     /// A polygon which contains all position, texture coordinate and normal data of each vertex.
-    PTN(Vec<(u32, u32, u32)>)
+    PTN(Vec<(usize, usize, usize)>)
 }
 
 /// A group which contains multiple range of points, lines and polygons
