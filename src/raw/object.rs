@@ -34,7 +34,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut name = None;
     let mut material_libraries = Vec::new();
 
-    let mut vertices = Vec::new();
+    let mut positions = Vec::new();
     let mut tex_coords = Vec::new();
     let mut normals = Vec::new();
     let mut param_vertices = Vec::new();
@@ -52,7 +52,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     try!(lex(input, |stmt, args| {
         match stmt {
             // Vertex data
-            "v" => vertices.push(match f!(args) {
+            "v" => positions.push(match f!(args) {
                 [x, y, z, w] => f32x4(x, y, z, w),
                 [x, y, z] => f32x4(x, y, z, 1.0),
                 _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments")
@@ -203,7 +203,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
         name: name,
         material_libraries: material_libraries,
 
-        vertices: vertices,
+        positions: positions,
         tex_coords: tex_coords,
         normals: normals,
         param_vertices: param_vertices,
@@ -387,7 +387,7 @@ pub struct RawObj {
     pub material_libraries: Vec<String>,
 
     /// Position vectors of each vertex.
-    pub vertices: Vec<f32x4>,
+    pub positions: Vec<f32x4>,
     /// Texture coordinates of each vertex.
     pub tex_coords: Vec<f32x4>,
     /// Normal vectors of each vertex.

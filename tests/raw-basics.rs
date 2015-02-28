@@ -76,7 +76,7 @@ fn empty() {
         obj.name,                       None
         obj.material_libraries,         Vec::<String>::new()
 
-        obj.vertices.len(),             0
+        obj.positions.len(),             0
         obj.tex_coords.len(),           0
         obj.normals.len(),              0
         obj.param_vertices.len(),       0
@@ -100,7 +100,7 @@ fn cube() {
         obj.name,                       Some("Cube".to_string())
         obj.material_libraries,         vec![ "cube.mtl" ]
 
-        obj.vertices.len(),             8
+        obj.positions.len(),             8
         obj.tex_coords.len(),           14
         obj.normals.len(),              0
         obj.param_vertices.len(),       0
@@ -116,7 +116,7 @@ fn cube() {
     };
 
     test! {
-        obj.vertices {
+        obj.positions {
             1.000000, -1.000000, -1.000000, 1.0;
             1.000000, -1.000000,  1.000000, 1.0;
            -1.000000, -1.000000,  1.000000, 1.0;
@@ -179,7 +179,7 @@ fn dome() {
         obj.name,                       Some("Dome".to_string())
         obj.material_libraries,         vec![ "dome.mtl" ]
 
-        obj.vertices.len(),             33
+        obj.positions.len(),             33
         obj.tex_coords.len(),           0
         obj.normals.len(),              0
         obj.param_vertices.len(),       0
@@ -195,7 +195,7 @@ fn dome() {
     };
 
     test! {
-        obj.vertices {
+        obj.positions {
            -0.382683,  0.923880,  0.000000, 1.0;
            -0.707107,  0.707107,  0.000000, 1.0;
            -0.923880,  0.382683,  0.000000, 1.0;

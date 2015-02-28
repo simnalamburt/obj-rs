@@ -64,7 +64,7 @@ pub struct Obj<V = Vertex> {
 
 impl<V: FromRawVertex> Obj<V> {
     fn new(raw: RawObj) -> ObjResult<Self> {
-        let (vertices, indices) = try!(FromRawVertex::process(raw.vertices, raw.normals, raw.polygons));
+        let (vertices, indices) = try!(FromRawVertex::process(raw.positions, raw.normals, raw.polygons));
 
         Ok(Obj {
             name: raw.name,
