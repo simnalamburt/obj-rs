@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use error::ObjResult;
 use raw::lexer::lex;
 
-/// Parses a wavefront `.obj` format *(incomplete)*
+/// Parses a wavefront `.mtl` format *(incomplete)*
 pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
     try!(lex(input, |stmt, _| {
         match stmt {

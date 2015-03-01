@@ -1,6 +1,6 @@
 /*!
 
-[Wavefront obj][obj] parser for Rust. It handles both `.obj` and `.mtl` formats. [GitHub][]
+[Wavefront OBJ][obj] parser for Rust. It handles both `.obj` and `.mtl` formats. [GitHub][]
 
 ```rust
 use std::fs::File;
@@ -15,11 +15,10 @@ dome.vertices;
 dome.indices;
 ```
 
-![sample][]
+<img src="http://simnalamburt.github.io/obj-rs/sample.png" style="max-width:100%">
 
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [GitHub]: https://github.com/simnalamburt/obj-rs
-[sample]: http://simnalamburt.github.io/obj-rs/sample.png
 
 */
 
@@ -46,19 +45,19 @@ use raw::object::Polygon::*;
 
 pub use error::ObjResult;
 
-/// Load a wavefront `.obj` format into rust and OpenGL friendly format.
+/// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex, T: BufRead>(input: T) -> ObjResult<Obj<V>> {
     let raw = try!(parse_obj(input));
     Obj::new(raw)
 }
 
-/// 3D model object.
+/// 3D model object loaded from wavefront OBJ.
 pub struct Obj<V = Vertex> {
-    /// Name of the model.
+    /// Object's name.
     pub name: Option<String>,
-    /// Vertex buffer of the model.
+    /// Vertex buffer.
     pub vertices: Vec<V>,
-    /// Index buffer of the model.
+    /// Index buffer.
     pub indices: Vec<u16>,
 }
 
@@ -80,7 +79,7 @@ pub trait FromRawVertex {
     fn process(vertices: Vec<f32x4>, normals: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
 }
 
-/// Vertex data type of `Obj`.
+/// Vertex data type of `Obj` which contains position and normal data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "glium-support", vertex_format)]
 pub struct Vertex {
@@ -136,7 +135,7 @@ impl FromRawVertex for Vertex {
     }
 }
 
-/// Position data type of `Obj`.
+/// Vertex data type of `Obj` which contains only position data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "glium-support", vertex_format)]
 pub struct Position {

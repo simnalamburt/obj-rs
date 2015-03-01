@@ -437,7 +437,7 @@ pub enum Polygon {
     PTN(Vec<(usize, usize, usize)>)
 }
 
-/// A group which contains multiple range of points, lines and polygons
+/// A group which contains ranges of points, lines and polygons
 #[derive(Clone, Debug)]
 pub struct Group {
     /// Multiple range of points
