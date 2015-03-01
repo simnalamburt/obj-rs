@@ -1,4 +1,5 @@
 [package]
+
 name = "obj-rs"
 version = "0.4.2"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
@@ -23,3 +24,15 @@ optional = true
 [dependencies.glium_macros]
 git = "https://github.com/tomaka/glium"
 optional = true
+
+
+[[example]]
+name = "glium"
+
+[dev-dependencies.glium]
+git = "https://github.com/tomaka/glium"
+default-features = false
+[dev-dependencies.glutin]
+git = "https://github.com/tomaka/glutin"
+[dev-dependencies.glium_macros]
+git = "https://github.com/tomaka/glium"

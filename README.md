@@ -7,7 +7,7 @@ formats. [Documentation][docs]
 ```toml
 [dependencies.obj-rs]
 git = "https://github.com/simnalamburt/obj-rs"
-features = ["glium"]
+features = ["glium-support"]
 ```
 ```rust
 use std::fs::File;
@@ -28,6 +28,23 @@ dome.indices;
 **obj-rs** is currently able to load position and normal data of `obj` but not
 texture & material data yet.
 
+Glium support
+--------
+
+**obj-rs** supports [glium][] out of the box. See [example][] for further details.
+
+```rust
+use glium::*;
+
+let input = BufReader::new(File::open("rilakkuma.obj").unwrap());
+let bear: Obj = load_obj(input).unwrap();
+
+let vertex_buffer = VertexBuffer::new(&display, bear.vertices);
+let index_buffer = IndexBuffer::new(&display, index::TrianglesList(bear.indices));
+```
+
+--------
+
 [BSD 2-Clause](LICENSE.md)
 
 [cargo-i]: https://img.shields.io/badge/cargo-v0.4.2-yellowgreen.svg?style=flat
@@ -38,3 +55,5 @@ texture & material data yet.
 [Rust]: http://rust-lang.org
 [docs]: https://simnalamburt.github.io/obj-rs
 [img]: http://simnalamburt.github.io/obj-rs/screenshot.png
+[glium]: https://github.com/tomaka/glium
+[example]: examples/glium.rs
