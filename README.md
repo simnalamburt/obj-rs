@@ -22,11 +22,11 @@ dome.vertices;
 dome.indices;
 ```
 
-![sample][]
+![img][]
 
 > This sample image is pretty good illustration of current status of **obj-rs**.
-**obj-rs** is currently able to load position data of `obj` but not normal and
-texture data yet.
+**obj-rs** is currently able to load position and normal data of `obj` but not
+texture & material data yet.
 
 [BSD 2-Clause](LICENSE.md)
 
@@ -37,4 +37,4 @@ texture data yet.
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Rust]: http://rust-lang.org
 [docs]: https://simnalamburt.github.io/obj-rs
-[sample]: http://simnalamburt.github.io/obj-rs/sample.png
+[img]: http://simnalamburt.github.io/obj-rs/screenshot.png

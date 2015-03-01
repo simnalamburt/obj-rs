@@ -15,7 +15,7 @@ dome.vertices;
 dome.indices;
 ```
 
-<img src="http://simnalamburt.github.io/obj-rs/sample.png" style="max-width:100%">
+<img src="http://simnalamburt.github.io/obj-rs/screenshot.png" style="max-width:100%">
 
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [GitHub]: https://github.com/simnalamburt/obj-rs
