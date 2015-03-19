@@ -1,5 +1,3 @@
-#![feature(fs, io)]
-
 extern crate obj;
 
 use std::fs::File;

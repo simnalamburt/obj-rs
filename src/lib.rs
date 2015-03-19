@@ -22,7 +22,7 @@ dome.indices;
 
 */
 
-#![feature(core, plugin, io, collections, str_words, std_misc)]
+#![feature(core, plugin, collections, str_words, std_misc)]
 #![cfg_attr(feature = "glium-support", plugin(glium_macros))]
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]

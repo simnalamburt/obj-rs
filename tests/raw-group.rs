@@ -1,5 +1,3 @@
-#![feature(fs, io, old_io)]
-
 extern crate obj;
 
 use std::fs::File;
@@ -33,9 +31,8 @@ macro_rules! eq {
 
 macro_rules! stderr {
     ($($arg:tt)*) => ({
-        use std::old_io::stdio::stderr;
-
-        writeln!(&mut stderr(), $($arg)*).unwrap()
+        use std::io::Write;
+        writeln!(&mut std::io::stderr(), $($arg)*).unwrap()
     })
 }
 

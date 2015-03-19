@@ -1,5 +1,4 @@
-#![feature(core, path, fs, io)]
-#![feature(old_io)]
+#![feature(core)]
 
 extern crate obj;
 
@@ -61,7 +60,8 @@ macro_rules! eq {
         let right = &($rhs);
 
         if !((*left == *right) && (*right == *left)) {
-            let _ = writeln!(&mut std::old_io::stdio::stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
+            use std::io::Write;
+            let _ = writeln!(&mut std::io::stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
                      but it was \x1b[33m{:?}\x1b[0m", $exp, *right, *left);
             panic!($exp);
         }
