@@ -1,0 +1,10 @@
+[package]
+
+name = "glium"
+version = "0.0.1"
+authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
+
+[dependencies]
+glium = { version = "*", default-features = false }
+glutin = "*"
+obj-rs = { path = "../..", features = ["glium-support"] }

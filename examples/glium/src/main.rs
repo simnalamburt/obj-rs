@@ -2,19 +2,23 @@
 //!
 //!     cargo run --example glium --features glium-support
 
-#![cfg_attr(feature = "glium-support", feature(std_misc, old_io))]
+#![feature(std_misc, old_io)]
 
 extern crate glutin;
 #[macro_use] extern crate glium;
+
 extern crate obj;
 
-#[cfg(feature = "glium-support")]
+use std::default::Default;
+use std::fs::File;
+use std::io::BufReader;
+use std::old_io::timer;
+use std::time::Duration;
+
+use obj::*;
+
 fn main() {
-    use std::default::Default;
-    use std::fs::File;
-    use std::io::BufReader;
     use glium::DisplayBuild;
-    use obj::*;
 
     // building the display, ie. the main object
     let display = glutin::WindowBuilder::new()
@@ -75,8 +79,6 @@ fn main() {
     // the main loop
     // each cycle will draw once
     'main: loop {
-        use std::old_io::timer;
-        use std::time::Duration;
         use glium::Surface;
 
         let mut target = display.draw();
@@ -96,6 +98,3 @@ fn main() {
         }
     }
 }
-
-#[cfg(not(feature = "glium-support"))]
-fn main() { }
