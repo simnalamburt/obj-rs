@@ -2,8 +2,7 @@
 //!
 //!     cargo run --example glium --features glium-support
 
-#![feature(plugin, std_misc, old_io)]
-#![plugin(glium_macros)]
+#![cfg_attr(feature = "glium-support", feature(std_misc, old_io))]
 
 extern crate glutin;
 #[macro_use] extern crate glium;

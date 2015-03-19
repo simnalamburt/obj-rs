@@ -15,14 +15,11 @@ license       = "BSD-2-Clause"
 name = "obj"
 
 [features]
-glium-support = ["glium", "glium_macros"]
+glium-support = ["glium"]
 
 [dependencies.glium]
-git = "https://github.com/tomaka/glium"
+version = "*"
 default-features = false
-optional = true
-[dependencies.glium_macros]
-git = "https://github.com/tomaka/glium"
 optional = true
 
 
@@ -30,9 +27,7 @@ optional = true
 name = "glium"
 
 [dev-dependencies.glium]
-git = "https://github.com/tomaka/glium"
+version = "*"
 default-features = false
 [dev-dependencies.glutin]
-git = "https://github.com/tomaka/glutin"
-[dev-dependencies.glium_macros]
-git = "https://github.com/tomaka/glium"
+version = "*"

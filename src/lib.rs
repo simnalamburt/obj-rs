@@ -22,15 +22,16 @@ dome.indices;
 
 */
 
-#![feature(core, plugin, collections, str_words, std_misc)]
-#![cfg_attr(feature = "glium-support", plugin(glium_macros))]
+#![feature(core, collections, str_words, std_misc)]
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]
 
 #[cfg(feature = "glium-support")]
+#[macro_use]
 extern crate glium;
 
-#[macro_use] mod error;
+#[macro_use]
+mod error;
 pub mod raw;
 
 use std::io::BufRead;
@@ -81,13 +82,15 @@ pub trait FromRawVertex {
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
-#[cfg_attr(feature = "glium-support", vertex_format)]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
     /// Normal vertor of a vertex.
     pub normal: [f32; 3],
 }
+
+#[cfg(feature = "glium-support")]
+implement_vertex!(Vertex, position, normal);
 
 impl FromRawVertex for Vertex {
     fn process(positions: Vec<f32x4>, normals: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
@@ -137,11 +140,13 @@ impl FromRawVertex for Vertex {
 
 /// Vertex data type of `Obj` which contains only position data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
-#[cfg_attr(feature = "glium-support", vertex_format)]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3]
 }
+
+#[cfg(feature = "glium-support")]
+implement_vertex!(Position, position);
 
 impl FromRawVertex for Position {
     fn process(vertices: Vec<f32x4>, _: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
