@@ -5,9 +5,8 @@ obj-rs [![cargo-i][]][cargo-a] [![travis-i][]][travis-a]
 formats. [Documentation][docs]
 
 ```toml
-[dependencies.obj-rs]
-git = "https://github.com/simnalamburt/obj-rs"
-features = ["glium-support"]
+[dependencies]
+obj-rs = "*"
 ```
 ```rust
 use std::fs::File;
@@ -33,8 +32,13 @@ Glium support
 
 **obj-rs** supports [glium][] out of the box. See [example][] for further details.
 
+```toml
+[dependencies]
+obj-rs = { version = "*", features = ["glium-support"] }
+```
 ```rust
 use glium::*;
+use obj::*;
 
 let input = BufReader::new(File::open("rilakkuma.obj").unwrap());
 let bear: Obj = load_obj(input).unwrap();
