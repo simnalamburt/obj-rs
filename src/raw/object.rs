@@ -283,7 +283,7 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
         let count = self.counter.get();
         if let Some(ref current) = self.current {
             if *current == input { return }
-            if self.result[*current].end(count) {
+            if self.result.get_mut(current).unwrap().end(count) {
                 let res = self.result.remove(&current);
                 assert!(res.is_some());
             }
@@ -299,7 +299,7 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
     /// Ends a current group.
     fn end(&mut self) {
         if let Some(ref current) = self.current {
-            if self.result[*current].end(self.counter.get()) {
+            if self.result.get_mut(current).unwrap().end(self.counter.get()) {
                 let result = self.result.remove(current);
                 assert!(result.is_some());
             }
@@ -351,7 +351,7 @@ impl Group {
 
 
 /// Custom trait to interface `HashMap` and `VecMap`.
-trait Map<K: Key, V: ?Sized> : ::std::ops::IndexMut<K, Output=V> {
+trait Map<K: Key, V: ?Sized> {
     /// Interface of `insert` function.
     fn insert(&mut self, K, V) -> Option<V>;
     /// Interface of `get_mut` function.

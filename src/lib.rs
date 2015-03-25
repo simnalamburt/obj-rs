@@ -22,7 +22,7 @@ dome.indices;
 
 */
 
-#![feature(core, collections, str_words, std_misc)]
+#![feature(core, collections, str_words)]
 #![cfg_attr(test, feature(test))]
 #![deny(warnings, missing_docs)]
 
