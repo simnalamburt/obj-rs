@@ -22,9 +22,9 @@ dome.indices;
 
 */
 
-#![feature(core, collections, str_words)]
+#![feature(core, collections, str_words, slice_patterns)]
 #![cfg_attr(test, feature(test))]
-#![deny(warnings, missing_docs)]
+#![deny(missing_docs)]
 
 #[cfg(feature = "glium-support")]
 #[macro_use]
