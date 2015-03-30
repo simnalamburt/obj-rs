@@ -51,7 +51,7 @@ let index_buffer = IndexBuffer::new(&display, index::TrianglesList(bear.indices)
 
 [BSD 2-Clause](LICENSE.md)
 
-[cargo-i]: https://img.shields.io/badge/cargo-v0.4.5-yellowgreen.svg?style=flat
+[cargo-i]: https://img.shields.io/badge/cargo-v0.4.6-yellowgreen.svg?style=flat
 [cargo-a]: https://crates.io/crates/obj-rs
 [travis-i]: https://travis-ci.org/simnalamburt/obj-rs.svg?branch=master
 [travis-a]: https://travis-ci.org/simnalamburt/obj-rs
