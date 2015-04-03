@@ -48,5 +48,5 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
 }
 
 /// Low-level Rust binding for `.mtl` format *(incomplete)*.
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub struct RawMtl;

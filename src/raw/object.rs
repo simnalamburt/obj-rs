@@ -8,7 +8,7 @@ use raw::lexer::lex;
 
 /// Parses a string into number.
 macro_rules! n {
-    ($input:expr) => ( try!($input.parse()) )
+    ($input:expr) => ( try!($input.parse::<usize>()) )
 }
 
 /// Parses &[&str] into &[f32].
