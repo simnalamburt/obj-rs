@@ -8,7 +8,7 @@ pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
         let line = try!(line);
         let line = line.split('#').next().unwrap();
 
-        let mut words = line.words();
+        let mut words = line.split_whitespace();
         match words.next() {
             Some(stmt) => {
                 let args: Vec<&str> = words.collect();

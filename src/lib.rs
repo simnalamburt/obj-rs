@@ -22,7 +22,7 @@ dome.indices;
 
 */
 
-#![feature(core, collections, str_words, slice_patterns)]
+#![feature(core, collections, slice_patterns)]
 #![cfg_attr(test, feature(test))]
 #![deny(missing_docs)]
 
@@ -36,7 +36,6 @@ pub mod raw;
 
 use std::io::BufRead;
 use std::simd::f32x4;
-use std::num::cast;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::*;
 
@@ -107,7 +106,7 @@ impl FromRawVertex for Vertex {
                         let n = normals[ni];
                         let vertex = Vertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2] };
 
-                        let index = cast(vb.len()).unwrap();
+                        let index= vb.len() as u16;
                         vb.push(vertex);
                         entry.insert(index);
                         index
@@ -153,7 +152,7 @@ impl FromRawVertex for Position {
         let vb = vertices.into_iter().map(|v| Position { position: [v.0, v.1, v.2] }).collect();
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
-            let mut map = |pi| { ib.push(cast(pi).unwrap()) };
+            let mut map = |pi| { ib.push(pi as u16) };
             for polygon in polygons.into_iter() {
                 match polygon {
                     P(ref vec) if vec.len() == 3 => {
