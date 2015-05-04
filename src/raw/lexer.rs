@@ -51,7 +51,7 @@ mod bench {
     #[bench]
     fn pass_slice(b: &mut test::Bencher) {
         b.iter(|| {
-            let words = "1.00 2.00 3.00".words();
+            let words = "1.00 2.00 3.00".split_whitespace();
             let args: Vec<&str> = words.collect();
             let args = &args[..];
 
@@ -62,7 +62,7 @@ mod bench {
     #[bench]
     fn pass_iter(b: &mut test::Bencher) {
         b.iter(|| {
-            let words = "1.00 2.00 3.00".words();
+            let words = "1.00 2.00 3.00".split_whitespace();
 
             words.map(|input| input.parse().unwrap()).collect::<Vec<f32>>();
         })
