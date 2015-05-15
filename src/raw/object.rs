@@ -2,7 +2,6 @@
 
 use std::io::BufRead;
 use std::collections::{HashMap, VecMap};
-use std::simd::f32x4;
 use error::ObjResult;
 use raw::lexer::lex;
 
@@ -53,24 +52,24 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
         match stmt {
             // Vertex data
             "v" => positions.push(match f!(args) {
-                [x, y, z, w] => f32x4(x, y, z, w),
-                [x, y, z] => f32x4(x, y, z, 1.0),
+                [x, y, z, w] => (x, y, z, w),
+                [x, y, z] => (x, y, z, 1.0),
                 _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments")
             }),
             "vt" => tex_coords.push(match f!(args) {
-                [u, v, w] => f32x4(u, v, w, 0.0),
-                [u, v] => f32x4(u, v, 0.0, 0.0),
-                [u] => f32x4(u, 0.0, 0.0, 0.0),
+                [u, v, w] => (u, v, w),
+                [u, v] => (u, v, 0.0),
+                [u] => (u, 0.0, 0.0),
                 _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
             }),
             "vn" => normals.push(match f!(args) {
-                [x, y, z] => f32x4(x, y, z, 0.0),
+                [x, y, z] => (x, y, z),
                 _ => error!(WrongNumberOfArguments, "Expected 3 arguments")
             }),
             "vp" => param_vertices.push(match f!(args) {
-                [u, v, w] => f32x4(u, v, w, 0.0),
-                [u, v] => f32x4(u, v, 1.0, 0.0),
-                [u] => f32x4(u, 0.0, 1.0, 0.0),
+                [u, v, w] => (u, v, w),
+                [u, v] => (u, v, 1.0),
+                [u] => (u, 0.0, 1.0),
                 _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
             }),
 
@@ -387,13 +386,13 @@ pub struct RawObj {
     pub material_libraries: Vec<String>,
 
     /// Position vectors of each vertex.
-    pub positions: Vec<f32x4>,
+    pub positions: Vec<(f32, f32, f32, f32)>,
     /// Texture coordinates of each vertex.
-    pub tex_coords: Vec<f32x4>,
+    pub tex_coords: Vec<(f32, f32, f32)>,
     /// Normal vectors of each vertex.
-    pub normals: Vec<f32x4>,
+    pub normals: Vec<(f32, f32, f32)>,
     /// Parametric vertices.
-    pub param_vertices: Vec<f32x4>,
+    pub param_vertices: Vec<(f32, f32, f32)>,
 
     /// Points which stores the index data of position vectors.
     pub points: Vec<Point>,

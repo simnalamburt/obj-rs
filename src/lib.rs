@@ -22,7 +22,7 @@ dome.indices;
 
 */
 
-#![feature(core, collections, slice_patterns)]
+#![feature(collections, slice_patterns)]
 #![cfg_attr(test, feature(test))]
 #![deny(missing_docs)]
 
@@ -35,7 +35,6 @@ mod error;
 pub mod raw;
 
 use std::io::BufRead;
-use std::simd::f32x4;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::*;
 
@@ -76,7 +75,7 @@ impl<V: FromRawVertex> Obj<V> {
 /// Conversion from `RawObj`'s raw data.
 pub trait FromRawVertex {
     /// Build vertex and index buffer from raw object data.
-    fn process(vertices: Vec<f32x4>, normals: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
+    fn process(vertices: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
 }
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
@@ -92,7 +91,7 @@ pub struct Vertex {
 implement_vertex!(Vertex, position, normal);
 
 impl FromRawVertex for Vertex {
-    fn process(positions: Vec<f32x4>, normals: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+    fn process(positions: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
         let mut vb = Vec::with_capacity(polygons.len() * 3);
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
@@ -148,7 +147,7 @@ pub struct Position {
 implement_vertex!(Position, position);
 
 impl FromRawVertex for Position {
-    fn process(vertices: Vec<f32x4>, _: Vec<f32x4>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+    fn process(vertices: Vec<(f32, f32, f32, f32)>, _: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
         let vb = vertices.into_iter().map(|v| Position { position: [v.0, v.1, v.2] }).collect();
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
