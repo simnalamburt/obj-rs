@@ -1,11 +1,10 @@
 language: rust
 rust:
   - nightly
+sudo: false
 env:
   - FLAGS=
   - FLAGS="--features glium-support"
-install:
-  - if [ -n "$FLAGS" ]; then sudo apt-get install libXxf86vm-dev; fi
 script:
   - cargo build $(echo $FLAGS)
   - cargo test  $(echo $FLAGS)
