@@ -5,6 +5,5 @@ version = "0.0.1"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 
 [dependencies]
-glium = { version = "*", default-features = false }
-glutin = "*"
+glium = { version = "0.8.2", default-features = false, features = ["glutin"] }
 obj-rs = { path = "../..", features = ["glium-support"] }

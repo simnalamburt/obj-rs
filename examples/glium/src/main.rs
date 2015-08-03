@@ -1,38 +1,31 @@
-//! Type the command below to your console to run this example.
-//!
-//!     cargo run --example glium --features glium-support
-
-#![feature(std_misc, old_io)]
-
-extern crate glutin;
 #[macro_use] extern crate glium;
-
 extern crate obj;
 
-use std::default::Default;
 use std::fs::File;
 use std::io::BufReader;
-use std::old_io::timer;
-use std::time::Duration;
+use std::default::Default;
 
 use obj::*;
 
 fn main() {
-    use glium::DisplayBuild;
+    use glium::{DisplayBuild, VertexBuffer, IndexBuffer, Program};
+    use glium::index::PrimitiveType::TrianglesList;
 
     // building the display, ie. the main object
-    let display = glutin::WindowBuilder::new()
-        .with_dimensions(500, 500)
+    let display = glium::glutin::WindowBuilder::new()
+        .with_dimensions(500, 200)
+        .with_title(format!("obj-rs"))
         .with_depth_buffer(32)
-        .build_glium().unwrap();
+        .build_glium()
+        .unwrap();
 
-    let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
+    let input = BufReader::new(File::open("../../tests/fixtures/normal-cone.obj").unwrap());
     let obj: Obj = load_obj(input).unwrap();
 
-    let vertex_buffer = glium::VertexBuffer::new(&display, obj.vertices);
-    let index_buffer = glium::IndexBuffer::new(&display, glium::index::TrianglesList(obj.indices));
+    let vertex_buffer = VertexBuffer::new(&display, &obj.vertices).unwrap();
+    let index_buffer = IndexBuffer::new(&display, TrianglesList, &obj.indices).unwrap();
 
-    let program = glium::Program::from_source(&display, r#"
+    let program = Program::from_source(&display, r#"
         #version 410
 
         uniform mat4 matrix;
@@ -80,19 +73,22 @@ fn main() {
     // each cycle will draw once
     'main: loop {
         use glium::Surface;
+        use std::thread::sleep_ms;
 
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 0.0), 1.0);
         target.draw(&vertex_buffer, &index_buffer, &program, &uniforms, &params).unwrap();
-        target.finish();
+        target.finish().unwrap();
 
         // sleeping for some time in order not to use up too much CPU
-        timer::sleep(Duration::milliseconds(17));
+        sleep_ms(17);
 
         // polling and handling the events received by the window
         for event in display.poll_events() {
+            use glium::glutin::Event::*;
+
             match event {
-                glutin::Event::Closed => break 'main,
+                Closed => break 'main,
                 _ => ()
             }
         }
