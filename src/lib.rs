@@ -22,16 +22,12 @@ dome.indices;
 
 */
 
-#![feature(collections, slice_patterns)]
-#![cfg_attr(test, feature(test))]
 #![deny(missing_docs)]
 
-#[cfg(feature = "glium-support")]
-#[macro_use]
-extern crate glium;
+#[cfg(feature = "glium-support")] #[macro_use] extern crate glium;
+extern crate vec_map;
 
-#[macro_use]
-mod error;
+#[macro_use] mod error;
 pub mod raw;
 
 use std::io::BufRead;

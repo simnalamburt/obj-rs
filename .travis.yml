@@ -1,13 +1,21 @@
+sudo: false
 language: rust
 rust:
+  - stable
+  - beta
   - nightly
-sudo: false
+os:
+  - linux
+  - osx
+
 env:
   - FLAGS=
   - FLAGS="--features glium-support"
 script:
   - cargo build $(echo $FLAGS)
   - cargo test  $(echo $FLAGS)
+
+
 notifications:
   irc:
     nick: obj-rs
