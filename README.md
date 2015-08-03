@@ -6,7 +6,7 @@ formats. [Documentation][docs]
 
 ```toml
 [dependencies]
-obj-rs = "*"
+obj-rs = "0.4"
 ```
 ```rust
 use std::fs::File;
@@ -34,7 +34,7 @@ Glium support
 
 ```toml
 [dependencies]
-obj-rs = { version = "*", features = ["glium-support"] }
+obj-rs = { version = "0.4", features = ["glium-support"] }
 ```
 ```rust
 use glium::*;
@@ -57,7 +57,7 @@ let index_buffer = IndexBuffer::new(&display, index::TrianglesList(bear.indices)
 [travis-a]: https://travis-ci.org/simnalamburt/obj-rs
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Rust]: http://rust-lang.org
-[docs]: https://simnalamburt.github.io/obj-rs
-[img]: http://simnalamburt.github.io/obj-rs/screenshot.png
+[docs]: https://simnalamburt.github.io/obj-rs/
+[img]: https://simnalamburt.github.io/obj-rs/screenshot.png
 [glium]: https://github.com/tomaka/glium
-[example]: examples/glium.rs
+[example]: examples/glium/src/main.rs
