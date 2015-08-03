@@ -22,7 +22,6 @@ dome.indices;
 
 */
 
-#![feature(collections, slice_patterns)]
 #![cfg_attr(test, feature(test))]
 #![deny(missing_docs)]
 

@@ -5,11 +5,6 @@ use std::collections::{HashMap, VecMap};
 use error::ObjResult;
 use raw::lexer::lex;
 
-/// Parses a string into number.
-macro_rules! n {
-    ($input:expr) => ( try!($input.parse::<usize>()) )
-}
-
 /// Parses &[&str] into &[f32].
 macro_rules! f {
     ($args:expr) => (
@@ -21,11 +16,6 @@ macro_rules! f {
             ret
         }[..]
     )
-}
-
-/// Splits a string with '/'.
-macro_rules! s {
-    ($param:ident) => ( &$param.split('/').collect::<Vec<&str>>()[..] )
 }
 
 /// Parses a wavefront `.obj` format.
@@ -51,34 +41,46 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     try!(lex(input, |stmt, args| {
         match stmt {
             // Vertex data
-            "v" => positions.push(match f!(args) {
-                [x, y, z, w] => (x, y, z, w),
-                [x, y, z] => (x, y, z, 1.0),
-                _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments")
-            }),
-            "vt" => tex_coords.push(match f!(args) {
-                [u, v, w] => (u, v, w),
-                [u, v] => (u, v, 0.0),
-                [u] => (u, 0.0, 0.0),
-                _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
-            }),
-            "vn" => normals.push(match f!(args) {
-                [x, y, z] => (x, y, z),
-                _ => error!(WrongNumberOfArguments, "Expected 3 arguments")
-            }),
-            "vp" => param_vertices.push(match f!(args) {
-                [u, v, w] => (u, v, w),
-                [u, v] => (u, v, 1.0),
-                [u] => (u, 0.0, 1.0),
-                _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
-            }),
+            "v" => {
+                let args = f!(args);
+                positions.push(match args.len() {
+                    4 => (args[0], args[1], args[2], args[3]),
+                    3 => (args[0], args[1], args[2], 1.0),
+                    _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments")
+                })
+            }
+            "vt" => {
+                let args = f!(args);
+                tex_coords.push(match args.len() {
+                    3 => (args[0], args[1], args[2]),
+                    2 => (args[0], args[1], 0.0),
+                    1 => (args[0], 0.0, 0.0),
+                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
+                })
+            }
+            "vn" => {
+                let args = f!(args);
+                normals.push(match args.len() {
+                    3 => (args[0], args[1], args[2]),
+                    _ => error!(WrongNumberOfArguments, "Expected 3 arguments")
+                })
+            }
+            "vp" => {
+                let args = f!(args);
+                param_vertices.push(match args.len() {
+                    3 => (args[0], args[1], args[2]),
+                    2 => (args[0], args[1], 1.0),
+                    1 => (args[0], 0.0, 1.0),
+                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
+                })
+            }
 
             // Free-form curve / surface attributes
             "cstype" => {
                 let _rational: bool;
-                let geometry = match args {
-                    ["rat", ty] => { _rational = true; ty }
-                    [ty] => { _rational = false; ty }
+                let geometry = match args.len() {
+                    2 if args[0] == "rat" => { _rational = true; args[1] }
+                    1 => { _rational = false; args[0] }
                     _ => error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format")
                 };
 
@@ -91,11 +93,14 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     _ => error!(WrongTypeOfArguments, "Expected one of 'bmatrix', 'bezier', 'bspline', 'cardinal' and 'taylor'")
                 }
             }
-            "deg" => match f!(args) {
-                [_deg_u, _deg_v]  => unimplemented!(),
-                [_deg_u] => unimplemented!(),
-                _ => error!(WrongNumberOfArguments, "Expected 1 or 2 arguments")
-            },
+            "deg" => {
+                let args = f!(args);
+                match args.len() {
+                    2 => unimplemented!(), // (deg_u, deg_v)
+                    1 => unimplemented!(), // (deg_u)
+                    _ => error!(WrongNumberOfArguments, "Expected 1 or 2 arguments")
+                }
+            }
             "bmat" => unimplemented!(),
             "step" => unimplemented!(),
 
@@ -107,30 +112,65 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
                 let mut args = args.iter();
                 let first = args.next().unwrap();
+                let rest = args;
 
-                macro_rules! m {
-                    { $($pat:pat => $name:ident[$exp:expr]),* } => (
-                        match s!(first) {
-                            $($pat => Polygon::$name({
-                                let mut polygon = vec![ $exp ];
-                                for param in args {
-                                    match s!(param) {
-                                        $pat => polygon.push($exp),
-                                        _ => unimplemented!()
-                                    }
-                                }
-                                polygon
-                            }),)*
-                            _ => error!(WrongTypeOfArguments, "Expected '#', '#/#', '#//#' or '#/#/#' format")
-                        }
-                    )
+                // Splits a string with '/'.
+                macro_rules! s {
+                    ($param:ident) => ( &$param.split('/').collect::<Vec<&str>>()[..] )
                 }
 
-                polygons.push(m! {
-                    [p]        => P[n!(p) - 1],
-                    [p, t]     => PT[(n!(p) - 1, n!(t) - 1)],
-                    [p, "", u] => PN[(n!(p) - 1, n!(u) - 1)],
-                    [p, t, u]  => PTN[(n!(p) - 1, n!(t) - 1, n!(u) - 1)]
+                // Parses a string into number.
+                macro_rules! n {
+                    ($input:expr) => ( try!($input.parse::<usize>()) - 1 )
+                }
+
+                let params = s!(first);
+                polygons.push(match params.len() {
+                    1 => Polygon::P({
+                        let mut polygon = vec![ n!(params[0]) ];
+                        for param in rest {
+                            let params = s!(param);
+                            match params.len() {
+                                1 => polygon.push(n!(params[0])),
+                                _ => unimplemented!()
+                            }
+                        }
+                        polygon
+                    }),
+                    2 => Polygon::PT({
+                        let mut polygon = vec![ (n!(params[0]), n!(params[1])) ];
+                        for param in rest {
+                            let params = s!(param);
+                            match params.len() {
+                                2 => polygon.push((n!(params[0]), n!(params[1]))),
+                                _ => unimplemented!()
+                            }
+                        }
+                        polygon
+                    }),
+                    3 if params[1] == "" => Polygon::PN({
+                        let mut polygon = vec![ (n!(params[0]), n!(params[2])) ];
+                        for param in rest {
+                            let params = s!(param);
+                            match params.len() {
+                                3 if params[1] == "" => polygon.push((n!(params[0]), n!(params[2]))),
+                                _ => unimplemented!()
+                            }
+                        }
+                        polygon
+                    }),
+                    3 => Polygon::PTN({
+                        let mut polygon = vec![ (n!(params[0]), n!(params[1]), n!(params[2])) ];
+                        for param in rest {
+                            let params = s!(param);
+                            match params.len() {
+                                3 => polygon.push((n!(params[0]), n!(params[1]), n!(params[2]))),
+                                _ => unimplemented!()
+                            }
+                        }
+                        polygon
+                    }),
+                    _ => error!(WrongTypeOfArguments, "Expected '#', '#/#', '#//#' or '#/#/#' format")
                 });
             }
             "curv" => unimplemented!(),
@@ -149,37 +189,50 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "con" => unimplemented!(),
 
             // Grouping
-            "g" => match args {
-                [name] => group_builder.start(name.to_string()),
-                _ => error!(WrongNumberOfArguments, "Expected group name parameter, but nothing has been supplied")
-            },
-            "s" => match args {
-                ["off"] | ["0"] => smoothing_builder.end(),
-                [param] => smoothing_builder.start(n!(param)),
-                _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
-            },
-            "mg" => match args {
-                ["off"] | ["0"] => merging_builder.end(),
-                [param] => merging_builder.start(n!(param)),
-                _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
-            },
-            "o" => name = match args {
-                [] => None,
-                args => Some(args.connect(" "))
-            },
+            "g" => {
+                match args.len() {
+                    1 => group_builder.start(args[0].to_string()),
+                    _ => error!(WrongNumberOfArguments, "Expected group name parameter, but nothing has been supplied")
+                }
+            }
+            "s" => {
+                match args.len() {
+                    1 if (args[0] == "off" || args[0] == "0") => smoothing_builder.end(),
+                    1 => smoothing_builder.start(try!(args[0].parse())),
+                    _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
+                }
+            }
+            "mg" => {
+                match args.len() {
+                    1 if (args[0] == "off" || args[0] == "0") => merging_builder.end(),
+                    1 => merging_builder.start(try!(args[0].parse())),
+                    _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
+                }
+            }
+            "o" => {
+                name = match args.len() {
+                    0 => None,
+                    _ => Some(args.connect(" "))
+                }
+            }
 
             // Display / render attributes
             "bevel" => unimplemented!(),
             "c_interp" => unimplemented!(),
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
-            "usemtl" => match args {
-                [material] => mesh_builder.start(material.to_string()),
-                _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
-            },
+            "usemtl" => {
+                match args.len() {
+                    1 => mesh_builder.start(args[0].to_string()),
+                    _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
+                }
+            }
             "mtllib" => {
-                let paths: Vec<String> = args.iter().map(|path| path.to_string()).collect();
-                material_libraries.push_all(&paths[..]);
+                // TODO: .push_all()
+                material_libraries.reserve(args.len());
+                for path in args {
+                    material_libraries.push(path.to_string());
+                }
             }
             "shadow_obj" => unimplemented!(),
             "trace_obj" => unimplemented!(),
