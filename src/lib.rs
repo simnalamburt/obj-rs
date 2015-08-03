@@ -25,12 +25,9 @@ dome.indices;
 #![cfg_attr(test, feature(test))]
 #![deny(missing_docs)]
 
-#[cfg(feature = "glium-support")]
-#[macro_use]
-extern crate glium;
+#[cfg(feature = "glium-support")] #[macro_use] extern crate glium;
 
-#[macro_use]
-mod error;
+#[macro_use] mod error;
 pub mod raw;
 
 use std::io::BufRead;
