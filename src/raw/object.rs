@@ -1,7 +1,8 @@
 //! Parses `.obj` format which stores 3D mesh data
 
 use std::io::BufRead;
-use std::collections::{HashMap, VecMap};
+use std::collections::HashMap;
+use vec_map::VecMap;
 use error::ObjResult;
 use raw::lexer::lex;
 

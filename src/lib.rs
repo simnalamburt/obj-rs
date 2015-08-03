@@ -26,6 +26,7 @@ dome.indices;
 #![deny(missing_docs)]
 
 #[cfg(feature = "glium-support")] #[macro_use] extern crate glium;
+extern crate vec_map;
 
 #[macro_use] mod error;
 pub mod raw;
