@@ -10,9 +10,10 @@ use raw::lexer::lex;
 macro_rules! f {
     ($args:expr) => (
         &{
-            let mut ret = Vec::new();
-            for &arg in $args.iter() {
-                ret.push(try!(arg.parse::<f32>()))
+            let mut ret = Vec::<f32>::new();
+            ret.reserve($args.len());
+            for arg in $args.into_iter() {
+                ret.push(try!(arg.parse()))
             }
             ret
         }[..]
