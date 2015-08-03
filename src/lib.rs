@@ -22,7 +22,6 @@ dome.indices;
 
 */
 
-#![cfg_attr(test, feature(test))]
 #![deny(missing_docs)]
 
 #[cfg(feature = "glium-support")] #[macro_use] extern crate glium;

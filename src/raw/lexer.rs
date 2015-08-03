@@ -47,31 +47,3 @@ statement2 Hello, world!
         Ok(())
     }).unwrap();
 }
-
-#[cfg(test)]
-mod bench {
-    //! There is a slight overhead (~30ns) in `lex()` function because it passes arguments as a
-    //! slice not an iterator.
-
-    extern crate test;
-
-    #[bench]
-    fn pass_slice(b: &mut test::Bencher) {
-        b.iter(|| {
-            let words = "1.00 2.00 3.00".split_whitespace();
-            let args: Vec<&str> = words.collect();
-            let args = &args[..];
-
-            args.iter().map(|&input| input.parse().unwrap()).collect::<Vec<f32>>();
-        })
-    }
-
-    #[bench]
-    fn pass_iter(b: &mut test::Bencher) {
-        b.iter(|| {
-            let words = "1.00 2.00 3.00".split_whitespace();
-
-            words.map(|input| input.parse().unwrap()).collect::<Vec<f32>>();
-        })
-    }
-}
