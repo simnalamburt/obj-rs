@@ -37,14 +37,15 @@ Glium support
 obj-rs = { version = "0.4", features = ["glium-support"] }
 ```
 ```rust
-use glium::*;
+use std::fs::File;
+use std::io::BufReader;
 use obj::*;
 
 let input = BufReader::new(File::open("rilakkuma.obj").unwrap());
-let bear: Obj = load_obj(input).unwrap();
+let obj: Obj = load_obj(input).unwrap();
 
-let vertex_buffer = VertexBuffer::new(&display, bear.vertices);
-let index_buffer = IndexBuffer::new(&display, index::TrianglesList(bear.indices));
+let vb = obj.vertex_buffer(&display).unwrap();
+let ib = obj.index_buffer(&display).unwrap();
 ```
 
 --------

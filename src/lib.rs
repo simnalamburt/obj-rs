@@ -161,3 +161,23 @@ impl FromRawVertex for Position {
         Ok((vb, ib))
     }
 }
+
+
+#[cfg(feature = "glium-support")]
+mod glium_support {
+    use glium::{vertex, index, VertexBuffer, IndexBuffer};
+    use glium::backend::Facade;
+    use super::Obj;
+
+    impl<V: vertex::Vertex> Obj<V> {
+        /// Retrieve glium-compatible vertex buffer from Obj
+        pub fn vertex_buffer<F: Facade>(&self, facade: &F) -> Result<VertexBuffer<V>, vertex::BufferCreationError> {
+            VertexBuffer::new(facade, &self.vertices)
+        }
+
+        /// Retrieve glium-compatible index buffer from Obj
+        pub fn index_buffer<F: Facade>(&self, facade: &F) -> Result<IndexBuffer<u16>, index::BufferCreationError> {
+            IndexBuffer::new(facade, index::PrimitiveType::TrianglesList, &self.indices)
+        }
+    }
+}
