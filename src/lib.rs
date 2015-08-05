@@ -31,18 +31,13 @@ extern crate vec_map;
 pub mod raw;
 
 use std::io::BufRead;
-use std::collections::HashMap;
-use std::collections::hash_map::Entry::*;
-
-use raw::{parse_obj, RawObj};
+use std::collections::hash_map::{HashMap, Entry};
 use raw::object::Polygon;
-use raw::object::Polygon::*;
-
 pub use error::ObjResult;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex, T: BufRead>(input: T) -> ObjResult<Obj<V>> {
-    let raw = try!(parse_obj(input));
+    let raw = try!(raw::parse_obj(input));
     Obj::new(raw)
 }
 
@@ -57,7 +52,7 @@ pub struct Obj<V = Vertex> {
 }
 
 impl<V: FromRawVertex> Obj<V> {
-    fn new(raw: RawObj) -> ObjResult<Self> {
+    fn new(raw: raw::RawObj) -> ObjResult<Self> {
         let (vertices, indices) = try!(FromRawVertex::process(raw.positions, raw.normals, raw.polygons));
 
         Ok(Obj {
@@ -95,8 +90,8 @@ impl FromRawVertex for Vertex {
             let mut map = |pi: usize, ni: usize| {
                 // Look up cache
                 let index = match cache.entry((pi, ni)) {
-                    // Cache fail -> make new, store it on cache
-                    Vacant(entry) => {
+                    // Cache miss -> make new, store it on cache
+                    Entry::Vacant(entry) => {
                         let p = positions[pi];
                         let n = normals[ni];
                         let vertex = Vertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2] };
@@ -107,7 +102,7 @@ impl FromRawVertex for Vertex {
                         index
                     }
                     // Cache hit -> use it
-                    Occupied(entry) => {
+                    Entry::Occupied(entry) => {
                         *entry.get()
                     }
                 };
@@ -116,11 +111,11 @@ impl FromRawVertex for Vertex {
 
             for polygon in polygons.into_iter() {
                 match polygon {
-                    P(_) | PT(_) => error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
-                    PN(ref vec) if vec.len() == 3 => {
+                    Polygon::P(_) | Polygon::PT(_) => error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
+                    Polygon::PN(ref vec) if vec.len() == 3 => {
                         for &(pi, ni) in vec.iter() { map(pi, ni) }
                     }
-                    PTN(ref vec) if vec.len() == 3 => {
+                    Polygon::PTN(ref vec) if vec.len() == 3 => {
                         for &(pi, _, ni) in vec.iter() { map(pi, ni) }
                     }
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
@@ -150,13 +145,13 @@ impl FromRawVertex for Position {
             let mut map = |pi| { ib.push(pi as u16) };
             for polygon in polygons.into_iter() {
                 match polygon {
-                    P(ref vec) if vec.len() == 3 => {
+                    Polygon::P(ref vec) if vec.len() == 3 => {
                         for &pi in vec.iter() { map(pi) }
                     }
-                    PT(ref vec) | PN(ref vec) if vec.len() == 3 => {
+                    Polygon::PT(ref vec) | Polygon::PN(ref vec) if vec.len() == 3 => {
                         for &(pi, _) in vec.iter() { map(pi) }
                     }
-                    PTN(ref vec) if vec.len() == 3 => {
+                    Polygon::PTN(ref vec) if vec.len() == 3 => {
                         for &(pi, _, _) in vec.iter() { map(pi) }
                     }
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
