@@ -12,7 +12,7 @@ macro_rules! f {
         &{
             let mut ret = Vec::<f32>::new();
             ret.reserve($args.len());
-            for arg in $args.into_iter() {
+            for arg in $args {
                 ret.push(try!(arg.parse()))
             }
             ret

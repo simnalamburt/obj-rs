@@ -109,14 +109,14 @@ impl FromRawVertex for Vertex {
                 ib.push(index)
             };
 
-            for polygon in polygons.into_iter() {
+            for polygon in polygons {
                 match polygon {
                     Polygon::P(_) | Polygon::PT(_) => error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
                     Polygon::PN(ref vec) if vec.len() == 3 => {
-                        for &(pi, ni) in vec.iter() { map(pi, ni) }
+                        for &(pi, ni) in vec { map(pi, ni) }
                     }
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
-                        for &(pi, _, ni) in vec.iter() { map(pi, ni) }
+                        for &(pi, _, ni) in vec { map(pi, ni) }
                     }
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
                 }
@@ -142,17 +142,18 @@ impl FromRawVertex for Position {
         let vb = vertices.into_iter().map(|v| Position { position: [v.0, v.1, v.2] }).collect();
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
-            let mut map = |pi| { ib.push(pi as u16) };
-            for polygon in polygons.into_iter() {
+            let mut map = |pi: usize| { ib.push(pi as u16) };
+
+            for polygon in polygons {
                 match polygon {
                     Polygon::P(ref vec) if vec.len() == 3 => {
-                        for &pi in vec.iter() { map(pi) }
+                        for &pi in vec { map(pi) }
                     }
                     Polygon::PT(ref vec) | Polygon::PN(ref vec) if vec.len() == 3 => {
-                        for &(pi, _) in vec.iter() { map(pi) }
+                        for &(pi, _) in vec { map(pi) }
                     }
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
-                        for &(pi, _, _) in vec.iter() { map(pi) }
+                        for &(pi, _, _) in vec { map(pi) }
                     }
                     _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
                 }

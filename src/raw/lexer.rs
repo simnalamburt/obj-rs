@@ -6,22 +6,12 @@ pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
 {
     for line in input.lines() {
         let line = try!(line);
-        let line = line.split('#').next().unwrap();
+        let line = line.split('#').next().unwrap(); // Remove comments
+        let mut words = line.split_whitespace();
 
-        // Backporting Rust 1.1 into 1.0
-        fn is_not_empty(s: &&str) -> bool { !s.is_empty() }
-        let is_not_empty: fn(&&str) -> bool = is_not_empty; // coerce to fn pointer
-
-        fn is_whitespace(c: char) -> bool { c.is_whitespace() }
-        let is_whitespace: fn(char) -> bool = is_whitespace; // coerce to fn pointer
-
-        let mut words = line.split(is_whitespace).filter(is_not_empty);
-        match words.next() {
-            Some(stmt) => {
-                let args: Vec<&str> = words.collect();
-                try!(callback(stmt, &args[..]))
-            }
-            None => ()
+        if let Some(stmt) = words.next() {
+            let args: Vec<_> = words.collect();
+            try!(callback(stmt, &args[..]))
         }
     }
 
@@ -37,13 +27,13 @@ statement1 arg0    arg1
 statement2 Hello, world!
 "#;
 
-    lex(&mut input.as_bytes(), |stmt, args| {
+    assert!(lex(&mut input.as_bytes(), |stmt, args| {
         match stmt {
             "statement0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
             "statement1" => assert_eq!(args, ["arg0", "arg1"]),
             "statement2" => assert_eq!(args, ["Hello,", "world!"]),
-            _ => error!(UnexpectedStatement, "Text failed")
+            _ => panic!("Unit test failed")
         }
         Ok(())
-    }).unwrap();
+    }).is_ok());
 }
