@@ -1,6 +1,6 @@
 //! Contains helper structs for error handling
 
-use std::result;
+use std::fmt;
 use std::io::Error;
 use std::num::{ParseIntError, ParseFloatError};
 use std::convert::From;
@@ -10,7 +10,7 @@ use std::convert::From;
 ///
 /// This typedef is generally used to avoid writing out `ObjError` directly and is otherwise a
 /// direct mapping to `std::result::Result`.
-pub type ObjResult<T> = result::Result<T, ObjError>;
+pub type ObjResult<T> = Result<T, ObjError>;
 
 /// The error type for loading of the `obj` file.
 #[derive(Debug)]
@@ -33,6 +33,17 @@ macro_rules! implmnt {
             }
         }
     )
+}
+
+impl fmt::Display for ObjError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &ObjError::Io(ref e) => e.fmt(f),
+            &ObjError::ParseInt(ref e) => e.fmt(f),
+            &ObjError::ParseFloat(ref e) => e.fmt(f),
+            &ObjError::Load(ref e) => e.fmt(f),
+        }
+    }
 }
 
 implmnt!(Io, Error);
@@ -66,6 +77,20 @@ impl LoadError {
     /// Creates a new custom error from a specified kind/description.
     pub fn new(kind: LoadErrorKind, desc: &'static str) -> Self {
         LoadError { kind: kind, desc: desc }
+    }
+}
+
+impl fmt::Display for LoadError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let basic = match self.kind {
+            LoadErrorKind::UnexpectedStatement => "Met unexpected statement. ",
+            LoadErrorKind::WrongNumberOfArguments => "Received wrong number of arguments. ",
+            LoadErrorKind::WrongTypeOfArguments => "Received unexpected type of arguments. ",
+            LoadErrorKind::UntriangulatedModel => "Model should be triangulated first to be loaded properly. ",
+            LoadErrorKind::InsufficientData => "Model cannot be transformed into requested form. ",
+        };
+
+        write!(fmt, "{} {}", basic, self.desc)
     }
 }
 
