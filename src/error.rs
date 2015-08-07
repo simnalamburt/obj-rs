@@ -12,11 +12,16 @@ use std::convert::From;
 /// direct mapping to `std::result::Result`.
 pub type ObjResult<T> = result::Result<T, ObjError>;
 
+/// The error type for loading of the `obj` file.
 #[derive(Debug)]
-enum ObjError {
+pub enum ObjError {
+    /// IO error has been occurred during opening the `obj` file.
     Io(Error),
+    /// Tried to parse integer frome the `obj` file, but failed.
     ParseInt(ParseIntError),
+    /// Tried to parse floating point number frome the `obj` file, but failed.
     ParseFloat(ParseFloatError),
+    /// `LoadError` has been occurred during parseing the `obj` file.
     Load(LoadError)
 }
 
@@ -44,7 +49,7 @@ impl From<LoadError> for ObjError {
     }
 }
 
-/// The error type for parse operations and loading of the `Obj` struct.
+/// The error type for parse operations of the `Obj` struct.
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct LoadError {
     kind: LoadErrorKind,
