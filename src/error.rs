@@ -25,29 +25,20 @@ pub enum ObjError {
     Load(LoadError)
 }
 
-impl From<Error> for ObjError {
-    fn from(err: Error) -> Self {
-        ObjError::Io(err)
-    }
+macro_rules! implmnt {
+    ($name:ident, $error:ident) => (
+        impl From<$error> for ObjError {
+            fn from(err: $error) -> Self {
+                ObjError::$name(err)
+            }
+        }
+    )
 }
 
-impl From<ParseIntError> for ObjError {
-    fn from(err: ParseIntError) -> Self {
-        ObjError::ParseInt(err)
-    }
-}
-
-impl From<ParseFloatError> for ObjError {
-    fn from(err: ParseFloatError) -> Self {
-        ObjError::ParseFloat(err)
-    }
-}
-
-impl From<LoadError> for ObjError {
-    fn from(err: LoadError) -> Self {
-        ObjError::Load(err)
-    }
-}
+implmnt!(Io, Error);
+implmnt!(ParseInt, ParseIntError);
+implmnt!(ParseFloat, ParseFloatError);
+implmnt!(Load, LoadError);
 
 /// The error type for parse operations of the `Obj` struct.
 #[derive(PartialEq, Eq, Clone, Debug)]
