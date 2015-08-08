@@ -52,7 +52,8 @@ pub struct Obj<V = Vertex> {
 }
 
 impl<V: FromRawVertex> Obj<V> {
-    fn new(raw: raw::RawObj) -> ObjResult<Self> {
+    /// Create `Obj` from `RawObj` object.
+    pub fn new(raw: raw::RawObj) -> ObjResult<Self> {
         let (vertices, indices) = try!(FromRawVertex::process(raw.positions, raw.normals, raw.polygons));
 
         Ok(Obj {
