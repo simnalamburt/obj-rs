@@ -332,3 +332,16 @@ fn dome() {
         obj.smoothing_groups[2].polygons[0].end,                62
     };
 }
+
+#[test]
+fn sponza() {
+    // Sponza atrium model, it's reasonably big and more importantly uses negative indexes
+    // for some of the face specifications.
+    let obj = fixture("sponza.obj");
+
+    test! {
+        obj.name,              Some("sponza.lwo".to_owned())
+        obj.positions.len(),   39742
+        obj.polygons.len(),    36347
+    }
+}

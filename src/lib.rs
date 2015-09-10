@@ -67,7 +67,7 @@ impl<V: FromRawVertex> Obj<V> {
 }
 
 /// Conversion from `RawObj`'s raw data.
-pub trait FromRawVertex {
+pub trait FromRawVertex : Sized {
     /// Build vertex and index buffer from raw object data.
     fn process(vertices: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
 }

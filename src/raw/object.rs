@@ -116,64 +116,90 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 let first = args.next().unwrap();
                 let rest = args;
 
-                // Splits a string with '/'.
-                macro_rules! s {
-                    ($param:ident) => ( &$param.split('/').collect::<Vec<&str>>()[..] )
-                }
+                let group = try!(parse_vertex_group(first));
 
-                // Parses a string into number.
-                macro_rules! n {
-                    ($input:expr) => ( try!($input.parse::<usize>()) - 1 )
-                }
+                // Helper macro for handling the indexes.
+                // If the index is < 0, then it represents an offset from the end of
+                // the current list. So -1 is the most recently added vertex.
+                // If the index is > 0 then it's simply the position in the list such
+                // that 1 is the first vertex.
+                macro_rules! idx ( ($i:expr, $l:expr) => ({
+                    let i = $i;
+                    if i < 0 {
+                        let i = (i * -1) as usize;
+                        $l.len() - i
+                    } else {
+                        (i - 1) as usize
+                    }
+                }));
 
-                let params = s!(first);
-                polygons.push(match params.len() {
-                    1 => Polygon::P({
-                        let mut polygon = vec![ n!(params[0]) ];
-                        for param in rest {
-                            let params = s!(param);
-                            match params.len() {
-                                1 => polygon.push(n!(params[0])),
-                                _ => unimplemented!()
+
+                let polygon = match group {
+                    (p, 0, 0) => {
+                        let mut polygon = vec![idx!(p, positions)];
+                        for gs in rest {
+                            let group = try!(parse_vertex_group(gs));
+                            if group.1 != 0 || group.2 != 0 {
+                                error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
+
+                            polygon.push(idx!(group.0, positions));
                         }
-                        polygon
-                    }),
-                    2 => Polygon::PT({
-                        let mut polygon = vec![ (n!(params[0]), n!(params[1])) ];
-                        for param in rest {
-                            let params = s!(param);
-                            match params.len() {
-                                2 => polygon.push((n!(params[0]), n!(params[1]))),
-                                _ => unimplemented!()
+
+                        Polygon::P(polygon)
+                    }
+                    (p, t, 0) => {
+                        let mut polygon = vec![(
+                            idx!(p, positions),
+                            idx!(t, tex_coords))];
+                        for gs in rest {
+                            let group = try!(parse_vertex_group(gs));
+                            if group.2 != 0 {
+                                error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
+
+                            polygon.push((
+                                idx!(group.0, positions),
+                                idx!(group.1, tex_coords)));
                         }
-                        polygon
-                    }),
-                    3 if params[1] == "" => Polygon::PN({
-                        let mut polygon = vec![ (n!(params[0]), n!(params[2])) ];
-                        for param in rest {
-                            let params = s!(param);
-                            match params.len() {
-                                3 if params[1] == "" => polygon.push((n!(params[0]), n!(params[2]))),
-                                _ => unimplemented!()
+
+                        Polygon::PT(polygon)
+                    }
+                    (p, 0, n) => {
+                        let mut polygon = vec![(
+                            idx!(p, positions),
+                            idx!(n, normals))];
+                        for gs in rest {
+                            let group = try!(parse_vertex_group(gs));
+                            if group.1 != 0 {
+                                error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
+
+                            polygon.push((
+                                idx!(group.0, positions),
+                                idx!(group.2, normals)));
                         }
-                        polygon
-                    }),
-                    3 => Polygon::PTN({
-                        let mut polygon = vec![ (n!(params[0]), n!(params[1]), n!(params[2])) ];
-                        for param in rest {
-                            let params = s!(param);
-                            match params.len() {
-                                3 => polygon.push((n!(params[0]), n!(params[1]), n!(params[2]))),
-                                _ => unimplemented!()
-                            }
+
+                        Polygon::PN(polygon)
+                    }
+                    (p, t, n) => {
+                        let mut polygon = vec![(
+                            idx!(p, positions),
+                            idx!(t, tex_coords),
+                            idx!(n, normals))];
+                        for gs in rest {
+                            let group = try!(parse_vertex_group(gs));
+                            polygon.push((
+                                idx!(group.0, positions),
+                                idx!(group.1, tex_coords),
+                                idx!(group.2, normals)));
                         }
-                        polygon
-                    }),
-                    _ => error!(WrongTypeOfArguments, "Expected '#', '#/#', '#//#' or '#/#/#' format")
-                });
+
+                        Polygon::PTN(polygon)
+                    }
+                };
+
+                polygons.push(polygon);
             }
             "curv" => unimplemented!(),
             "curv2" => unimplemented!(),
@@ -271,6 +297,31 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
         smoothing_groups: smoothing_builder.result,
         merging_groups: merging_builder.result
     })
+}
+
+// Parses the vertex group in the face statement, missing entries
+// are indicated with a 0 value
+fn parse_vertex_group(s: &str) -> ObjResult<(i32, i32, i32)> {
+    let mut indices = s.split('/');
+
+    let first  = indices.next().unwrap_or("");
+    let second = indices.next().unwrap_or("");
+    let third  = indices.next().unwrap_or("");
+
+    let first = try!(first.parse());
+    let second = if second == "" {
+        0
+    } else {
+        try!(second.parse())
+    };
+
+    let third = if third == "" {
+        0
+    } else {
+        try!(third.parse())
+    };
+
+    Ok((first, second, third))
 }
 
 
@@ -405,7 +456,7 @@ impl Group {
 
 
 /// Custom trait to interface `HashMap` and `VecMap`.
-trait Map<K: Key, V: ?Sized> {
+trait Map<K: Key, V> {
     /// Interface of `insert` function.
     fn insert(&mut self, K, V) -> Option<V>;
     /// Interface of `get_mut` function.
