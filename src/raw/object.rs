@@ -20,6 +20,21 @@ macro_rules! f {
     )
 }
 
+// Helper macro for handling the indexes.
+// If the index is < 0, then it represents an offset from the end of
+// the current list. So -1 is the most recently added vertex.
+// If the index is > 0 then it's simply the position in the list such
+// that 1 is the first vertex.
+macro_rules! idx ( ($i:expr, $l:expr) => ({
+    let i = $i;
+    if i < 0 {
+        let i = (i * -1) as usize;
+        $l.len() - i
+    } else {
+        (i - 1) as usize
+    }
+}));
+
 /// Parses a wavefront `.obj` format.
 pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut name = None;
@@ -30,8 +45,8 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut normals = Vec::new();
     let mut param_vertices = Vec::new();
 
-    let points = Vec::new();
-    let lines = Vec::new();
+    let mut points = Vec::new();
+    let mut lines = Vec::new();
     let mut polygons = Vec::new();
 
     let counter = Counter::new(&points, &lines, &polygons);
@@ -107,9 +122,57 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "step" => unimplemented!(),
 
             // Elements
-            "p" => unimplemented!(),
-            "l" => unimplemented!(),
-            "f" => {
+            "p" => {
+                for v in args {
+                    let v : i32 = try!(v.parse());
+                    let v = idx!(v, positions);
+                    points.push(v);
+                }
+            }
+            "l" => {
+                if args.len() < 2 { error!(WrongNumberOfArguments, "Expected at least 2 arguments") }
+                let mut args = args.iter();
+                let first = args.next().unwrap();
+                let rest = args;
+
+                let group = try!(parse_vertex_group(first));
+
+                let line = match group {
+                    (p, 0, 0) => {
+                        let mut points = vec![idx!(p, positions)];
+                        for gs in rest {
+                            let group = try!(parse_vertex_group(gs));
+                            if group.1 != 0 || group.2 != 0 {
+                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                            }
+
+                            points.push(idx!(group.0, positions));
+                        }
+                        Line::P(points)
+                    }
+                    (p, t, 0) => {
+                        let mut points = vec![(
+                            idx!(p, positions),
+                            idx!(t, tex_coords))];
+                        for gs in rest {
+                            let group = try!(parse_vertex_group(gs));
+                            if group.2 != 0 {
+                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                            }
+
+                            points.push((
+                                idx!(group.0, positions),
+                                idx!(group.1, tex_coords)));
+                        }
+                        Line::PT(points)
+                    }
+                    _ => {
+                        error!(WrongTypeOfArguments, "Unexpected vertex format, expected `#` or `#/#`");
+                    }
+                };
+                lines.push(line);
+            }
+            "fo" | "f" => {
                 if args.len() < 3 { error!(WrongNumberOfArguments, "Expected at least 3 arguments") }
 
                 let mut args = args.iter();
@@ -117,22 +180,6 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 let rest = args;
 
                 let group = try!(parse_vertex_group(first));
-
-                // Helper macro for handling the indexes.
-                // If the index is < 0, then it represents an offset from the end of
-                // the current list. So -1 is the most recently added vertex.
-                // If the index is > 0 then it's simply the position in the list such
-                // that 1 is the first vertex.
-                macro_rules! idx ( ($i:expr, $l:expr) => ({
-                    let i = $i;
-                    if i < 0 {
-                        let i = (i * -1) as usize;
-                        $l.len() - i
-                    } else {
-                        (i - 1) as usize
-                    }
-                }));
-
 
                 let polygon = match group {
                     (p, 0, 0) => {
@@ -521,12 +568,13 @@ pub struct RawObj {
 pub type Point = usize;
 
 /// The `Line` type.
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub enum Line {
-    /// A line which contains only the position data of both ends
-    P([usize; 2]),
-    /// A line which contains both position and texture coordinate data of both ends
-    PT([(usize, usize); 2])
+    /// A series of line segments which contain only the position data of each vertex
+    P(Vec<usize>),
+    /// A series of line segments which contain both position and texture coordinate
+    /// data of each vertex
+    PT(Vec<(usize, usize)>)
 }
 
 /// The `Polygon` type.
