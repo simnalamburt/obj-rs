@@ -345,3 +345,17 @@ fn sponza() {
         obj.polygons.len(),    36347
     }
 }
+
+#[test]
+fn lines_points() {
+    // Basic test for lines and points geometry statements
+    let obj = fixture("lines_points.obj");
+
+    test! {
+        obj.name,             Some("lines.obj".to_owned())
+        obj.positions.len(),  3
+        obj.tex_coords.len(), 2
+        obj.lines.len(),      2
+        obj.points.len(),     3
+    }
+}
