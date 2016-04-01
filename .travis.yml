@@ -1,26 +1,21 @@
 sudo: false
 language: rust
-rust:
-  - stable
-  - beta
-  - nightly
-os:
-  - linux
-  - osx
 
 env:
   - FLAGS=
   - FLAGS="--features glium-support"
 script:
-  - cargo build $(echo $FLAGS)
-  - cargo test  $(echo $FLAGS)
+  - cargo build --verbose $(echo $FLAGS)
+  - cargo test  --verbose $(echo $FLAGS)
 
+cache:
+  directories:
+    - ~/.cargo
+    - target
 
 notifications:
   irc:
     nick: obj-rs
-    channels:
-      - irc.uriirc.org:16667#hyeon
-    template:
-      - "#%{build_number} %{result}, %{build_url}"
+    channels: 'ircs://irc.uriirc.org:16664#hyeon'
+    template: '#%{build_number} %{result}, %{build_url}'
     skip_join: true
