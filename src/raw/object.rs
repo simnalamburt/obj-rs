@@ -287,7 +287,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "o" => {
                 name = match args.len() {
                     0 => None,
-                    _ => Some(args.connect(" "))
+                    _ => Some(args.join(" "))
                 }
             }
 
