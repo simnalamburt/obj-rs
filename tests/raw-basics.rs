@@ -47,7 +47,7 @@ macro_rules! test_v3 {
 }
 
 macro_rules! test {
-    ($($lhs:expr { $($kind:ident $elem:expr)* })*) => ({
+    ($($lhs:expr => { $($kind:ident $elem:expr)* })*) => ({
         $({
             let mut index = 0usize;
             $(
@@ -155,7 +155,7 @@ fn cube() {
     };
 
     test! {
-        obj.polygons {
+        obj.polygons => {
             PT  vec![ (0, 0), (1, 1), (2, 2), (3, 3)   ]
             PT  vec![ (4, 4), (7, 5), (6, 6), (5, 7)   ]
             PT  vec![ (0, 8), (4, 9), (5, 7), (1, 1)   ]
@@ -240,7 +240,7 @@ fn dome() {
     };
 
     test! {
-        obj.polygons {
+        obj.polygons => {
             P   vec!(3, 2, 6)
             P   vec!(2, 1, 5)
             P   vec!(0, 4, 5)
