@@ -57,22 +57,26 @@ fn main() {
             [ 2.356724, 0.000000, -0.217148, -0.216930],
             [ 0.000000, 2.414214,  0.000000,  0.000000],
             [-0.523716, 0.000000, -0.977164, -0.976187],
-            [ 0.000000, 0.000000,  9.128673,  9.219544]
+            [ 0.000000, 0.000000,  9.128673,  9.219544f32]
         ],
-        light: (-1.0, -1.0, -1.0)
+        light: (-1.0, -1.0, -1.0f32)
     };
 
     let params = glium::DrawParameters {
-        depth_write: true,
-        depth_test: glium::DepthTest::IfLess,
-        .. Default::default()
+        depth: glium::Depth {
+            test: glium::DepthTest::IfLess,
+            write: true,
+            ..Default::default()
+        },
+        ..Default::default()
     };
 
     // the main loop
     // each cycle will draw once
     'main: loop {
         use glium::Surface;
-        use std::thread::sleep_ms;
+        use std::thread::sleep;
+        use std::time::Duration;
 
         let mut target = display.draw();
         target.clear_color_and_depth((0.0, 0.0, 0.0, 0.0), 1.0);
@@ -80,7 +84,7 @@ fn main() {
         target.finish().unwrap();
 
         // sleeping for some time in order not to use up too much CPU
-        sleep_ms(17);
+        sleep(Duration::from_millis(17));
 
         // polling and handling the events received by the window
         for event in display.poll_events() {
