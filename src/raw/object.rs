@@ -520,8 +520,8 @@ impl<V> Map<String, V> for HashMap<String, V> {
 
 impl<V> Map<usize, V> for VecMap<V> {
     fn insert(&mut self, k: usize, v: V) -> Option<V> { self.insert(k, v) }
-    fn get_mut(&mut self, k: &usize) -> Option<&mut V> { self.get_mut(k) }
-    fn remove(&mut self, k: &usize) -> Option<V> { self.remove(k) }
+    fn get_mut(&mut self, k: &usize) -> Option<&mut V> { self.get_mut(*k) }
+    fn remove(&mut self, k: &usize) -> Option<V> { self.remove(*k) }
 }
 
 /// A trait which should be implemented by a type passed into `Key` of `Map`.
