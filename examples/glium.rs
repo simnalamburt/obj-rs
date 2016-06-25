@@ -8,13 +8,12 @@
 #[macro_use] extern crate glium;
 extern crate obj;
 
-use std::fs::File;
-use std::io::BufReader;
-use std::default::Default;
-
-use obj::*;
-
+#[cfg(feature = "glium-support")]
 fn main() {
+    use std::fs::File;
+    use std::io::BufReader;
+    use std::default::Default;
+    use obj::*;
     use glium::{DisplayBuild, Program};
 
     // building the display, ie. the main object
@@ -103,4 +102,12 @@ fn main() {
             }
         }
     }
+}
+
+#[cfg(not(feature = "glium-support"))]
+fn main() {
+    println!("\n\
+    Please execute it with \x1b[4m--features glium-support\x1b[24m the option
+
+    $ \x1b[33mcargo run --example glium --features glium-support\x1b[0m\n");
 }
