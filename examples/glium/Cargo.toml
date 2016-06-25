@@ -1,9 +1,0 @@
-[package]
-
-name = "glium"
-version = "0.0.1"
-authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-
-[dependencies]
-glium = "0.14.0"
-obj-rs = { path = "../..", features = ["glium-support"] }

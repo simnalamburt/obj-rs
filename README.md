@@ -1,7 +1,6 @@
-obj-rs [![crates-i][]][crates-a] [![travis-i][]][travis-a]
+obj-rs [![crates-i]][crates-a] [![travis-i]][travis-a]
 ========
-
-[Wavefront obj][obj] parser for **[Rust][]**. It handles both `.obj` and `.mtl`
+[Wavefront obj][obj] parser for **[Rust]**. It handles both `.obj` and `.mtl`
 formats. [Documentation][docs]
 
 ```toml
@@ -13,15 +12,15 @@ use std::fs::File;
 use std::io::BufReader;
 use obj::*;
 
-let input = BufReader::new(File::open("tests/fixtures/dome.obj").unwrap());
-let dome: Obj = load_obj(input).unwrap();
+let input = try!(BufReader::new(File::open("tests/fixtures/dome.obj")));
+let dome: Obj = try!(load_obj(input));
 
 // Do whatever you want
 dome.vertices;
 dome.indices;
 ```
 
-![img][]
+![img]
 
 > This sample image is pretty good illustration of current status of **obj-rs**.
 **obj-rs** is currently able to load position and normal data of `obj` but not
@@ -29,12 +28,11 @@ texture & material data yet.
 
 Glium support
 --------
-
-**obj-rs** supports [glium][] out of the box. See [example][] for further details.
+**obj-rs** supports [glium] out of the box.
 
 ```toml
 [dependencies]
-glium = "0.8"
+glium = "0.14"
 obj-rs = { version = "0.4", features = ["glium-support"] }
 ```
 ```rust
@@ -42,11 +40,17 @@ use std::fs::File;
 use std::io::BufReader;
 use obj::*;
 
-let input = BufReader::new(File::open("rilakkuma.obj").unwrap());
-let obj: Obj = load_obj(input).unwrap();
+let input = BufReader::new(try!(File::open("rilakkuma.obj")));
+let obj: Obj = try!(load_obj(input));
 
-let vb = obj.vertex_buffer(&display).unwrap();
-let ib = obj.index_buffer(&display).unwrap();
+let vb = try!(obj.vertex_buffer(&display));
+let ib = try!(obj.index_buffer(&display));
+```
+
+Please see the [working sample] for the further details. Use can execute it with
+the command below.
+```bash
+cargo run --example glium --features glium-support
 ```
 
 --------
@@ -62,4 +66,4 @@ let ib = obj.index_buffer(&display).unwrap();
 [docs]: https://simnalamburt.github.io/obj-rs/
 [img]: https://simnalamburt.github.io/obj-rs/screenshot.png
 [glium]: https://github.com/tomaka/glium
-[example]: examples/glium/src/main.rs
+[working sample]: examples/glium.rs

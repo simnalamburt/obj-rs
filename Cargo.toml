@@ -23,3 +23,10 @@ glium-support = ["glium"]
 glium = { version = "0.14.0", default-features = false, optional = true }
 vec_map = "0.6.0"
 rustc-serialize = "0.3"
+
+
+[[example]]
+name = "glium"
+
+[dev_dependencies]
+glium = "0.14.0"

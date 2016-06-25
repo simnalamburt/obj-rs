@@ -1,3 +1,10 @@
+//! Working example of *obj-rs*
+//! ========
+//!
+//! Execute it with the command below
+//!
+//!     cargo run --example glium --features glium-support
+
 #[macro_use] extern crate glium;
 extern crate obj;
 
@@ -18,7 +25,7 @@ fn main() {
         .build_glium()
         .unwrap();
 
-    let input = BufReader::new(File::open("../../tests/fixtures/normal-cone.obj").unwrap());
+    let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
     let obj: Obj = load_obj(input).unwrap();
 
     let vb = obj.vertex_buffer(&display).unwrap();
