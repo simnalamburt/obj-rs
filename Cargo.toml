@@ -13,7 +13,7 @@ authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 homepage = "https://github.com/simnalamburt/obj-rs"
 repository = "https://github.com/simnalamburt/obj-rs"
 documentation = "https://simnalamburt.github.io/obj-rs/"
-license = "(Apache-2.0 OR MIT)"
+license = "Apache-2.0/MIT"
 keywords = ["graphics", "obj", "WaveFront", "3D", "parser"]
 readme = "README.md"
 
