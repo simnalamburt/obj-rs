@@ -1,7 +1,7 @@
 obj-rs [![crates-i]][crates-a] [![travis-i]][travis-a]
 ========
-[Wavefront obj][obj] parser for **[Rust]**. It handles both `.obj` and `.mtl`
-formats. [Documentation][docs]
+[Wavefront obj] parser for **[Rust]**. It handles both `.obj` and `.mtl`
+formats. [Documentation]
 
 ```toml
 [dependencies]
@@ -53,17 +53,22 @@ the command below.
 cargo run --example glium --features glium-support
 ```
 
---------
+<br>
 
-[BSD 2-Clause](LICENSE.md)
+--------
+*obj-rs* is primarily distributed under the terms of both the [Apache License
+(Version 2.0)] and the [MIT license]. See [COPYRIGHT] for details.
 
 [crates-i]: https://img.shields.io/crates/v/obj-rs.svg
 [crates-a]: https://crates.io/crates/obj-rs
 [travis-i]: https://travis-ci.org/simnalamburt/obj-rs.svg?branch=master
 [travis-a]: https://travis-ci.org/simnalamburt/obj-rs
-[obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
+[Wavefront obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Rust]: http://rust-lang.org
-[docs]: https://simnalamburt.github.io/obj-rs/
+[Documentation]: https://simnalamburt.github.io/obj-rs/
 [img]: https://simnalamburt.github.io/obj-rs/screenshot.png
 [glium]: https://github.com/tomaka/glium
 [working sample]: examples/glium.rs
+[MIT license]: LICENSE-MIT
+[Apache License (Version 2.0)]: LICENSE-APACHE
+[COPYRIGHT]: COPYRIGHT

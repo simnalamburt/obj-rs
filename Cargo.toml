@@ -1,3 +1,11 @@
+# Copyright 2014-2017 Hyeon Kim
+#
+# Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+# http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+# <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+# option. This file may not be copied, modified, or distributed
+# except according to those terms.
+
 [package]
 name = "obj-rs"
 version = "0.4.15"
@@ -5,7 +13,7 @@ authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 homepage = "https://github.com/simnalamburt/obj-rs"
 repository = "https://github.com/simnalamburt/obj-rs"
 documentation = "https://simnalamburt.github.io/obj-rs/"
-license = "BSD-2-Clause"
+license = "(Apache-2.0 OR MIT)"
 keywords = ["graphics", "obj", "WaveFront", "3D", "parser"]
 readme = "README.md"
 
