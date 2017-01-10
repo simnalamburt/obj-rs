@@ -1,7 +1,9 @@
-obj-rs [![crates-i]][crates-a] [![travis-i]][travis-a]
+obj-rs [![Travis Build Status]][travis] [![AppVeyor Build Status]][appveyor]
 ========
-[Wavefront obj] parser for **[Rust]**. It handles both `.obj` and `.mtl`
-formats. [Documentation]
+[Wavefront obj] parser for [Rust]. It handles both `.obj` and `.mtl` formats.
+
+- [API Documentation](https://simnalamburt.github.io/obj-rs/)
+- [See `obj-rs` in crates.io](https://crates.io/crates/obj-rs)
 
 ```toml
 [dependencies]
@@ -25,6 +27,8 @@ dome.indices;
 > This sample image is pretty good illustration of current status of **obj-rs**.
 **obj-rs** is currently able to load position and normal data of `obj` but not
 texture & material data yet.
+
+<br>
 
 Glium support
 --------
@@ -59,13 +63,13 @@ cargo run --example glium --features glium-support
 *obj-rs* is primarily distributed under the terms of both the [Apache License
 (Version 2.0)] and the [MIT license]. See [COPYRIGHT] for details.
 
-[crates-i]: https://img.shields.io/crates/v/obj-rs.svg
-[crates-a]: https://crates.io/crates/obj-rs
-[travis-i]: https://travis-ci.org/simnalamburt/obj-rs.svg?branch=master
-[travis-a]: https://travis-ci.org/simnalamburt/obj-rs
+[Travis Build Status]: https://travis-ci.org/simnalamburt/obj-rs.svg?branch=master
+[travis]: https://travis-ci.org/simnalamburt/obj-rs
+[AppVeyor Build Status]: https://ci.appveyor.com/api/projects/status/281kjgy7oxaa120s/branch/master?svg=true
+[appveyor]: https://ci.appveyor.com/project/simnalamburt/obj-rs/branch/master
+
 [Wavefront obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Rust]: http://rust-lang.org
-[Documentation]: https://simnalamburt.github.io/obj-rs/
 [img]: https://simnalamburt.github.io/obj-rs/screenshot.png
 [glium]: https://github.com/tomaka/glium
 [working sample]: examples/glium.rs
