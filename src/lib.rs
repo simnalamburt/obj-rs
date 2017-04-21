@@ -42,7 +42,7 @@ pub mod raw;
 use std::io::BufRead;
 use std::collections::hash_map::{HashMap, Entry};
 use raw::object::Polygon;
-pub use error::{ObjResult, ObjError};
+pub use error::{ObjResult, ObjError, LoadError, LoadErrorKind};
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex, T: BufRead>(input: T) -> ObjResult<Obj<V>> {
