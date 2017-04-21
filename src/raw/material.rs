@@ -48,8 +48,6 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             // Unexpected statement
             _ => error!(UnexpectedStatement, "Received unknown statement")
         }
-
-        Ok(())
     }));
 
     Ok(RawMtl)
