@@ -34,7 +34,8 @@ dome.indices;
 
 #[cfg(feature = "glium-support")] #[macro_use] extern crate glium;
 extern crate vec_map;
-extern crate rustc_serialize;
+
+#[macro_use] extern crate serde_derive;
 
 #[macro_use] mod error;
 pub mod raw;
@@ -51,7 +52,7 @@ pub fn load_obj<V: FromRawVertex, T: BufRead>(input: T) -> ObjResult<Obj<V>> {
 }
 
 /// 3D model object loaded from wavefront OBJ.
-#[derive(RustcEncodable, RustcDecodable)]
+#[derive(Serialize, Deserialize)]
 pub struct Obj<V = Vertex> {
     /// Object's name.
     pub name: Option<String>,
@@ -81,7 +82,7 @@ pub trait FromRawVertex : Sized {
 }
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Copy, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -139,7 +140,7 @@ impl FromRawVertex for Vertex {
 }
 
 /// Vertex data type of `Obj` which contains only position data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug, RustcEncodable, RustcDecodable)]
+#[derive(Copy, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3]
