@@ -17,17 +17,22 @@ pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
     // in order to allow it to be re-used across iterations.
     let mut args : Vec<*const str> = Vec::new();
 
-    // This is a buffer of continued lines created by "\"
-    let mut multi_line : String = String::new();
+    // This is a buffer for continued lines joined by '\'.
+    let mut multi_line = String::new();
+
     for line in input.lines() {
         let line = line?;
         let line = line.split('#').next().unwrap(); // Remove comments
+
         if line.ends_with('\\') {
-            multi_line.push_str(line.trim_right_matches('\\'));
-            multi_line.push(' '); // Whitespace delimiter for continued line
+            multi_line.push_str(&line[..line.len()-1]);
+            multi_line.push(' '); // Insert a space to delimit the following lines
             continue
-        } else {
-            multi_line.push_str(line); // Append current line
+        }
+
+        multi_line.push_str(line); // Append the current line
+
+        {
             let mut words = multi_line.split_whitespace();
 
             if let Some(stmt) = words.next() {
@@ -47,6 +52,7 @@ pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
                 args.clear();
             }
         }
+
         multi_line.clear();
     }
 
