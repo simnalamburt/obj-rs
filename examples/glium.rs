@@ -22,15 +22,20 @@ fn main() {
     use std::io::BufReader;
     use std::default::Default;
     use obj::*;
-    use glium::{DisplayBuild, Program};
+    use glium::{Program, glutin};
+    use glium::glutin::dpi::LogicalSize;
+
+    let mut events_loop = glutin::EventsLoop::new();
 
     // building the display, ie. the main object
-    let display = glium::glutin::WindowBuilder::new()
-        .with_dimensions(500, 400)
-        .with_title(format!("obj-rs"))
-        .with_depth_buffer(32)
-        .build_glium()
-        .unwrap();
+    
+    let window = glutin::WindowBuilder::new()
+        .with_dimensions(LogicalSize::new(500.0, 400.0))
+        .with_title("obj-rs");
+
+    let context = glutin::ContextBuilder::new();
+
+    let display = glium::Display::new(window, context, &events_loop).unwrap();
 
     let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
     let obj: Obj = load_obj(input).unwrap();
@@ -87,7 +92,8 @@ fn main() {
 
     // the main loop
     // each cycle will draw once
-    'main: loop {
+    let mut running = true;
+    while running {
         use glium::Surface;
         use std::thread::sleep;
         use std::time::Duration;
@@ -101,14 +107,12 @@ fn main() {
         sleep(Duration::from_millis(17));
 
         // polling and handling the events received by the window
-        for event in display.poll_events() {
-            use glium::glutin::Event::*;
-
+        events_loop.poll_events(|event| {
             match event {
-                Closed => break 'main,
+                glutin::Event::WindowEvent {event: glutin::WindowEvent::CloseRequested, ..} => running = false,
                 _ => ()
             }
-        }
+        });
     }
 }
 
