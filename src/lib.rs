@@ -33,6 +33,7 @@ dome.indices;
 #![deny(missing_docs)]
 
 #[cfg(feature = "glium-support")] #[macro_use] extern crate glium;
+extern crate num;
 extern crate vec_map;
 
 #[macro_use] extern crate serde_derive;
@@ -40,29 +41,30 @@ extern crate vec_map;
 #[macro_use] mod error;
 pub mod raw;
 
+use num::{FromPrimitive, Integer};
 use std::io::BufRead;
 use std::collections::hash_map::{HashMap, Entry};
 use raw::object::Polygon;
 pub use error::{ObjResult, ObjError, LoadError, LoadErrorKind};
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
-pub fn load_obj<V: FromRawVertex, T: BufRead>(input: T) -> ObjResult<Obj<V>> {
+pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
     let raw = try!(raw::parse_obj(input));
     Obj::new(raw)
 }
 
 /// 3D model object loaded from wavefront OBJ.
 #[derive(Serialize, Deserialize)]
-pub struct Obj<V = Vertex> {
+pub struct Obj<V = Vertex, I = u16> {
     /// Object's name.
     pub name: Option<String>,
     /// Vertex buffer.
     pub vertices: Vec<V>,
     /// Index buffer.
-    pub indices: Vec<u16>,
+    pub indices: Vec<I>,
 }
 
-impl<V: FromRawVertex> Obj<V> {
+impl<V: FromRawVertex<I>, I> Obj<V, I> {
     /// Create `Obj` from `RawObj` object.
     pub fn new(raw: raw::RawObj) -> ObjResult<Self> {
         let (vertices, indices) = try!(FromRawVertex::process(raw.positions, raw.normals, raw.polygons));
@@ -76,9 +78,9 @@ impl<V: FromRawVertex> Obj<V> {
 }
 
 /// Conversion from `RawObj`'s raw data.
-pub trait FromRawVertex : Sized {
+pub trait FromRawVertex<I> : Sized {
     /// Build vertex and index buffer from raw object data.
-    fn process(vertices: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)>;
+    fn process(vertices: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)>;
 }
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
@@ -93,8 +95,8 @@ pub struct Vertex {
 #[cfg(feature = "glium-support")]
 implement_vertex!(Vertex, position, normal);
 
-impl FromRawVertex for Vertex {
-    fn process(positions: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for Vertex {
+    fn process(positions: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
         let mut vb = Vec::with_capacity(polygons.len() * 3);
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
@@ -108,7 +110,7 @@ impl FromRawVertex for Vertex {
                         let n = normals[ni];
                         let vertex = Vertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2] };
 
-                        let index= vb.len() as u16;
+                        let index = I::from_usize(vb.len()).expect("Unable to convert the index from usize");
                         vb.push(vertex);
                         entry.insert(index);
                         index
@@ -149,12 +151,12 @@ pub struct Position {
 #[cfg(feature = "glium-support")]
 implement_vertex!(Position, position);
 
-impl FromRawVertex for Position {
-    fn process(vertices: Vec<(f32, f32, f32, f32)>, _: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<u16>)> {
+impl<I: FromPrimitive + Integer> FromRawVertex<I> for Position {
+    fn process(vertices: Vec<(f32, f32, f32, f32)>, _: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
         let vb = vertices.into_iter().map(|v| Position { position: [v.0, v.1, v.2] }).collect();
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
-            let mut map = |pi: usize| { ib.push(pi as u16) };
+            let mut map = |pi: usize| { ib.push(I::from_usize(pi).expect("Unable to convert the index from usize")) };
 
             for polygon in polygons {
                 match polygon {
@@ -182,14 +184,14 @@ mod glium_support {
     use glium::backend::Facade;
     use super::Obj;
 
-    impl<V: vertex::Vertex> Obj<V> {
+    impl<V: vertex::Vertex, I: glium::index::Index> Obj<V, I> {
         /// Retrieve glium-compatible vertex buffer from Obj
         pub fn vertex_buffer<F: Facade>(&self, facade: &F) -> Result<VertexBuffer<V>, vertex::BufferCreationError> {
             VertexBuffer::new(facade, &self.vertices)
         }
 
         /// Retrieve glium-compatible index buffer from Obj
-        pub fn index_buffer<F: Facade>(&self, facade: &F) -> Result<IndexBuffer<u16>, index::BufferCreationError> {
+        pub fn index_buffer<F: Facade>(&self, facade: &F) -> Result<IndexBuffer<I>, index::BufferCreationError> {
             IndexBuffer::new(facade, index::PrimitiveType::TrianglesList, &self.indices)
         }
     }
