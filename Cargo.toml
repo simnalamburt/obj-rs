@@ -8,7 +8,7 @@
 
 [package]
 name = "obj-rs"
-version = "0.4.20"
+version = "0.4.21"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 homepage = "https://github.com/simnalamburt/obj-rs"
 repository = "https://github.com/simnalamburt/obj-rs"
@@ -32,6 +32,7 @@ glium = { version = "0.22.0", default-features = false, optional = true }
 vec_map = "0.6.0"
 serde = "1.0"
 serde_derive = "1.0"
+num = "0.2.0"
 
 
 [[example]]
