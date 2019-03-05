@@ -8,7 +8,7 @@
 
 [package]
 name = "obj-rs"
-version = "0.4.21"
+version = "0.4.22"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 homepage = "https://github.com/simnalamburt/obj-rs"
 repository = "https://github.com/simnalamburt/obj-rs"
