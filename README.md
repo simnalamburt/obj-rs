@@ -5,7 +5,7 @@ See [Documentation] for the further details.
 
 ```toml
 [dependencies]
-obj-rs = "0.4"
+obj-rs = "0.5"
 ```
 ```rust
 use std::fs::File;
@@ -31,7 +31,7 @@ Glium support
 ```toml
 [dependencies]
 glium = "0.14"
-obj-rs = { version = "0.4", features = ["glium-support"] }
+obj-rs = { version = "0.5", features = ["glium-support"] }
 ```
 ```rust
 use std::fs::File;
