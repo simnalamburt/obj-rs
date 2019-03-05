@@ -67,7 +67,7 @@ pub struct Obj<V = Vertex, I = u16> {
 impl<V: FromRawVertex<I>, I> Obj<V, I> {
     /// Create `Obj` from `RawObj` object.
     pub fn new(raw: raw::RawObj) -> ObjResult<Self> {
-        let (vertices, indices) = try!(FromRawVertex::process(raw.positions, raw.normals, raw.polygons));
+        let (vertices, indices) = try!(FromRawVertex::process(raw.positions, raw.normals, raw.tex_coords, raw.polygons));
 
         Ok(Obj {
             name: raw.name,
@@ -80,7 +80,7 @@ impl<V: FromRawVertex<I>, I> Obj<V, I> {
 /// Conversion from `RawObj`'s raw data.
 pub trait FromRawVertex<I> : Sized {
     /// Build vertex and index buffer from raw object data.
-    fn process(vertices: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)>;
+    fn process(vertices: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, tex_coords: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)>;
 }
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
@@ -96,7 +96,7 @@ pub struct Vertex {
 implement_vertex!(Vertex, position, normal);
 
 impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for Vertex {
-    fn process(positions: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
+    fn process(positions: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, _: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
         let mut vb = Vec::with_capacity(polygons.len() * 3);
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
@@ -108,8 +108,7 @@ impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for Vertex {
                     Entry::Vacant(entry) => {
                         let p = positions[pi];
                         let n = normals[ni];
-                        let vertex = Vertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2] };
-
+                        let vertex = Vertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2]};
                         let index = I::from_usize(vb.len()).expect("Unable to convert the index from usize");
                         vb.push(vertex);
                         entry.insert(index);
@@ -152,7 +151,7 @@ pub struct Position {
 implement_vertex!(Position, position);
 
 impl<I: FromPrimitive + Integer> FromRawVertex<I> for Position {
-    fn process(vertices: Vec<(f32, f32, f32, f32)>, _: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
+    fn process(vertices: Vec<(f32, f32, f32, f32)>, _: Vec<(f32, f32, f32)>, _: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
         let vb = vertices.into_iter().map(|v| Position { position: [v.0, v.1, v.2] }).collect();
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
@@ -173,6 +172,65 @@ impl<I: FromPrimitive + Integer> FromRawVertex<I> for Position {
                 }
             }
         }
+        Ok((vb, ib))
+    }
+}
+
+/// Vertex data type of `Obj` which contains position, normal and texture data of a vertex.
+#[derive(Copy, PartialEq, Clone, Debug, Serialize, Deserialize)]
+pub struct TexturedVertex {
+    /// Position vector of a vertex.
+    pub position: [f32; 3],
+    /// Normal vertor of a vertex.
+    pub normal: [f32; 3],
+    /// Texture of a vertex.
+    pub texture: [f32; 3]
+}
+
+#[cfg(feature = "glium-support")]
+implement_vertex!(TexturedVertex, position, normal, texture);
+
+impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for TexturedVertex {
+    fn process(positions: Vec<(f32, f32, f32, f32)>, normals: Vec<(f32, f32, f32)>, tex_coords: Vec<(f32, f32, f32)>, polygons: Vec<Polygon>) -> ObjResult<(Vec<Self>, Vec<I>)> {
+        let mut vb = Vec::with_capacity(polygons.len() * 3);
+        let mut ib = Vec::with_capacity(polygons.len() * 3);
+        {
+            let mut cache = HashMap::new();
+            let mut map = |pi: usize, ni: usize, ti: usize| {
+                // Look up cache
+                let index = match cache.entry((pi, ni, ti)) {
+                    // Cache miss -> make new, store it on cache
+                    Entry::Vacant(entry) => {
+                        let p = positions[pi];
+                        let n = normals[ni];
+                        let t = tex_coords[ti];
+                        let vertex = TexturedVertex { position: [p.0, p.1, p.2], normal: [n.0, n.1, n.2], texture: [t.0, t.1, t.2] };
+                        let index = I::from_usize(vb.len()).expect("Unable to convert the index from usize");
+                        vb.push(vertex);
+                        entry.insert(index);
+                        index
+                    }
+                    // Cache hit -> use it
+                    Entry::Occupied(entry) => {
+                        *entry.get()
+                    }
+                };
+                ib.push(index)
+            };
+
+            for polygon in polygons {
+                match polygon {
+                    Polygon::P(_) => error!(InsufficientData, "Tried to extract normal and texture data which are not contained in the model"),
+                    Polygon::PT(_) => error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
+                    Polygon::PN(_) => error!(InsufficientData, "Tried to extract texture data which are not contained in the model"),
+                    Polygon::PTN(ref vec) if vec.len() == 3 => {
+                        for &(pi, ti, ni) in vec { map(pi, ni, ti) }
+                    }
+                    _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
+                }
+            }
+        }
+        vb.shrink_to_fit();
         Ok((vb, ib))
     }
 }
