@@ -12,23 +12,26 @@ extern crate obj;
 #[cfg(feature = "glium-support")]
 fn main() {
     use glium::glutin::dpi::LogicalSize;
-    use glium::{glutin, Program};
+    use glium::Program;
+    use glium::glutin::event::{Event, WindowEvent};
+    use glium::glutin::event_loop::{ControlFlow, EventLoop};
+    use glium::glutin::window::WindowBuilder;
+    use glium::glutin::ContextBuilder;
     use obj::*;
-    use std::default::Default;
     use std::fs::File;
     use std::io::BufReader;
 
-    let mut events_loop = glutin::EventsLoop::new();
+    let event_loop = EventLoop::new();
 
     // building the display, ie. the main object
 
-    let window = glutin::WindowBuilder::new()
-        .with_dimensions(LogicalSize::new(500.0, 400.0))
+    let window = WindowBuilder::new()
+        .with_inner_size(LogicalSize::new(500.0, 400.0))
         .with_title("obj-rs");
 
-    let context = glutin::ContextBuilder::new();
+    let context = ContextBuilder::new();
 
-    let display = glium::Display::new(window, context, &events_loop).unwrap();
+    let display = glium::Display::new(window, context, &event_loop).unwrap();
 
     let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
     let obj: Obj = load_obj(input).unwrap();
@@ -89,31 +92,28 @@ fn main() {
         ..Default::default()
     };
 
-    // the main loop
-    // each cycle will draw once
-    let mut running = true;
-    while running {
-        use glium::Surface;
-        use std::thread::sleep;
-        use std::time::Duration;
+    // Main loop
+    event_loop.run(move |event, _, control_flow| {
+        *control_flow = ControlFlow::Wait;
 
-        let mut target = display.draw();
-        target.clear_color_and_depth((0.0, 0.0, 0.0, 0.0), 1.0);
-        target.draw(&vb, &ib, &program, &uniforms, &params).unwrap();
-        target.finish().unwrap();
+        match event {
+            Event::LoopDestroyed => return,
+            Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
+                *control_flow = ControlFlow::Exit
+            }
+            Event::RedrawRequested(_) => {
+                // draw
+                use glium::Surface;
 
-        // sleeping for some time in order not to use up too much CPU
-        sleep(Duration::from_millis(17));
-
-        // polling and handling the events received by the window
-        events_loop.poll_events(|event| match event {
-            glutin::Event::WindowEvent {
-                event: glutin::WindowEvent::CloseRequested,
-                ..
-            } => running = false,
+                let mut target = display.draw();
+                target.clear_color_and_depth((0.0, 0.0, 0.0, 0.0), 1.0);
+                target.draw(&vb, &ib, &program, &uniforms, &params).unwrap();
+                target.finish().unwrap();
+            }
             _ => (),
-        });
-    }
+        }
+
+    });
 }
 
 #[cfg(not(feature = "glium-support"))]
