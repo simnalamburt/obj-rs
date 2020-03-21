@@ -30,7 +30,7 @@ Glium support
 
 ```toml
 [dependencies]
-glium = "0.14"
+glium = "0.26"
 obj-rs = { version = "0.5", features = ["glium-support"] }
 ```
 ```rust
