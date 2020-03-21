@@ -8,17 +8,21 @@
 
 extern crate obj;
 
-use obj::raw::{RawObj, parse_obj};
+use obj::raw::{parse_obj, RawObj};
 
 fn fixture(filename: &str) -> RawObj {
-    use std::path::Path;
     use std::fs::File;
     use std::io::BufReader;
+    use std::path::Path;
 
     let path = Path::new("tests").join("fixtures").join(filename);
     let file = match File::open(&path) {
         Ok(f) => f,
-        Err(e) => panic!("Failed to open \"{}\". \x1b[31m{}\x1b[0m", path.to_string_lossy(), e)
+        Err(e) => panic!(
+            "Failed to open \"{}\". \x1b[31m{}\x1b[0m",
+            path.to_string_lossy(),
+            e
+        ),
     };
     let input = BufReader::new(file);
 
@@ -72,19 +76,27 @@ macro_rules! test {
 }
 
 macro_rules! eq {
-    ($lhs:expr, $rhs:expr) => (eq!($lhs, $rhs, stringify!($lhs)));
+    ($lhs:expr, $rhs:expr) => {
+        eq!($lhs, $rhs, stringify!($lhs))
+    };
 
-    ($lhs:expr, $rhs:expr, $exp:expr) => ({
+    ($lhs:expr, $rhs:expr, $exp:expr) => {{
         let left = &($lhs);
         let right = &($rhs);
 
         if !((*left == *right) && (*right == *left)) {
             use std::io::Write;
-            let _ = writeln!(&mut std::io::stderr(), "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
-                     but it was \x1b[33m{:?}\x1b[0m", $exp, *right, *left);
+            let _ = writeln!(
+                &mut std::io::stderr(),
+                "\x1b[33m{}\x1b[0m should be \x1b[33m{:?}\x1b[0m, \
+                 but it was \x1b[33m{:?}\x1b[0m",
+                $exp,
+                *right,
+                *left
+            );
             panic!($exp);
         }
-    });
+    }};
 }
 
 #[test]

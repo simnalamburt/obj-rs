@@ -13,22 +13,23 @@
 //!
 //!     cargo run --example glium --features glium-support
 
-#[macro_use] extern crate glium;
+#[macro_use]
+extern crate glium;
 extern crate obj;
 
 #[cfg(feature = "glium-support")]
 fn main() {
+    use glium::glutin::dpi::LogicalSize;
+    use glium::{glutin, Program};
+    use obj::*;
+    use std::default::Default;
     use std::fs::File;
     use std::io::BufReader;
-    use std::default::Default;
-    use obj::*;
-    use glium::{Program, glutin};
-    use glium::glutin::dpi::LogicalSize;
 
     let mut events_loop = glutin::EventsLoop::new();
 
     // building the display, ie. the main object
-    
+
     let window = glutin::WindowBuilder::new()
         .with_dimensions(LogicalSize::new(500.0, 400.0))
         .with_title("obj-rs");
@@ -43,7 +44,9 @@ fn main() {
     let vb = obj.vertex_buffer(&display).unwrap();
     let ib = obj.index_buffer(&display).unwrap();
 
-    let program = Program::from_source(&display, r#"
+    let program = Program::from_source(
+        &display,
+        r#"
         #version 410
 
         uniform mat4 matrix;
@@ -57,7 +60,8 @@ fn main() {
             gl_Position = matrix * vec4(position, 1.0);
             _normal = normalize(normal);
         }
-    "#, r#"
+    "#,
+        r#"
         #version 410
 
         uniform vec3 light;
@@ -68,7 +72,10 @@ fn main() {
         void main() {
             result = vec4(clamp(dot(_normal, -light), 0.0f, 1.0f) * vec3(1.0f, 0.93f, 0.56f), 1.0f);
         }
-    "#, None).unwrap();
+    "#,
+        None,
+    )
+    .unwrap();
 
     // drawing a frame
     let uniforms = uniform! {
@@ -107,19 +114,22 @@ fn main() {
         sleep(Duration::from_millis(17));
 
         // polling and handling the events received by the window
-        events_loop.poll_events(|event| {
-            match event {
-                glutin::Event::WindowEvent {event: glutin::WindowEvent::CloseRequested, ..} => running = false,
-                _ => ()
-            }
+        events_loop.poll_events(|event| match event {
+            glutin::Event::WindowEvent {
+                event: glutin::WindowEvent::CloseRequested,
+                ..
+            } => running = false,
+            _ => (),
         });
     }
 }
 
 #[cfg(not(feature = "glium-support"))]
 fn main() {
-    println!("\n\
+    println!(
+        "\n\
     Please execute it with \x1b[4m--features glium-support\x1b[24m the option
 
-    $ \x1b[33mcargo run --example glium --features glium-support\x1b[0m\n");
+    $ \x1b[33mcargo run --example glium --features glium-support\x1b[0m\n"
+    );
 }

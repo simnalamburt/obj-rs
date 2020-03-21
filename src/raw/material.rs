@@ -8,8 +8,8 @@
 
 //! Parses `.mtl` format which stores material data
 
-use std::io::prelude::*;
 use std::collections::HashMap;
+use std::io::prelude::*;
 use std::mem::replace;
 
 use error::ObjResult;
@@ -48,7 +48,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
 
                 match args.len() {
                     1 => name = Some(args[0].to_owned()),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument")
+                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
                 }
             }
 
@@ -59,36 +59,26 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             "Ke" => mat.emissive = Some(try!(parse_color(args))),
             "Km" => unimplemented!(),
             "Tf" => mat.transmission_filter = Some(try!(parse_color(args))),
-            "Ns" => {
-                match args.len() {
-                    1 => mat.specular_exponent = Some(try!(args[0].parse())),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument")
-                }
-            }
-            "Ni" => {
-                match args.len() {
-                    1 => mat.optical_density = Some(try!(args[0].parse())),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument")
-                }
-            }
-            "illum" => {
-                match args.len() {
-                    1 => mat.illumination_model = Some(try!(args[0].parse())),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument")
-                }
-            }
-            "d" => {
-                match args.len() {
-                    1 => mat.dissolve = Some(try!(args[0].parse())),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument")
-                }
-            }
-            "Tr" => {
-                match args.len() {
-                    1 => mat.dissolve = Some(1.0 - try!(args[0].parse::<f32>())),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument")
-                }
-            }
+            "Ns" => match args.len() {
+                1 => mat.specular_exponent = Some(try!(args[0].parse())),
+                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+            },
+            "Ni" => match args.len() {
+                1 => mat.optical_density = Some(try!(args[0].parse())),
+                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+            },
+            "illum" => match args.len() {
+                1 => mat.illumination_model = Some(try!(args[0].parse())),
+                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+            },
+            "d" => match args.len() {
+                1 => mat.dissolve = Some(try!(args[0].parse())),
+                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+            },
+            "Tr" => match args.len() {
+                1 => mat.dissolve = Some(1.0 - try!(args[0].parse::<f32>())),
+                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+            },
 
             // Texture map statements
             "map_Ka" => mat.ambient_map = Some(try!(parse_texture_map(args))),
@@ -105,7 +95,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             "refl" => unimplemented!(),
 
             // Unexpected statement
-            _ => error!(UnexpectedStatement, "Received unknown statement")
+            _ => error!(UnexpectedStatement, "Received unknown statement"),
         }
 
         Ok(())
@@ -131,24 +121,22 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
             match args.len() {
                 1 => MtlColor::Xyz(args[0], args[0], args[0]),
                 3 => MtlColor::Xyz(args[0], args[1], args[2]),
-                _ => error!(WrongNumberOfArguments, "Expected 1 or 3 color values")
+                _ => error!(WrongNumberOfArguments, "Expected 1 or 3 color values"),
             }
         }
 
-        "spectral" => {
-            match args.len() {
-                2 => MtlColor::Spectral(args[1].to_owned(), 1.0),
-                3 => MtlColor::Spectral(args[1].to_owned(), try!(args[2].parse())),
-                _ => error!(WrongNumberOfArguments, "Expected 2 or 3 arguments")
-            }
-        }
+        "spectral" => match args.len() {
+            2 => MtlColor::Spectral(args[1].to_owned(), 1.0),
+            3 => MtlColor::Spectral(args[1].to_owned(), try!(args[2].parse())),
+            _ => error!(WrongNumberOfArguments, "Expected 2 or 3 arguments"),
+        },
 
         _ => {
             let args = f!(args);
             match args.len() {
                 1 => MtlColor::Rgb(args[0], args[0], args[0]),
                 3 => MtlColor::Rgb(args[0], args[1], args[2]),
-                _ => error!(WrongNumberOfArguments, "Expected 1 or 3 color values")
+                _ => error!(WrongNumberOfArguments, "Expected 1 or 3 color values"),
             }
         }
     })
@@ -157,7 +145,9 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
 /// Parses a texture map specification from the arguments of a statement
 fn parse_texture_map(args: &[&str]) -> ObjResult<MtlTextureMap> {
     if args.len() == 1 {
-        Ok(MtlTextureMap { file: args[0].to_owned() })
+        Ok(MtlTextureMap {
+            file: args[0].to_owned(),
+        })
     } else {
         error!(WrongNumberOfArguments, "Expected exactly 1 argument")
     }
@@ -167,7 +157,7 @@ fn parse_texture_map(args: &[&str]) -> ObjResult<MtlTextureMap> {
 #[derive(Clone, Debug)]
 pub struct RawMtl {
     /// Map from the material name to its properties
-    pub materials: HashMap<String, Material>
+    pub materials: HashMap<String, Material>,
 }
 
 /// A single material from a `.mtl` file
@@ -216,7 +206,7 @@ pub enum MtlColor {
     ///
     /// The first argument is the name of a `.rfl` file specifying the curve.
     /// The second argument is a multiplier for the values in the `.rfl` file.
-    Spectral(String, f32)
+    Spectral(String, f32),
 }
 
 /// A texture map specified in a `.mtl` file

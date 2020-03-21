@@ -8,11 +8,11 @@
 
 //! Parses `.obj` format which stores 3D mesh data
 
-use std::io::BufRead;
-use std::collections::HashMap;
-use vec_map::VecMap;
 use error::ObjResult;
 use raw::lexer::lex;
+use std::collections::HashMap;
+use std::io::BufRead;
+use vec_map::VecMap;
 
 /// Parses &[&str] into &[f32].
 macro_rules! f {
@@ -58,10 +58,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut polygons = Vec::new();
 
     let counter = Counter::new(&points, &lines, &polygons);
-    let mut group_builder       = counter.hash_map("default".to_string());
-    let mut mesh_builder        = counter.hash_map(String::new());
-    let mut smoothing_builder   = counter.vec_map();
-    let mut merging_builder     = counter.vec_map();
+    let mut group_builder = counter.hash_map("default".to_string());
+    let mut mesh_builder = counter.hash_map(String::new());
+    let mut smoothing_builder = counter.vec_map();
+    let mut merging_builder = counter.vec_map();
 
     try!(lex(input, |stmt, args| {
         match stmt {
@@ -71,7 +71,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 positions.push(match args.len() {
                     4 => (args[0], args[1], args[2], args[3]),
                     3 => (args[0], args[1], args[2], 1.0),
-                    _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments")
+                    _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments"),
                 })
             }
             "vt" => {
@@ -80,14 +80,14 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     3 => (args[0], args[1], args[2]),
                     2 => (args[0], args[1], 0.0),
                     1 => (args[0], 0.0, 0.0),
-                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
+                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
                 })
             }
             "vn" => {
                 let args = f!(args);
                 normals.push(match args.len() {
                     3 => (args[0], args[1], args[2]),
-                    _ => error!(WrongNumberOfArguments, "Expected 3 arguments")
+                    _ => error!(WrongNumberOfArguments, "Expected 3 arguments"),
                 })
             }
             "vp" => {
@@ -96,7 +96,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     3 => (args[0], args[1], args[2]),
                     2 => (args[0], args[1], 1.0),
                     1 => (args[0], 0.0, 1.0),
-                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments")
+                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
                 })
             }
 
@@ -104,9 +104,15 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "cstype" => {
                 let _rational: bool;
                 let geometry = match args.len() {
-                    2 if args[0] == "rat" => { _rational = true; args[1] }
-                    1 => { _rational = false; args[0] }
-                    _ => error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format")
+                    2 if args[0] == "rat" => {
+                        _rational = true;
+                        args[1]
+                    }
+                    1 => {
+                        _rational = false;
+                        args[0]
+                    }
+                    _ => error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format"),
                 };
 
                 match geometry {
@@ -115,7 +121,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     "bspline" => unimplemented!(),
                     "cardinal" => unimplemented!(),
                     "taylor" => unimplemented!(),
-                    _ => error!(WrongTypeOfArguments, "Expected one of 'bmatrix', 'bezier', 'bspline', 'cardinal' and 'taylor'")
+                    _ => error!(
+                        WrongTypeOfArguments,
+                        "Expected one of 'bmatrix', 'bezier', 'bspline', 'cardinal' and 'taylor'"
+                    ),
                 }
             }
             "deg" => {
@@ -123,7 +132,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 match args.len() {
                     2 => unimplemented!(), // (deg_u, deg_v)
                     1 => unimplemented!(), // (deg_u)
-                    _ => error!(WrongNumberOfArguments, "Expected 1 or 2 arguments")
+                    _ => error!(WrongNumberOfArguments, "Expected 1 or 2 arguments"),
                 }
             }
             "bmat" => unimplemented!(),
@@ -132,13 +141,15 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             // Elements
             "p" => {
                 for v in args {
-                    let v : i32 = try!(v.parse());
+                    let v: i32 = try!(v.parse());
                     let v = idx!(v, positions);
                     points.push(v);
                 }
             }
             "l" => {
-                if args.len() < 2 { error!(WrongNumberOfArguments, "Expected at least 2 arguments") }
+                if args.len() < 2 {
+                    error!(WrongNumberOfArguments, "Expected at least 2 arguments")
+                }
                 let mut args = args.iter();
                 let first = args.next().unwrap();
                 let rest = args;
@@ -159,29 +170,30 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         Line::P(points)
                     }
                     (p, t, 0) => {
-                        let mut points = vec![(
-                            idx!(p, positions),
-                            idx!(t, tex_coords))];
+                        let mut points = vec![(idx!(p, positions), idx!(t, tex_coords))];
                         for gs in rest {
                             let group = try!(parse_vertex_group(gs));
                             if group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            points.push((
-                                idx!(group.0, positions),
-                                idx!(group.1, tex_coords)));
+                            points.push((idx!(group.0, positions), idx!(group.1, tex_coords)));
                         }
                         Line::PT(points)
                     }
                     _ => {
-                        error!(WrongTypeOfArguments, "Unexpected vertex format, expected `#` or `#/#`");
+                        error!(
+                            WrongTypeOfArguments,
+                            "Unexpected vertex format, expected `#` or `#/#`"
+                        );
                     }
                 };
                 lines.push(line);
             }
             "fo" | "f" => {
-                if args.len() < 3 { error!(WrongNumberOfArguments, "Expected at least 3 arguments") }
+                if args.len() < 3 {
+                    error!(WrongNumberOfArguments, "Expected at least 3 arguments")
+                }
 
                 let mut args = args.iter();
                 let first = args.next().unwrap();
@@ -204,50 +216,41 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         Polygon::P(polygon)
                     }
                     (p, t, 0) => {
-                        let mut polygon = vec![(
-                            idx!(p, positions),
-                            idx!(t, tex_coords))];
+                        let mut polygon = vec![(idx!(p, positions), idx!(t, tex_coords))];
                         for gs in rest {
                             let group = try!(parse_vertex_group(gs));
                             if group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            polygon.push((
-                                idx!(group.0, positions),
-                                idx!(group.1, tex_coords)));
+                            polygon.push((idx!(group.0, positions), idx!(group.1, tex_coords)));
                         }
 
                         Polygon::PT(polygon)
                     }
                     (p, 0, n) => {
-                        let mut polygon = vec![(
-                            idx!(p, positions),
-                            idx!(n, normals))];
+                        let mut polygon = vec![(idx!(p, positions), idx!(n, normals))];
                         for gs in rest {
                             let group = try!(parse_vertex_group(gs));
                             if group.1 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            polygon.push((
-                                idx!(group.0, positions),
-                                idx!(group.2, normals)));
+                            polygon.push((idx!(group.0, positions), idx!(group.2, normals)));
                         }
 
                         Polygon::PN(polygon)
                     }
                     (p, t, n) => {
-                        let mut polygon = vec![(
-                            idx!(p, positions),
-                            idx!(t, tex_coords),
-                            idx!(n, normals))];
+                        let mut polygon =
+                            vec![(idx!(p, positions), idx!(t, tex_coords), idx!(n, normals))];
                         for gs in rest {
                             let group = try!(parse_vertex_group(gs));
                             polygon.push((
                                 idx!(group.0, positions),
                                 idx!(group.1, tex_coords),
-                                idx!(group.2, normals)));
+                                idx!(group.2, normals),
+                            ));
                         }
 
                         Polygon::PTN(polygon)
@@ -272,30 +275,27 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "con" => unimplemented!(),
 
             // Grouping
-            "g" => {
-                match args.len() {
-                    1 => group_builder.start(args[0].to_string()),
-                    _ => error!(WrongNumberOfArguments, "Expected group name parameter, but nothing has been supplied")
-                }
-            }
-            "s" => {
-                match args.len() {
-                    1 if (args[0] == "off" || args[0] == "0") => smoothing_builder.end(),
-                    1 => smoothing_builder.start(try!(args[0].parse())),
-                    _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
-                }
-            }
-            "mg" => {
-                match args.len() {
-                    1 if (args[0] == "off" || args[0] == "0") => merging_builder.end(),
-                    1 => merging_builder.start(try!(args[0].parse())),
-                    _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
-                }
-            }
+            "g" => match args.len() {
+                1 => group_builder.start(args[0].to_string()),
+                _ => error!(
+                    WrongNumberOfArguments,
+                    "Expected group name parameter, but nothing has been supplied"
+                ),
+            },
+            "s" => match args.len() {
+                1 if (args[0] == "off" || args[0] == "0") => smoothing_builder.end(),
+                1 => smoothing_builder.start(try!(args[0].parse())),
+                _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
+            },
+            "mg" => match args.len() {
+                1 if (args[0] == "off" || args[0] == "0") => merging_builder.end(),
+                1 => merging_builder.start(try!(args[0].parse())),
+                _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
+            },
             "o" => {
                 name = match args.len() {
                     0 => None,
-                    _ => Some(args.join(" "))
+                    _ => Some(args.join(" ")),
                 }
             }
 
@@ -304,12 +304,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "c_interp" => unimplemented!(),
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
-            "usemtl" => {
-                match args.len() {
-                    1 => mesh_builder.start(args[0].to_string()),
-                    _ => error!(WrongNumberOfArguments, "Expected only 1 argument")
-                }
-            }
+            "usemtl" => match args.len() {
+                1 => mesh_builder.start(args[0].to_string()),
+                _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
+            },
             "mtllib" => {
                 // TODO: .push_all()
                 material_libraries.reserve(args.len());
@@ -323,7 +321,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "stech" => unimplemented!(),
 
             // Unexpected statement
-            _ => error!(UnexpectedStatement, "Received unknown statement")
+            _ => error!(UnexpectedStatement, "Received unknown statement"),
         }
 
         Ok(())
@@ -350,7 +348,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
         groups: group_builder.result,
         meshes: mesh_builder.result,
         smoothing_groups: smoothing_builder.result,
-        merging_groups: merging_builder.result
+        merging_groups: merging_builder.result,
     })
 }
 
@@ -359,9 +357,9 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 fn parse_vertex_group(s: &str) -> ObjResult<(i32, i32, i32)> {
     let mut indices = s.split('/');
 
-    let first  = indices.next().unwrap_or("");
+    let first = indices.next().unwrap_or("");
     let second = indices.next().unwrap_or("");
-    let third  = indices.next().unwrap_or("");
+    let third = indices.next().unwrap_or("");
 
     let first = try!(first.parse());
     let second = if second == "" {
@@ -370,36 +368,41 @@ fn parse_vertex_group(s: &str) -> ObjResult<(i32, i32, i32)> {
         try!(second.parse())
     };
 
-    let third = if third == "" {
-        0
-    } else {
-        try!(third.parse())
-    };
+    let third = if third == "" { 0 } else { try!(third.parse()) };
 
     Ok((first, second, third))
 }
 
-
 /// Counts current total count of parsed `points`, `lines` and `polygons`.
 struct Counter {
-    points:     *const Vec<Point>,
-    lines:      *const Vec<Line>,
-    polygons:   *const Vec<Polygon>,
+    points: *const Vec<Point>,
+    lines: *const Vec<Line>,
+    polygons: *const Vec<Polygon>,
 }
 
 impl Counter {
     /// Constructs a new `Counter`.
-    fn new(points: *const Vec<Point>, lines: *const Vec<Line>, polygons: *const Vec<Polygon>) -> Self {
+    fn new(
+        points: *const Vec<Point>,
+        lines: *const Vec<Line>,
+        polygons: *const Vec<Polygon>,
+    ) -> Self {
         Counter {
-            points:     points,
-            lines:      lines,
-            polygons:   polygons
+            points: points,
+            lines: lines,
+            polygons: polygons,
         }
     }
 
     /// Returns a current count of parsed `(points, lines, polygons)`.
     fn get(&self) -> (usize, usize, usize) {
-        unsafe { ((*self.points).len(), (*self.lines).len(), (*self.polygons).len()) }
+        unsafe {
+            (
+                (*self.points).len(),
+                (*self.lines).len(),
+                (*self.polygons).len(),
+            )
+        }
     }
 
     /// Creates a `HashMap<String, Group>` builder which references `self` as counter.
@@ -410,7 +413,7 @@ impl Counter {
         GroupBuilder {
             counter: self,
             current: Some(input),
-            result: result
+            result: result,
         }
     }
 
@@ -419,37 +422,42 @@ impl Counter {
         GroupBuilder {
             counter: self,
             current: None,
-            result: VecMap::new()
+            result: VecMap::new(),
         }
     }
 }
-
 
 /// Helper for creating `groups`, `meshes`, `smoothing_groups` and `merging_groups` member of
 /// `Obj`.
 struct GroupBuilder<'a, T, K> {
     counter: &'a Counter,
     current: Option<K>, // Some(K) if some group has been started
-                        // None    otherwise
-    result: T
+    // None    otherwise
+    result: T,
 }
 
-impl<'a, T, K> GroupBuilder<'a, T, K> where
+impl<'a, T, K> GroupBuilder<'a, T, K>
+where
     T: Map<K, Group>,
-    K: Clone + Key
+    K: Clone + Key,
 {
     /// Starts a group whose name is `input`.
     fn start(&mut self, input: K) {
         let count = self.counter.get();
         if let Some(ref current) = self.current {
-            if *current == input { return }
+            if *current == input {
+                return;
+            }
             if self.result.get_mut(current).unwrap().end(count) {
                 let res = self.result.remove(&current);
                 assert!(res.is_some());
             }
         }
         (|| {
-            if let Some(ref mut group) = self.result.get_mut(&input) { group.start(count); return }
+            if let Some(ref mut group) = self.result.get_mut(&input) {
+                group.start(count);
+                return;
+            }
             let res = self.result.insert(input.clone(), Group::new(count));
             assert!(res.is_none());
         })();
@@ -459,15 +467,21 @@ impl<'a, T, K> GroupBuilder<'a, T, K> where
     /// Ends a current group.
     fn end(&mut self) {
         if let Some(ref current) = self.current {
-            if self.result.get_mut(current).unwrap().end(self.counter.get()) {
+            if self
+                .result
+                .get_mut(current)
+                .unwrap()
+                .end(self.counter.get())
+            {
                 let result = self.result.remove(current);
                 assert!(result.is_some());
             }
-        } else { return }
+        } else {
+            return;
+        }
         self.current = None;
     }
 }
-
 
 /// Constant which is used to represent undefined bound of range.
 const UNDEFINED: usize = ::std::usize::MAX;
@@ -475,18 +489,27 @@ const UNDEFINED: usize = ::std::usize::MAX;
 impl Group {
     fn new(count: (usize, usize, usize)) -> Self {
         let mut ret = Group {
-            points:     Vec::with_capacity(1),
-            lines:      Vec::with_capacity(1),
-            polygons:   Vec::with_capacity(1)
+            points: Vec::with_capacity(1),
+            lines: Vec::with_capacity(1),
+            polygons: Vec::with_capacity(1),
         };
         ret.start(count);
         ret
     }
 
     fn start(&mut self, count: (usize, usize, usize)) {
-        self.points.push(Range { start: count.0, end: UNDEFINED });
-        self.lines.push(Range { start: count.1, end: UNDEFINED });
-        self.polygons.push(Range { start: count.2, end: UNDEFINED })
+        self.points.push(Range {
+            start: count.0,
+            end: UNDEFINED,
+        });
+        self.lines.push(Range {
+            start: count.1,
+            end: UNDEFINED,
+        });
+        self.polygons.push(Range {
+            start: count.2,
+            end: UNDEFINED,
+        })
     }
 
     /// Closes group, return true if self is empty
@@ -509,7 +532,6 @@ impl Group {
     }
 }
 
-
 /// Custom trait to interface `HashMap` and `VecMap`.
 trait Map<K: Key, V> {
     /// Interface of `insert` function.
@@ -521,23 +543,34 @@ trait Map<K: Key, V> {
 }
 
 impl<V> Map<String, V> for HashMap<String, V> {
-    fn insert(&mut self, k: String, v: V) -> Option<V> { self.insert(k, v) }
-    fn get_mut(&mut self, k: &String) -> Option<&mut V> { self.get_mut(k) }
-    fn remove(&mut self, k: &String) -> Option<V> { self.remove(k) }
+    fn insert(&mut self, k: String, v: V) -> Option<V> {
+        self.insert(k, v)
+    }
+    fn get_mut(&mut self, k: &String) -> Option<&mut V> {
+        self.get_mut(k)
+    }
+    fn remove(&mut self, k: &String) -> Option<V> {
+        self.remove(k)
+    }
 }
 
 impl<V> Map<usize, V> for VecMap<V> {
-    fn insert(&mut self, k: usize, v: V) -> Option<V> { self.insert(k, v) }
-    fn get_mut(&mut self, k: &usize) -> Option<&mut V> { self.get_mut(*k) }
-    fn remove(&mut self, k: &usize) -> Option<V> { self.remove(*k) }
+    fn insert(&mut self, k: usize, v: V) -> Option<V> {
+        self.insert(k, v)
+    }
+    fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
+        self.get_mut(*k)
+    }
+    fn remove(&mut self, k: &usize) -> Option<V> {
+        self.remove(*k)
+    }
 }
 
 /// A trait which should be implemented by a type passed into `Key` of `Map`.
-trait Key : Eq {}
+trait Key: Eq {}
 
 impl Key for String {}
 impl Key for usize {}
-
 
 /// Low-level Rust binding for `.obj` format.
 pub struct RawObj {
@@ -569,7 +602,7 @@ pub struct RawObj {
     /// Smoothing groups.
     pub smoothing_groups: VecMap<Group>,
     /// Merging groups.
-    pub merging_groups: VecMap<Group>
+    pub merging_groups: VecMap<Group>,
 }
 
 /// The `Point` type which stores the index of the position vector.
@@ -582,7 +615,7 @@ pub enum Line {
     P(Vec<usize>),
     /// A series of line segments which contain both position and texture coordinate
     /// data of each vertex
-    PT(Vec<(usize, usize)>)
+    PT(Vec<(usize, usize)>),
 }
 
 /// The `Polygon` type.
@@ -595,7 +628,7 @@ pub enum Polygon {
     /// A polygon which contains both position and normal data of each vertex.
     PN(Vec<(usize, usize)>),
     /// A polygon which contains all position, texture coordinate and normal data of each vertex.
-    PTN(Vec<(usize, usize, usize)>)
+    PTN(Vec<(usize, usize, usize)>),
 }
 
 /// A group which contains ranges of points, lines and polygons
@@ -606,9 +639,8 @@ pub struct Group {
     /// Multiple range of lines
     pub lines: Vec<Range>,
     /// Multiple range of polygons
-    pub polygons: Vec<Range>
+    pub polygons: Vec<Range>,
 }
-
 
 /// A struct which represent `[start, end)` range.
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
@@ -616,5 +648,5 @@ pub struct Range {
     /// The lower bound of the range (inclusive).
     pub start: usize,
     /// The upper bound of the range (exclusive).
-    pub end: usize
+    pub end: usize,
 }

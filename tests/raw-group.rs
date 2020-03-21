@@ -8,10 +8,10 @@
 
 extern crate obj;
 
+use obj::raw::object::Range;
+use obj::raw::*;
 use std::fs::File;
 use std::io::BufReader;
-use obj::raw::*;
-use obj::raw::object::Range;
 
 macro_rules! test {
     ($($lhs:expr, $rhs:expr)*) => ({
@@ -20,21 +20,32 @@ macro_rules! test {
 }
 
 macro_rules! eq {
-    ($lhs:expr, $rhs:expr) => (eq!($lhs, $rhs, stringify!($lhs)));
+    ($lhs:expr, $rhs:expr) => {
+        eq!($lhs, $rhs, stringify!($lhs))
+    };
 
-    ($lhs:expr, $rhs:expr, $exp:expr) => ({
+    ($lhs:expr, $rhs:expr, $exp:expr) => {{
         let left = &($lhs);
         let right = &($rhs);
 
         if !((*left == *right) && (*right == *left)) {
             stderr!("");
-            stderr!("{w}{}{c} should be {o}{:?}{c}, but it was {o}{:?}{c}. See {b}{}:{}{c}.",
-                    $exp, *right, *left, line!(), column!(),
-                    w="\x1b[97m", b="\x1b[34m", o="\x1b[33m", c="\x1b[0m");
+            stderr!(
+                "{w}{}{c} should be {o}{:?}{c}, but it was {o}{:?}{c}. See {b}{}:{}{c}.",
+                $exp,
+                *right,
+                *left,
+                line!(),
+                column!(),
+                w = "\x1b[97m",
+                b = "\x1b[34m",
+                o = "\x1b[33m",
+                c = "\x1b[0m"
+            );
             stderr!("");
             panic!($exp);
         }
-    });
+    }};
 }
 
 macro_rules! stderr {
@@ -49,7 +60,7 @@ fn dup_groupnames() {
     let input = BufReader::new(File::open("tests/fixtures/group.obj").unwrap());
     let raw = match parse_obj(input) {
         Ok(raw) => raw,
-        Err(e) => panic!(e)
+        Err(e) => panic!(e),
     };
 
     test! {
