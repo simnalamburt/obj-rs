@@ -16,6 +16,8 @@ script:
   - cargo build --verbose $(echo $FLAGS)
   - cargo test  --verbose $(echo $FLAGS)
 
+# TODO: Check rustfmt, rust-analysis, clippy
+
 cache:
   directories:
     - ~/.cargo
