@@ -57,7 +57,7 @@ impl Error for ObjError {
         }
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match *self {
             ObjError::Io(ref err) => Some(err),
             ObjError::ParseInt(ref err) => Some(err),
