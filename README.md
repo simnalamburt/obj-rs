@@ -38,11 +38,11 @@ use std::fs::File;
 use std::io::BufReader;
 use obj::*;
 
-let input = BufReader::new(try!(File::open("rilakkuma.obj")));
-let obj: Obj = try!(load_obj(input));
+let input = BufReader::new(File::open("rilakkuma.obj")?);
+let obj: Obj = load_obj(input)?;
 
-let vb = try!(obj.vertex_buffer(&display));
-let ib = try!(obj.index_buffer(&display));
+let vb = obj.vertex_buffer(&display)?;
+let ib = obj.index_buffer(&display)?;
 ```
 
 Please see the [working sample] for the further details. Use can execute it with

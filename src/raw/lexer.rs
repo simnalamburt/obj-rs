@@ -40,7 +40,7 @@ where
                 // outlive the data they're pointing to.
                 unsafe {
                     let args: &[&str] = std::mem::transmute(&args[..]);
-                    try!(callback(stmt, args));
+                    callback(stmt, args)?;
                 }
                 // Clear the args buffer for reuse on the next iteration
                 args.clear();

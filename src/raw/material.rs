@@ -14,7 +14,7 @@ macro_rules! f {
             let mut ret = Vec::<f32>::new();
             ret.reserve($args.len());
             for arg in $args {
-                ret.push(try!(arg.parse()))
+                ret.push(arg.parse()?)
             }
             ret
         }[..]
@@ -29,7 +29,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
     let mut name: Option<String> = None;
     let mut mat: Material = Material::default();
 
-    try!(lex(input, |stmt, args| {
+    lex(input, |stmt, args| {
         match stmt {
             // Material name statement
             "newmtl" => {
@@ -45,42 +45,42 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             }
 
             // Material color and illumination statements
-            "Ka" => mat.ambient = Some(try!(parse_color(args))),
-            "Kd" => mat.diffuse = Some(try!(parse_color(args))),
-            "Ks" => mat.specular = Some(try!(parse_color(args))),
-            "Ke" => mat.emissive = Some(try!(parse_color(args))),
+            "Ka" => mat.ambient = Some(parse_color(args)?),
+            "Kd" => mat.diffuse = Some(parse_color(args)?),
+            "Ks" => mat.specular = Some(parse_color(args)?),
+            "Ke" => mat.emissive = Some(parse_color(args)?),
             "Km" => unimplemented!(),
-            "Tf" => mat.transmission_filter = Some(try!(parse_color(args))),
+            "Tf" => mat.transmission_filter = Some(parse_color(args)?),
             "Ns" => match args.len() {
-                1 => mat.specular_exponent = Some(try!(args[0].parse())),
+                1 => mat.specular_exponent = Some(args[0].parse()?),
                 _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "Ni" => match args.len() {
-                1 => mat.optical_density = Some(try!(args[0].parse())),
+                1 => mat.optical_density = Some(args[0].parse()?),
                 _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "illum" => match args.len() {
-                1 => mat.illumination_model = Some(try!(args[0].parse())),
+                1 => mat.illumination_model = Some(args[0].parse()?),
                 _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "d" => match args.len() {
-                1 => mat.dissolve = Some(try!(args[0].parse())),
+                1 => mat.dissolve = Some(args[0].parse()?),
                 _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "Tr" => match args.len() {
-                1 => mat.dissolve = Some(1.0 - try!(args[0].parse::<f32>())),
+                1 => mat.dissolve = Some(1.0 - args[0].parse::<f32>()?),
                 _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
 
             // Texture map statements
-            "map_Ka" => mat.ambient_map = Some(try!(parse_texture_map(args))),
-            "map_Kd" => mat.diffuse_map = Some(try!(parse_texture_map(args))),
-            "map_Ks" => mat.specular_map = Some(try!(parse_texture_map(args))),
-            "map_Ke" => mat.emissive_map = Some(try!(parse_texture_map(args))),
-            "map_d" => mat.dissolve_map = Some(try!(parse_texture_map(args))),
+            "map_Ka" => mat.ambient_map = Some(parse_texture_map(args)?),
+            "map_Kd" => mat.diffuse_map = Some(parse_texture_map(args)?),
+            "map_Ks" => mat.specular_map = Some(parse_texture_map(args)?),
+            "map_Ke" => mat.emissive_map = Some(parse_texture_map(args)?),
+            "map_d" => mat.dissolve_map = Some(parse_texture_map(args)?),
             "map_aat" => unimplemented!(),
             "map_refl" => unimplemented!(),
-            "map_bump" | "map_Bump" | "bump" => mat.bump_map = Some(try!(parse_texture_map(args))),
+            "map_bump" | "map_Bump" | "bump" => mat.bump_map = Some(parse_texture_map(args)?),
             "disp" => unimplemented!(),
 
             // Reflection map statement
@@ -91,7 +91,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
         }
 
         Ok(())
-    }));
+    })?;
 
     // Insert the final material
     if let Some(name) = name {
@@ -119,7 +119,7 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
 
         "spectral" => match args.len() {
             2 => MtlColor::Spectral(args[1].to_owned(), 1.0),
-            3 => MtlColor::Spectral(args[1].to_owned(), try!(args[2].parse())),
+            3 => MtlColor::Spectral(args[1].to_owned(), args[2].parse()?),
             _ => error!(WrongNumberOfArguments, "Expected 2 or 3 arguments"),
         },
 

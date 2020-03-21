@@ -13,7 +13,7 @@ macro_rules! f {
             let mut ret = Vec::<f32>::new();
             ret.reserve($args.len());
             for arg in $args {
-                ret.push(try!(arg.parse()))
+                ret.push(arg.parse()?)
             }
             ret
         }[..]
@@ -55,7 +55,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut smoothing_builder = counter.vec_map();
     let mut merging_builder = counter.vec_map();
 
-    try!(lex(input, |stmt, args| {
+    lex(input, |stmt, args| {
         match stmt {
             // Vertex data
             "v" => {
@@ -133,7 +133,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             // Elements
             "p" => {
                 for v in args {
-                    let v: i32 = try!(v.parse());
+                    let v: i32 = v.parse()?;
                     let v = idx!(v, positions);
                     points.push(v);
                 }
@@ -146,13 +146,13 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 let first = args.next().unwrap();
                 let rest = args;
 
-                let group = try!(parse_vertex_group(first));
+                let group = parse_vertex_group(first)?;
 
                 let line = match group {
                     (p, 0, 0) => {
                         let mut points = vec![idx!(p, positions)];
                         for gs in rest {
-                            let group = try!(parse_vertex_group(gs));
+                            let group = parse_vertex_group(gs)?;
                             if group.1 != 0 || group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
@@ -164,7 +164,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     (p, t, 0) => {
                         let mut points = vec![(idx!(p, positions), idx!(t, tex_coords))];
                         for gs in rest {
-                            let group = try!(parse_vertex_group(gs));
+                            let group = parse_vertex_group(gs)?;
                             if group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
@@ -191,13 +191,13 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 let first = args.next().unwrap();
                 let rest = args;
 
-                let group = try!(parse_vertex_group(first));
+                let group = parse_vertex_group(first)?;
 
                 let polygon = match group {
                     (p, 0, 0) => {
                         let mut polygon = vec![idx!(p, positions)];
                         for gs in rest {
-                            let group = try!(parse_vertex_group(gs));
+                            let group = parse_vertex_group(gs)?;
                             if group.1 != 0 || group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
@@ -210,7 +210,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     (p, t, 0) => {
                         let mut polygon = vec![(idx!(p, positions), idx!(t, tex_coords))];
                         for gs in rest {
-                            let group = try!(parse_vertex_group(gs));
+                            let group = parse_vertex_group(gs)?;
                             if group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
@@ -223,7 +223,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     (p, 0, n) => {
                         let mut polygon = vec![(idx!(p, positions), idx!(n, normals))];
                         for gs in rest {
-                            let group = try!(parse_vertex_group(gs));
+                            let group = parse_vertex_group(gs)?;
                             if group.1 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
@@ -237,7 +237,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         let mut polygon =
                             vec![(idx!(p, positions), idx!(t, tex_coords), idx!(n, normals))];
                         for gs in rest {
-                            let group = try!(parse_vertex_group(gs));
+                            let group = parse_vertex_group(gs)?;
                             polygon.push((
                                 idx!(group.0, positions),
                                 idx!(group.1, tex_coords),
@@ -276,12 +276,12 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             },
             "s" => match args.len() {
                 1 if (args[0] == "off" || args[0] == "0") => smoothing_builder.end(),
-                1 => smoothing_builder.start(try!(args[0].parse())),
+                1 => smoothing_builder.start(args[0].parse()?),
                 _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mg" => match args.len() {
                 1 if (args[0] == "off" || args[0] == "0") => merging_builder.end(),
-                1 => merging_builder.start(try!(args[0].parse())),
+                1 => merging_builder.start(args[0].parse()?),
                 _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "o" => {
@@ -317,7 +317,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
         }
 
         Ok(())
-    }));
+    })?;
 
     group_builder.end();
     mesh_builder.end();
@@ -353,14 +353,10 @@ fn parse_vertex_group(s: &str) -> ObjResult<(i32, i32, i32)> {
     let second = indices.next().unwrap_or("");
     let third = indices.next().unwrap_or("");
 
-    let first = try!(first.parse());
-    let second = if second == "" {
-        0
-    } else {
-        try!(second.parse())
-    };
+    let first = first.parse()?;
+    let second = if second == "" { 0 } else { second.parse()? };
 
-    let third = if third == "" { 0 } else { try!(third.parse()) };
+    let third = if third == "" { 0 } else { third.parse()? };
 
     Ok((first, second, third))
 }

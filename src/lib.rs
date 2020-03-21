@@ -45,7 +45,7 @@ use std::io::BufRead;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
-    let raw = try!(raw::parse_obj(input));
+    let raw = raw::parse_obj(input)?;
     Obj::new(raw)
 }
 
@@ -63,12 +63,8 @@ pub struct Obj<V = Vertex, I = u16> {
 impl<V: FromRawVertex<I>, I> Obj<V, I> {
     /// Create `Obj` from `RawObj` object.
     pub fn new(raw: raw::RawObj) -> ObjResult<Self> {
-        let (vertices, indices) = try!(FromRawVertex::process(
-            raw.positions,
-            raw.normals,
-            raw.tex_coords,
-            raw.polygons
-        ));
+        let (vertices, indices) =
+            FromRawVertex::process(raw.positions, raw.normals, raw.tex_coords, raw.polygons)?;
 
         Ok(Obj {
             name: raw.name,
