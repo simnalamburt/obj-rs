@@ -48,15 +48,6 @@ impl fmt::Display for ObjError {
 }
 
 impl Error for ObjError {
-    fn description(&self) -> &str {
-        match *self {
-            ObjError::Io(ref err) => err.description(),
-            ObjError::ParseInt(ref err) => err.description(),
-            ObjError::ParseFloat(ref err) => err.description(),
-            ObjError::Load(ref err) => err.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn Error> {
         match *self {
             ObjError::Io(ref err) => Some(err),
@@ -76,7 +67,7 @@ implmnt!(Load, LoadError);
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct LoadError {
     kind: LoadErrorKind,
-    desc: &'static str,
+    message: &'static str,
 }
 
 /// A list specifying general categories of load error.
@@ -95,18 +86,17 @@ pub enum LoadErrorKind {
 }
 
 impl LoadError {
-    /// Creates a new custom error from a specified kind/description.
-    pub fn new(kind: LoadErrorKind, desc: &'static str) -> Self {
-        LoadError {
-            kind: kind,
-            desc: desc,
-        }
+    /// Creates a new custom error from a specified kind and message.
+    pub fn new(kind: LoadErrorKind, message: &'static str) -> Self {
+        LoadError { kind, message }
     }
 }
 
-impl Error for LoadError {
-    fn description(&self) -> &str {
-        match self.kind {
+impl Error for LoadError {}
+
+impl fmt::Display for LoadError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let msg = match self.kind {
             LoadErrorKind::UnexpectedStatement => "Met unexpected statement",
             LoadErrorKind::WrongNumberOfArguments => "Received wrong number of arguments",
             LoadErrorKind::WrongTypeOfArguments => "Received unexpected type of arguments",
@@ -114,21 +104,17 @@ impl Error for LoadError {
                 "Model should be triangulated first to be loaded properly"
             }
             LoadErrorKind::InsufficientData => "Model cannot be transformed into requested form",
-        }
-    }
-}
+        };
 
-impl fmt::Display for LoadError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}: {}", self.description(), self.desc)
+        write!(fmt, "{}: {}", msg, self.message)
     }
 }
 
 macro_rules! error {
-    ($kind:ident, $desc:expr) => {
+    ($kind:ident, $message:expr) => {
         return Err(::std::convert::From::from($crate::error::LoadError::new(
             $crate::error::LoadErrorKind::$kind,
-            $desc,
+            $message,
         )));
     };
 }
