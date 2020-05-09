@@ -1,4 +1,7 @@
 [workspace]
 members = [
     "obj-rs",
+    "sampleapp",
 ]
+
+default-members = ["obj-rs"]
