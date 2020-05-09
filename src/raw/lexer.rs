@@ -1,5 +1,4 @@
 use crate::error::ObjResult;
-use std;
 use std::io::prelude::*;
 
 pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
