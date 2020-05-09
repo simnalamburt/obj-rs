@@ -90,6 +90,8 @@ pub enum LoadErrorKind {
     UntriangulatedModel,
     /// Model cannot be transformed into requested form.
     InsufficientData,
+    /// Received index value out of range.
+    IndexOutOfRange,
 }
 
 impl LoadError {
@@ -103,14 +105,15 @@ impl Error for LoadError {}
 
 impl fmt::Display for LoadError {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use LoadErrorKind::*;
+
         let msg = match self.kind {
-            LoadErrorKind::UnexpectedStatement => "Met unexpected statement",
-            LoadErrorKind::WrongNumberOfArguments => "Received wrong number of arguments",
-            LoadErrorKind::WrongTypeOfArguments => "Received unexpected type of arguments",
-            LoadErrorKind::UntriangulatedModel => {
-                "Model should be triangulated first to be loaded properly"
-            }
-            LoadErrorKind::InsufficientData => "Model cannot be transformed into requested form",
+            UnexpectedStatement => "Met unexpected statement",
+            WrongNumberOfArguments => "Received wrong number of arguments",
+            WrongTypeOfArguments => "Received unexpected type of arguments",
+            UntriangulatedModel => "Model should be triangulated first to be loaded properly",
+            InsufficientData => "Model cannot be transformed into requested form",
+            IndexOutOfRange => "Received index value out of range",
         };
 
         write!(fmt, "{}: {}", msg, self.message)

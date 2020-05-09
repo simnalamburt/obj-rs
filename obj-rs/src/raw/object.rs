@@ -34,21 +34,49 @@ macro_rules! parse_args {
 //
 // If total size of the collection is 5:
 //
-// - [1, 2, 3, 4, 5] → [0, 1, 2, 3, 4]
-// - [-5, -4, -3, -2, -1] → [0, 1, 2, 3, 4]
+// - ["1", "2", "3", "4", "5"] → [0, 1, 2, 3, 4]
+// - ["-5", "-4", "-3", "-2", "-1"] → [0, 1, 2, 3, 4]
+// - ["0"] → Error
+// - ["6"] → Error
+// - ["-6"] → Error
 //
 // If the index is < 0, then it represents an offset from the end of
 // the current list. So -1 is the most recently added vertex.
 //
 // If the index is > 0 then it's simply the position in the list such
 // that 1 is the first vertex.
-fn translate_index<T>(collection: &[T], signed_index: i32) -> usize {
-    if signed_index < 0 {
-        let abs = -signed_index as usize;
-        collection.len() - abs
+fn try_index<T>(collection: &[T], input: &str) -> ObjResult<usize> {
+    use crate::error::{LoadError, LoadErrorKind, ObjError};
+    use std::convert::TryInto;
+
+    let len: isize = collection.len().try_into().map_err(|_| {
+        ObjError::Load(LoadError::new(
+            LoadErrorKind::IndexOutOfRange,
+            "Too many items in collection",
+        ))
+    })?;
+
+    // Should be [-len, -1] ∪ [1, len]
+    let index: isize = input.parse()?;
+
+    let ret = if index < -len {
+        // (∞, -len)
+        make_error!(IndexOutOfRange, "Too small index value");
+    } else if index < 0 {
+        // [-len, 0)
+        len + index
+    } else if index == 0 {
+        // {0}
+        make_error!(IndexOutOfRange, "Index value shouldn't be zero");
+    } else if index <= len {
+        // (0, len]
+        index - 1
     } else {
-        (signed_index - 1) as usize
-    }
+        // (len, ∞)
+        make_error!(IndexOutOfRange, "Too big index value");
+    };
+
+    Ok(ret as usize)
 }
 
 /// Parses a wavefront `.obj` format.
@@ -128,8 +156,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             // Elements
             "p" => {
                 for v in args {
-                    let v: i32 = v.parse()?;
-                    let v = translate_index(&positions, v);
+                    let v = try_index(&positions, v)?;
                     points.push(v);
                 }
             }
@@ -142,8 +169,8 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
                     let line = parse_args! {
                         first, rest,
-                        [p] => Line::P[translate_index(&positions, p.parse()?)],
-                        [p, t] => Line::PT[(translate_index(&positions, p.parse()?), translate_index(&tex_coords, t.parse()?))],
+                        [p] => Line::P[try_index(&positions, p)?],
+                        [p, t] => Line::PT[(try_index(&positions, p)?, try_index(&tex_coords, t)?)],
                         ! => make_error!(WrongTypeOfArguments, "Unexpected vertex format, expected `#`, or `#/#`")
                     };
 
@@ -159,10 +186,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
                     let polygon = parse_args! {
                         first, rest,
-                        [p] => Polygon::P[translate_index(&positions, p.parse()?)],
-                        [p, t] => Polygon::PT[(translate_index(&positions, p.parse()?), translate_index(&tex_coords, t.parse()?))],
-                        [p, "", n] => Polygon::PN[(translate_index(&positions, p.parse()?), translate_index(&normals, n.parse()?))],
-                        [p, t, n] => Polygon::PTN[(translate_index(&positions, p.parse()?), translate_index(&tex_coords, t.parse()?), translate_index(&normals, n.parse()?))],
+                        [p] => Polygon::P[try_index(&positions, p)?],
+                        [p, t] => Polygon::PT[(try_index(&positions, p)?, try_index(&tex_coords, t)?)],
+                        [p, "", n] => Polygon::PN[(try_index(&positions, p)?, try_index(&normals, n)?)],
+                        [p, t, n] => Polygon::PTN[(try_index(&positions, p)?, try_index(&tex_coords, t)?, try_index(&normals, n)?)],
                         ! => make_error!(WrongTypeOfArguments, "Unexpected vertex format, expected `#`, `#/#`, `#//#`, or `#/#/#`")
                     };
 
