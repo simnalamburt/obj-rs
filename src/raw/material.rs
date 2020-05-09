@@ -6,7 +6,7 @@ use std::mem::replace;
 
 use crate::error::ObjResult;
 use crate::raw::lexer::lex;
-use crate::raw::util::f;
+use crate::raw::util::parse_args;
 
 /// Parses a wavefront `.mtl` format *(incomplete)*
 pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
@@ -96,7 +96,7 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
 
     Ok(match args[0] {
         "xyz" => {
-            let args = f(&args[1..])?;
+            let args = parse_args(&args[1..])?;
             match args.len() {
                 1 => MtlColor::Xyz(args[0], args[0], args[0]),
                 3 => MtlColor::Xyz(args[0], args[1], args[2]),
@@ -111,7 +111,7 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
         },
 
         _ => {
-            let args = f(args)?;
+            let args = parse_args(args)?;
             match args.len() {
                 1 => MtlColor::Rgb(args[0], args[0], args[0]),
                 3 => MtlColor::Rgb(args[0], args[1], args[2]),

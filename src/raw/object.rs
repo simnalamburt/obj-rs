@@ -6,7 +6,7 @@ use vec_map::VecMap;
 
 use crate::error::ObjResult;
 use crate::raw::lexer::lex;
-use crate::raw::util::f;
+use crate::raw::util::parse_args;
 
 // Helper function for handling the indexes.
 //
@@ -53,7 +53,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
         match stmt {
             // Vertex data
             "v" => {
-                let args = f(args)?;
+                let args = parse_args(args)?;
                 positions.push(match args.len() {
                     4 => (args[0], args[1], args[2], args[3]),
                     3 => (args[0], args[1], args[2], 1.0),
@@ -61,7 +61,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 })
             }
             "vt" => {
-                let args = f(args)?;
+                let args = parse_args(args)?;
                 tex_coords.push(match args.len() {
                     3 => (args[0], args[1], args[2]),
                     2 => (args[0], args[1], 0.0),
@@ -70,14 +70,14 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 })
             }
             "vn" => {
-                let args = f(args)?;
+                let args = parse_args(args)?;
                 normals.push(match args.len() {
                     3 => (args[0], args[1], args[2]),
                     _ => make_error!(WrongNumberOfArguments, "Expected 3 arguments"),
                 })
             }
             "vp" => {
-                let args = f(args)?;
+                let args = parse_args(args)?;
                 param_vertices.push(match args.len() {
                     3 => (args[0], args[1], args[2]),
                     2 => (args[0], args[1], 1.0),
@@ -114,7 +114,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 }
             }
             "deg" => {
-                let args = f(args)?;
+                let args = parse_args(args)?;
                 match args.len() {
                     2 => unimplemented!(), // (deg_u, deg_v)
                     1 => unimplemented!(), // (deg_u)
