@@ -131,7 +131,7 @@ impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for Vertex {
 
             for polygon in polygons {
                 match polygon {
-                    Polygon::P(_) | Polygon::PT(_) => error!(
+                    Polygon::P(_) | Polygon::PT(_) => make_error!(
                         InsufficientData,
                         "Tried to extract normal data which are not contained in the model"
                     ),
@@ -145,7 +145,7 @@ impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for Vertex {
                             map(pi, ni)
                         }
                     }
-                    _ => error!(
+                    _ => make_error!(
                         UntriangulatedModel,
                         "Model should be triangulated first to be loaded properly"
                     ),
@@ -203,7 +203,7 @@ impl<I: FromPrimitive + Integer> FromRawVertex<I> for Position {
                             map(pi)
                         }
                     }
-                    _ => error!(
+                    _ => make_error!(
                         UntriangulatedModel,
                         "Model should be triangulated first to be loaded properly"
                     ),
@@ -266,13 +266,13 @@ impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for TexturedVertex {
 
             for polygon in polygons {
                 match polygon {
-                    Polygon::P(_) => error!(InsufficientData, "Tried to extract normal and texture data which are not contained in the model"),
-                    Polygon::PT(_) => error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
-                    Polygon::PN(_) => error!(InsufficientData, "Tried to extract texture data which are not contained in the model"),
+                    Polygon::P(_) => make_error!(InsufficientData, "Tried to extract normal and texture data which are not contained in the model"),
+                    Polygon::PT(_) => make_error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
+                    Polygon::PN(_) => make_error!(InsufficientData, "Tried to extract texture data which are not contained in the model"),
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
                         for &(pi, ti, ni) in vec { map(pi, ni, ti) }
                     }
-                    _ => error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
+                    _ => make_error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
                 }
             }
         }

@@ -69,7 +69,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 positions.push(match args.len() {
                     4 => (args[0], args[1], args[2], args[3]),
                     3 => (args[0], args[1], args[2], 1.0),
-                    _ => error!(WrongNumberOfArguments, "Expected 3 or 4 arguments"),
+                    _ => make_error!(WrongNumberOfArguments, "Expected 3 or 4 arguments"),
                 })
             }
             "vt" => {
@@ -78,14 +78,14 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     3 => (args[0], args[1], args[2]),
                     2 => (args[0], args[1], 0.0),
                     1 => (args[0], 0.0, 0.0),
-                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
+                    _ => make_error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
                 })
             }
             "vn" => {
                 let args = f!(args);
                 normals.push(match args.len() {
                     3 => (args[0], args[1], args[2]),
-                    _ => error!(WrongNumberOfArguments, "Expected 3 arguments"),
+                    _ => make_error!(WrongNumberOfArguments, "Expected 3 arguments"),
                 })
             }
             "vp" => {
@@ -94,7 +94,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     3 => (args[0], args[1], args[2]),
                     2 => (args[0], args[1], 1.0),
                     1 => (args[0], 0.0, 1.0),
-                    _ => error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
+                    _ => make_error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
                 })
             }
 
@@ -110,7 +110,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         _rational = false;
                         args[0]
                     }
-                    _ => error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format"),
+                    _ => make_error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format"),
                 };
 
                 match geometry {
@@ -119,7 +119,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     "bspline" => unimplemented!(),
                     "cardinal" => unimplemented!(),
                     "taylor" => unimplemented!(),
-                    _ => error!(
+                    _ => make_error!(
                         WrongTypeOfArguments,
                         "Expected one of 'bmatrix', 'bezier', 'bspline', 'cardinal' and 'taylor'"
                     ),
@@ -130,7 +130,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 match args.len() {
                     2 => unimplemented!(), // (deg_u, deg_v)
                     1 => unimplemented!(), // (deg_u)
-                    _ => error!(WrongNumberOfArguments, "Expected 1 or 2 arguments"),
+                    _ => make_error!(WrongNumberOfArguments, "Expected 1 or 2 arguments"),
                 }
             }
             "bmat" => unimplemented!(),
@@ -146,7 +146,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             }
             "l" => {
                 if args.len() < 2 {
-                    error!(WrongNumberOfArguments, "Expected at least 2 arguments")
+                    make_error!(WrongNumberOfArguments, "Expected at least 2 arguments")
                 }
                 let mut args = args.iter();
                 let first = args.next().unwrap();
@@ -160,7 +160,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.1 != 0 || group.2 != 0 {
-                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
                             points.push(translate_index(&positions, group.0));
@@ -175,7 +175,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.2 != 0 {
-                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
                             points.push((
@@ -186,7 +186,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         Line::PT(points)
                     }
                     _ => {
-                        error!(
+                        make_error!(
                             WrongTypeOfArguments,
                             "Unexpected vertex format, expected `#` or `#/#`"
                         );
@@ -196,7 +196,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             }
             "fo" | "f" => {
                 if args.len() < 3 {
-                    error!(WrongNumberOfArguments, "Expected at least 3 arguments")
+                    make_error!(WrongNumberOfArguments, "Expected at least 3 arguments")
                 }
 
                 let mut args = args.iter();
@@ -211,7 +211,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.1 != 0 || group.2 != 0 {
-                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
                             polygon.push(translate_index(&positions, group.0));
@@ -227,7 +227,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.2 != 0 {
-                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
                             polygon.push((
@@ -244,7 +244,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.1 != 0 {
-                                error!(WrongTypeOfArguments, "Unexpected vertex format");
+                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
                             polygon.push((
@@ -294,7 +294,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             // Grouping
             "g" => match args.len() {
                 1 => group_builder.start(args[0].to_string()),
-                _ => error!(
+                _ => make_error!(
                     WrongNumberOfArguments,
                     "Expected group name parameter, but nothing has been supplied"
                 ),
@@ -302,12 +302,12 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "s" => match args.len() {
                 1 if (args[0] == "off" || args[0] == "0") => smoothing_builder.end(),
                 1 => smoothing_builder.start(args[0].parse()?),
-                _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mg" => match args.len() {
                 1 if (args[0] == "off" || args[0] == "0") => merging_builder.end(),
                 1 => merging_builder.start(args[0].parse()?),
-                _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "o" => {
                 name = match args.len() {
@@ -323,7 +323,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "lod" => unimplemented!(),
             "usemtl" => match args.len() {
                 1 => mesh_builder.start(args[0].to_string()),
-                _ => error!(WrongNumberOfArguments, "Expected only 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mtllib" => {
                 // TODO: .push_all()
@@ -338,7 +338,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "stech" => unimplemented!(),
 
             // Unexpected statement
-            _ => error!(UnexpectedStatement, "Received unknown statement"),
+            _ => make_error!(UnexpectedStatement, "Received unknown statement"),
         }
 
         Ok(())

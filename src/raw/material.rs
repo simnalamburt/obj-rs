@@ -40,7 +40,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
 
                 match args.len() {
                     1 => name = Some(args[0].to_owned()),
-                    _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+                    _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
                 }
             }
 
@@ -53,23 +53,23 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             "Tf" => mat.transmission_filter = Some(parse_color(args)?),
             "Ns" => match args.len() {
                 1 => mat.specular_exponent = Some(args[0].parse()?),
-                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "Ni" => match args.len() {
                 1 => mat.optical_density = Some(args[0].parse()?),
-                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "illum" => match args.len() {
                 1 => mat.illumination_model = Some(args[0].parse()?),
-                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "d" => match args.len() {
                 1 => mat.dissolve = Some(args[0].parse()?),
-                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
             "Tr" => match args.len() {
                 1 => mat.dissolve = Some(1.0 - args[0].parse::<f32>()?),
-                _ => error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+                _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
             },
 
             // Texture map statements
@@ -87,7 +87,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             "refl" => unimplemented!(),
 
             // Unexpected statement
-            _ => error!(UnexpectedStatement, "Received unknown statement"),
+            _ => make_error!(UnexpectedStatement, "Received unknown statement"),
         }
 
         Ok(())
@@ -104,7 +104,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
 /// Parses a color from the arguments of a statement
 fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
     if args.is_empty() {
-        error!(WrongNumberOfArguments, "Expected at least 1 argument");
+        make_error!(WrongNumberOfArguments, "Expected at least 1 argument");
     }
 
     Ok(match args[0] {
@@ -113,14 +113,14 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
             match args.len() {
                 1 => MtlColor::Xyz(args[0], args[0], args[0]),
                 3 => MtlColor::Xyz(args[0], args[1], args[2]),
-                _ => error!(WrongNumberOfArguments, "Expected 1 or 3 color values"),
+                _ => make_error!(WrongNumberOfArguments, "Expected 1 or 3 color values"),
             }
         }
 
         "spectral" => match args.len() {
             2 => MtlColor::Spectral(args[1].to_owned(), 1.0),
             3 => MtlColor::Spectral(args[1].to_owned(), args[2].parse()?),
-            _ => error!(WrongNumberOfArguments, "Expected 2 or 3 arguments"),
+            _ => make_error!(WrongNumberOfArguments, "Expected 2 or 3 arguments"),
         },
 
         _ => {
@@ -128,7 +128,7 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
             match args.len() {
                 1 => MtlColor::Rgb(args[0], args[0], args[0]),
                 3 => MtlColor::Rgb(args[0], args[1], args[2]),
-                _ => error!(WrongNumberOfArguments, "Expected 1 or 3 color values"),
+                _ => make_error!(WrongNumberOfArguments, "Expected 1 or 3 color values"),
             }
         }
     })
@@ -141,7 +141,7 @@ fn parse_texture_map(args: &[&str]) -> ObjResult<MtlTextureMap> {
             file: args[0].to_owned(),
         })
     } else {
-        error!(WrongNumberOfArguments, "Expected exactly 1 argument")
+        make_error!(WrongNumberOfArguments, "Expected exactly 1 argument")
     }
 }
 

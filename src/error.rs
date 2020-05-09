@@ -110,7 +110,7 @@ impl fmt::Display for LoadError {
     }
 }
 
-macro_rules! error {
+macro_rules! make_error {
     ($kind:ident, $message:expr) => {
         return Err(::std::convert::From::from($crate::error::LoadError::new(
             $crate::error::LoadErrorKind::$kind,
