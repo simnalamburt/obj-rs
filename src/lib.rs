@@ -7,12 +7,13 @@ use std::fs::File;
 use std::io::BufReader;
 use obj::*;
 
-let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
-let dome: Obj = load_obj(input).unwrap();
+let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj")?);
+let dome: Obj = load_obj(input)?;
 
 // Do whatever you want
 dome.vertices;
 dome.indices;
+# Ok::<(), ObjError>(())
 ```
 
 <img src="https://simnalamburt.github.io/obj-rs/screenshot.png" style="max-width:100%">

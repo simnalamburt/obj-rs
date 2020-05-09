@@ -6,7 +6,7 @@
 //!     cargo run --example glium --features glium-support
 
 #[cfg(feature = "glium-support")]
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     use glium::glutin::dpi::LogicalSize;
     use glium::glutin::event::{Event, WindowEvent};
     use glium::glutin::event_loop::{ControlFlow, EventLoop};
@@ -28,13 +28,13 @@ fn main() {
 
     let context = ContextBuilder::new();
 
-    let display = glium::Display::new(window, context, &event_loop).unwrap();
+    let display = glium::Display::new(window, context, &event_loop)?;
 
-    let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj").unwrap());
-    let obj: Obj = load_obj(input).unwrap();
+    let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj")?);
+    let obj: Obj = load_obj(input)?;
 
-    let vb = obj.vertex_buffer(&display).unwrap();
-    let ib = obj.index_buffer(&display).unwrap();
+    let vb = obj.vertex_buffer(&display)?;
+    let ib = obj.index_buffer(&display)?;
 
     let program = Program::from_source(
         &display,
@@ -66,8 +66,7 @@ fn main() {
         }
     "#,
         None,
-    )
-    .unwrap();
+    )?;
 
     // drawing a frame
     let uniforms = uniform! {
