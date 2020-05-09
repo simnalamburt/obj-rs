@@ -20,20 +20,26 @@ macro_rules! f {
     )
 }
 
-// Helper macro for handling the indexes.
+// Helper function for handling the indexes.
+//
+// If total size of the collection is 5:
+//
+// - [1, 2, 3, 4, 5] → [0, 1, 2, 3, 4]
+// - [-5, -4, -3, -2, -1] → [0, 1, 2, 3, 4]
+//
 // If the index is < 0, then it represents an offset from the end of
 // the current list. So -1 is the most recently added vertex.
+//
 // If the index is > 0 then it's simply the position in the list such
 // that 1 is the first vertex.
-macro_rules! idx ( ($i:expr, $l:expr) => ({
-    let i = $i;
-    if i < 0 {
-        let i = (i * -1) as usize;
-        $l.len() - i
+fn translate_index<T>(collection: &Vec<T>, signed_index: i32) -> usize {
+    if signed_index < 0 {
+        let abs = -signed_index as usize;
+        collection.len() - abs
     } else {
-        (i - 1) as usize
+        (signed_index - 1) as usize
     }
-}));
+}
 
 /// Parses a wavefront `.obj` format.
 pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
@@ -134,7 +140,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "p" => {
                 for v in args {
                     let v: i32 = v.parse()?;
-                    let v = idx!(v, positions);
+                    let v = translate_index(&positions, v);
                     points.push(v);
                 }
             }
@@ -150,26 +156,32 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
                 let line = match group {
                     (p, 0, 0) => {
-                        let mut points = vec![idx!(p, positions)];
+                        let mut points = vec![translate_index(&positions, p)];
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.1 != 0 || group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            points.push(idx!(group.0, positions));
+                            points.push(translate_index(&positions, group.0));
                         }
                         Line::P(points)
                     }
                     (p, t, 0) => {
-                        let mut points = vec![(idx!(p, positions), idx!(t, tex_coords))];
+                        let mut points = vec![(
+                            translate_index(&positions, p),
+                            translate_index(&tex_coords, t),
+                        )];
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            points.push((idx!(group.0, positions), idx!(group.1, tex_coords)));
+                            points.push((
+                                translate_index(&positions, group.0),
+                                translate_index(&tex_coords, group.1),
+                            ));
                         }
                         Line::PT(points)
                     }
@@ -195,53 +207,66 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
                 let polygon = match group {
                     (p, 0, 0) => {
-                        let mut polygon = vec![idx!(p, positions)];
+                        let mut polygon = vec![translate_index(&positions, p)];
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.1 != 0 || group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            polygon.push(idx!(group.0, positions));
+                            polygon.push(translate_index(&positions, group.0));
                         }
 
                         Polygon::P(polygon)
                     }
                     (p, t, 0) => {
-                        let mut polygon = vec![(idx!(p, positions), idx!(t, tex_coords))];
+                        let mut polygon = vec![(
+                            translate_index(&positions, p),
+                            translate_index(&tex_coords, t),
+                        )];
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.2 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            polygon.push((idx!(group.0, positions), idx!(group.1, tex_coords)));
+                            polygon.push((
+                                translate_index(&positions, group.0),
+                                translate_index(&tex_coords, group.1),
+                            ));
                         }
 
                         Polygon::PT(polygon)
                     }
                     (p, 0, n) => {
-                        let mut polygon = vec![(idx!(p, positions), idx!(n, normals))];
+                        let mut polygon =
+                            vec![(translate_index(&positions, p), translate_index(&normals, n))];
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             if group.1 != 0 {
                                 error!(WrongTypeOfArguments, "Unexpected vertex format");
                             }
 
-                            polygon.push((idx!(group.0, positions), idx!(group.2, normals)));
+                            polygon.push((
+                                translate_index(&positions, group.0),
+                                translate_index(&normals, group.2),
+                            ));
                         }
 
                         Polygon::PN(polygon)
                     }
                     (p, t, n) => {
-                        let mut polygon =
-                            vec![(idx!(p, positions), idx!(t, tex_coords), idx!(n, normals))];
+                        let mut polygon = vec![(
+                            translate_index(&positions, p),
+                            translate_index(&tex_coords, t),
+                            translate_index(&normals, n),
+                        )];
                         for gs in rest {
                             let group = parse_vertex_group(gs)?;
                             polygon.push((
-                                idx!(group.0, positions),
-                                idx!(group.1, tex_coords),
-                                idx!(group.2, normals),
+                                translate_index(&positions, group.0),
+                                translate_index(&tex_coords, group.1),
+                                translate_index(&normals, group.2),
                             ));
                         }
 
