@@ -22,8 +22,8 @@ macro_rules! eq {
         let right = &($rhs);
 
         if !((*left == *right) && (*right == *left)) {
-            stderr!("");
-            stderr!(
+            eprintln!("");
+            eprintln!(
                 "{w}{}{c} should be {o}{:?}{c}, but it was {o}{:?}{c}. See {b}{}:{}{c}.",
                 $exp,
                 *right,
@@ -35,17 +35,10 @@ macro_rules! eq {
                 o = "\x1b[33m",
                 c = "\x1b[0m"
             );
-            stderr!("");
+            eprintln!("");
             panic!($exp);
         }
     }};
-}
-
-macro_rules! stderr {
-    ($($arg:tt)*) => ({
-        use std::io::Write;
-        writeln!(&mut std::io::stderr(), $($arg)*)?
-    })
 }
 
 #[test]
