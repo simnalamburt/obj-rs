@@ -119,7 +119,7 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
 fn parse_texture_map(args: &[&str]) -> ObjResult<MtlTextureMap> {
     match args {
         [file] => Ok(MtlTextureMap {
-            file: file.to_string(),
+            file: (*file).to_string(),
         }),
         _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
     }
