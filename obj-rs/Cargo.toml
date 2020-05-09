@@ -2,24 +2,26 @@
 name = "obj-rs"
 version = "0.6.0"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-homepage = "https://github.com/simnalamburt/obj-rs"
-repository = "https://github.com/simnalamburt/obj-rs"
-documentation = "https://docs.rs/obj-rs/"
-license = "Apache-2.0/MIT"
-keywords = ["graphics", "obj", "WaveFront", "3D", "parser"]
-readme = "README.md"
 edition = "2018"
 
 description = """
 Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats.
 """
 
+documentation = "https://docs.rs/obj-rs/"
+readme = "README.md"
+homepage = "https://github.com/simnalamburt/obj-rs"
+repository = "https://github.com/simnalamburt/obj-rs"
+license = "Apache-2.0 OR MIT"
+keywords = ["graphics", "obj", "WaveFront", "3D", "parser"]
+categories = ["parsing", "rendering::data-formats"]
+
 [lib]
 name = "obj"
 
+
 [features]
 default = ["serde"]
-
 # This feature is kept for backwards compatibility. Use feature "glium" instead.
 glium-support = ["glium"]
 
@@ -28,13 +30,3 @@ glium = { version = "0.26.0", default-features = false, optional = true }
 vec_map = "0.8.2"
 serde = { version = "1.0", features = ["derive"], optional = true }
 num-traits = "0.2.11"
-
-
-[[example]]
-name = "glium"
-
-[dev_dependencies]
-glium = "0.26.0"
-
-[[example]]
-name = "no-normal"
