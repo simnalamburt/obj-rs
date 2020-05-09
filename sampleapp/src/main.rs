@@ -1,10 +1,3 @@
-//! Working example of *obj-rs*
-//! ========
-//!
-//! Execute it with the command below
-//!
-//!     cargo run --example glium --features glium
-
 use glium::glutin::dpi::LogicalSize;
 use glium::glutin::event::{Event, WindowEvent};
 use glium::glutin::event_loop::{ControlFlow, EventLoop};

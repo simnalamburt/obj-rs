@@ -48,7 +48,7 @@ let ib = obj.index_buffer(&display)?;
 Please see the [working sample] for the further details. Use can execute it with
 the command below.
 ```bash
-cargo run --example glium --features glium
+cargo run -p sampleapp
 ```
 
 <br>
@@ -63,7 +63,7 @@ cargo run --example glium --features glium
 [Wavefront .obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [Documentation]: https://docs.rs/obj-rs/
 [glium]: https://github.com/tomaka/glium
-[working sample]: examples/glium.rs
+[working sample]: sampleapp/src/main.rs
 
 [MIT license]: LICENSE-MIT
 [Apache License (Version 2.0)]: LICENSE-APACHE
