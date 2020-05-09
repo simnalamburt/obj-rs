@@ -1,128 +1,117 @@
-use obj::*;
+use obj::{load_obj, Obj, ObjResult, Position, TexturedVertex, Vertex};
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Error};
 
-macro_rules! fixture {
-    ($name:expr) => {
-        BufReader::new(File::open(concat!("tests/fixtures/", $name)).unwrap())
-    };
+fn fixture(name: &str) -> Result<BufReader<File>, Error> {
+    let file = File::open(format!("tests/fixtures/{}", name))?;
+    Ok(BufReader::new(file))
 }
 
 #[test]
-fn normal_cone() {
-    let obj: Obj = load_obj(fixture!("normal-cone.obj")).unwrap();
-
-    macro_rules! v {
-        (($($p:expr),*), ($($n:expr),*)) => ({
-            Vertex {
-                position: [$(stringify!($p).parse::<f32>().unwrap()),*],
-                normal: [$(stringify!($n).parse::<f32>().unwrap()),*],
-            }
-        })
-    }
+fn normal_cone() -> ObjResult<()> {
+    let obj: Obj = load_obj(fixture("normal-cone.obj")?)?;
 
     assert_eq!(obj.name, Some("Cone".to_string()));
     assert_eq!(obj.vertices.len(), 96);
     assert_eq!(
         obj.vertices[0],
-        v!(
-            (-0.382682, -1.000000, -0.923880),
-            (-0.259887, 0.445488, -0.856737)
-        )
+        Vertex {
+            position: [-0.382682, -1.000000, -0.923880],
+            normal: [-0.259887, 0.445488, -0.856737],
+        }
     );
     assert_eq!(
         obj.vertices[1],
-        v!(
-            (0.000000, 1.000000, 0.000000),
-            (-0.259887, 0.445488, -0.856737)
-        )
+        Vertex {
+            position: [0.000000, 1.000000, 0.000000],
+            normal: [-0.259887, 0.445488, -0.856737],
+        }
     );
     assert_eq!(obj.indices.len(), 96);
     assert_eq!(obj.indices[0], 0);
     assert_eq!(obj.indices[1], 1);
     assert_eq!(obj.indices[2], 2);
+
+    Ok(())
 }
 
 #[test]
-fn dome() {
-    let obj: Obj<Position> = load_obj(fixture!("dome.obj")).unwrap();
-
-    macro_rules! p {
-        ($($x:expr),*) => (Position { position: [$(stringify!($x).parse::<f32>().unwrap()),*] })
-    }
+fn dome() -> ObjResult<()> {
+    let obj: Obj<Position> = load_obj(fixture("dome.obj")?)?;
 
     assert_eq!(obj.name, Some("Dome".to_string()));
-    assert_eq!(obj.vertices[0], p!(-0.382683, 0.923880, 0.000000));
-    assert_eq!(obj.vertices[1], p!(-0.707107, 0.707107, 0.000000));
-    assert_eq!(obj.indices[0], 3);
-    assert_eq!(obj.indices[1], 2);
-    assert_eq!(obj.indices[2], 6);
-}
-
-#[test]
-fn textured_cube() {
-    let obj: Obj<TexturedVertex, u32> = load_obj(fixture!("textured-cube.obj")).unwrap();
-
-    macro_rules! vt {
-        (($($p:expr),*), ($($n:expr),*), ($($t:expr),*)) => ({
-            TexturedVertex {
-                position: [$(stringify!($p).parse::<f32>().unwrap()),*],
-                normal: [$(stringify!($n).parse::<f32>().unwrap()),*],
-                texture: [$(stringify!($t).parse::<f32>().unwrap()),*]
-            }
-        })
-    }
-
-    assert_eq!(obj.name, Some("cube".to_string()));
-    assert_eq!(obj.vertices.len(), 24);
-    dbg!(&obj.vertices);
     assert_eq!(
         obj.vertices[0],
-        vt!(
-            (-0.500000, -0.500000, 0.500000),
-            (0.000000, 0.000000, 1.000000),
-            (0.000000, 0.000000, 0.000000)
-        )
+        Position {
+            position: [-0.382683, 0.923880, 0.000000]
+        }
     );
     assert_eq!(
         obj.vertices[1],
-        vt!(
-            (0.500000, -0.500000, 0.500000),
-            (0.000000, 0.000000, 1.000000),
-            (1.000000, 0.000000, 0.000000)
-        )
+        Position {
+            position: [-0.707107, 0.707107, 0.000000]
+        }
+    );
+    assert_eq!(obj.indices[0], 3);
+    assert_eq!(obj.indices[1], 2);
+    assert_eq!(obj.indices[2], 6);
+
+    Ok(())
+}
+
+#[test]
+fn textured_cube() -> ObjResult<()> {
+    let obj: Obj<TexturedVertex, u32> = load_obj(fixture("textured-cube.obj")?)?;
+
+    assert_eq!(obj.name, Some("cube".to_string()));
+    assert_eq!(obj.vertices.len(), 24);
+    assert_eq!(
+        obj.vertices[0],
+        TexturedVertex {
+            position: [-0.500000, -0.500000, 0.500000],
+            normal: [0.000000, 0.000000, 1.000000],
+            texture: [0.000000, 0.000000, 0.000000]
+        }
+    );
+    assert_eq!(
+        obj.vertices[1],
+        TexturedVertex {
+            position: [0.500000, -0.500000, 0.500000],
+            normal: [0.000000, 0.000000, 1.000000],
+            texture: [1.000000, 0.000000, 0.000000]
+        }
     );
     assert_eq!(
         obj.vertices[2],
-        vt!(
-            (-0.500000, 0.500000, 0.500000),
-            (0.000000, 0.000000, 1.000000),
-            (0.000000, 1.000000, 0.000000)
-        )
+        TexturedVertex {
+            position: [-0.500000, 0.500000, 0.500000],
+            normal: [0.000000, 0.000000, 1.000000],
+            texture: [0.000000, 1.000000, 0.000000]
+        }
     );
     assert_eq!(
         obj.vertices[3],
-        vt!(
-            (0.500000, 0.500000, 0.500000),
-            (0.000000, 0.000000, 1.000000),
-            (1.000000, 1.000000, 0.000000)
-        )
+        TexturedVertex {
+            position: [0.500000, 0.500000, 0.500000],
+            normal: [0.000000, 0.000000, 1.000000],
+            texture: [1.000000, 1.000000, 0.000000]
+        }
     );
     assert_eq!(
         obj.vertices[4],
-        vt!(
-            (-0.500000, 0.500000, 0.500000),
-            (0.000000, 1.000000, 0.000000),
-            (0.000000, 0.000000, 0.000000)
-        )
+        TexturedVertex {
+            position: [-0.500000, 0.500000, 0.500000],
+            normal: [0.000000, 1.000000, 0.000000],
+            texture: [0.000000, 0.000000, 0.000000]
+        }
     );
     assert_eq!(
         obj.vertices[5],
-        vt!(
-            (0.500000, 0.500000, 0.500000),
-            (0.000000, 1.000000, 0.000000),
-            (1.000000, 0.000000, 0.000000)
-        )
+        TexturedVertex {
+            position: [0.500000, 0.500000, 0.500000],
+            normal: [0.000000, 1.000000, 0.000000],
+            texture: [1.000000, 0.000000, 0.000000]
+        }
     );
     assert_eq!(obj.indices.len(), 36);
     assert_eq!(obj.indices[0], 0);
@@ -133,4 +122,6 @@ fn textured_cube() {
     assert_eq!(obj.indices[5], 3);
     assert_eq!(obj.indices[6], 4);
     assert_eq!(obj.indices[7], 5);
+
+    Ok(())
 }
