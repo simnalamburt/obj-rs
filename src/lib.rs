@@ -33,12 +33,13 @@ pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
 
 use crate::raw::object::Polygon;
 use num_traits::FromPrimitive;
-use serde_derive::{Deserialize, Serialize};
 use std::collections::hash_map::{Entry, HashMap};
 use std::io::BufRead;
 
 #[cfg(feature = "glium")]
 use glium::implement_vertex;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
@@ -47,7 +48,7 @@ pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V
 }
 
 /// 3D model object loaded from wavefront OBJ.
-#[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Obj<V = Vertex, I = u16> {
     /// Object's name.
     pub name: Option<String>,
@@ -83,7 +84,8 @@ pub trait FromRawVertex<I>: Sized {
 }
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -157,7 +159,8 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
 }
 
 /// Vertex data type of `Obj` which contains only position data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -214,7 +217,8 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
 }
 
 /// Vertex data type of `Obj` which contains position, normal and texture data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct TexturedVertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
