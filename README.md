@@ -55,9 +55,9 @@ cargo run --example glium --features glium
 
 CI Status
 --------
-Linux/macOS Build | Windows Build
-:----------------:|:-------------:
-[![Travis Build Status]][travis] | [![AppVeyor Build Status]][appveyor]
+| Linux/macOS Build |
+|:-----------------:|
+| [![Travis Build Status]][travis] |
 
 <br>
 
@@ -75,8 +75,6 @@ Linux/macOS Build | Windows Build
 
 [Travis Build Status]: https://badgen.net/travis/simnalamburt/obj-rs/master?icon=travis
 [travis]: https://travis-ci.org/simnalamburt/obj-rs
-[AppVeyor Build Status]: https://badgen.net/appveyor/ci/simnalamburt/obj-rs/master?icon=appveyor
-[appveyor]: https://ci.appveyor.com/project/simnalamburt/obj-rs/branch/master
 
 [MIT license]: LICENSE-MIT
 [Apache License (Version 2.0)]: LICENSE-APACHE
