@@ -1,5 +1,5 @@
 use obj::raw::object::Range;
-use obj::raw::*;
+use obj::raw::parse_obj;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;

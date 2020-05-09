@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     use glium::glutin::ContextBuilder;
     use glium::uniform;
     use glium::Program;
-    use obj::*;
+    use obj::{load_obj, Obj};
     use std::fs::File;
     use std::io::BufReader;
 

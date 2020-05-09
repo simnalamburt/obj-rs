@@ -5,7 +5,7 @@
 ```rust
 use std::fs::File;
 use std::io::BufReader;
-use obj::*;
+use obj::{load_obj, Obj};
 
 let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj")?);
 let dome: Obj = load_obj(input)?;
@@ -13,7 +13,7 @@ let dome: Obj = load_obj(input)?;
 // Do whatever you want
 dome.vertices;
 dome.indices;
-# Ok::<(), ObjError>(())
+# Ok::<(), obj::ObjError>(())
 ```
 
 <img src="https://simnalamburt.github.io/obj-rs/screenshot.png" style="max-width:100%">

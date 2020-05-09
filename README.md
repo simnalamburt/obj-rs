@@ -10,7 +10,7 @@ obj-rs = "0.6"
 ```rust
 use std::fs::File;
 use std::io::BufReader;
-use obj::*;
+use obj::{load_obj, Obj};
 
 let input = BufReader::new(File::open("tests/fixtures/dome.obj"))?;
 let mobel: Obj = load_obj(input)?;
@@ -36,7 +36,7 @@ obj-rs = { version = "0.6", features = ["glium-support"] }
 ```rust
 use std::fs::File;
 use std::io::BufReader;
-use obj::*;
+use obj::{load_obj, Obj};
 
 let input = BufReader::new(File::open("rilakkuma.obj")?);
 let obj: Obj = load_obj(input)?;

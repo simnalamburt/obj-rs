@@ -1,7 +1,7 @@
 //! Parses `.mtl` format which stores material data
 
 use std::collections::HashMap;
-use std::io::prelude::*;
+use std::io::BufRead;
 use std::mem::take;
 
 use crate::error::ObjResult;

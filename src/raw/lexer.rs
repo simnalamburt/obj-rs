@@ -1,5 +1,5 @@
 use crate::error::ObjResult;
-use std::io::prelude::*;
+use std::io::BufRead;
 
 pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
 where
