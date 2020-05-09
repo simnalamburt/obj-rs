@@ -53,14 +53,6 @@ cargo run --example glium --features glium
 
 <br>
 
-CI Status
---------
-| Linux/macOS Build |
-|:-----------------:|
-| [![Travis Build Status]][travis] |
-
-<br>
-
 --------
 *obj-rs* is primarily distributed under the terms of both the [Apache License
 (Version 2.0)] and the [MIT license]. See [COPYRIGHT] for details.
@@ -72,9 +64,6 @@ CI Status
 [Documentation]: https://docs.rs/obj-rs/
 [glium]: https://github.com/tomaka/glium
 [working sample]: examples/glium.rs
-
-[Travis Build Status]: https://badgen.net/travis/simnalamburt/obj-rs/master?icon=travis
-[travis]: https://travis-ci.org/simnalamburt/obj-rs
 
 [MIT license]: LICENSE-MIT
 [Apache License (Version 2.0)]: LICENSE-APACHE
