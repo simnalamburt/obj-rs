@@ -40,7 +40,7 @@ fn cube() -> TestResult {
             optical_density: Some(1.0),
             illumination_model: Some(2),
             diffuse_map: Some(MtlTextureMap {
-                file: "cube-uv-num.png".to_owned()
+                file: "cube-uv-num.png".to_string()
             }),
             ..Material::default()
         }

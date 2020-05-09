@@ -356,7 +356,7 @@ fn sponza() -> TestResult {
     let obj = fixture("sponza.obj")?;
 
     test! {
-        obj.name,              Some("sponza.lwo".to_owned())
+        obj.name,              Some("sponza.lwo".to_string())
         obj.positions.len(),   39742
         obj.polygons.len(),    36347
     }
@@ -370,7 +370,7 @@ fn lines_points() -> TestResult {
     let obj = fixture("lines_points.obj")?;
 
     test! {
-        obj.name,             Some("lines.obj".to_owned())
+        obj.name,             Some("lines.obj".to_string())
         obj.positions.len(),  3
         obj.tex_coords.len(), 2
         obj.lines.len(),      2

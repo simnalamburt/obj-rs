@@ -8,6 +8,28 @@ use crate::error::ObjResult;
 use crate::raw::lexer::lex;
 use crate::raw::util::parse_args;
 
+macro_rules! parse_args {
+    {
+        $first:expr, $rest:expr,
+        $($pat:pat => $type:ident::$name:ident[$exp:expr]),*,
+        ! => $error:expr
+    } => (
+        match split_vertex_group($first)[..] {
+            $($pat => $type::$name({
+                let mut points = vec![$exp];
+                for param in $rest {
+                    match split_vertex_group(param)[..] {
+                        $pat => points.push($exp),
+                        _ => $error
+                    }
+                }
+                points
+            }),)*
+            _ => $error
+        }
+    )
+}
+
 // Helper function for handling the indexes.
 //
 // If total size of the collection is 5:
@@ -52,52 +74,34 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     lex(input, |stmt, args: &[&str]| {
         match stmt {
             // Vertex data
-            "v" => {
-                let args = parse_args(args)?;
-                positions.push(match args.len() {
-                    4 => (args[0], args[1], args[2], args[3]),
-                    3 => (args[0], args[1], args[2], 1.0),
-                    _ => make_error!(WrongNumberOfArguments, "Expected 3 or 4 arguments"),
-                })
-            }
-            "vt" => {
-                let args = parse_args(args)?;
-                tex_coords.push(match args.len() {
-                    3 => (args[0], args[1], args[2]),
-                    2 => (args[0], args[1], 0.0),
-                    1 => (args[0], 0.0, 0.0),
-                    _ => make_error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
-                })
-            }
-            "vn" => {
-                let args = parse_args(args)?;
-                normals.push(match args.len() {
-                    3 => (args[0], args[1], args[2]),
-                    _ => make_error!(WrongNumberOfArguments, "Expected 3 arguments"),
-                })
-            }
-            "vp" => {
-                let args = parse_args(args)?;
-                param_vertices.push(match args.len() {
-                    3 => (args[0], args[1], args[2]),
-                    2 => (args[0], args[1], 1.0),
-                    1 => (args[0], 0.0, 1.0),
-                    _ => make_error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
-                })
-            }
+            "v" => positions.push(match parse_args(args)?[..] {
+                [x, y, z, w] => (x, y, z, w),
+                [x, y, z] => (x, y, z, 1.0),
+                _ => make_error!(WrongNumberOfArguments, "Expected 3 or 4 arguments"),
+            }),
+            "vt" => tex_coords.push(match parse_args(args)?[..] {
+                [u, v, w] => (u, v, w),
+                [u, v] => (u, v, 0.0),
+                [u] => (u, 0.0, 0.0),
+                _ => make_error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
+            }),
+            "vn" => normals.push(match parse_args(args)?[..] {
+                [x, y, z] => (x, y, z),
+                _ => make_error!(WrongNumberOfArguments, "Expected 3 arguments"),
+            }),
+            "vp" => param_vertices.push(match parse_args(args)?[..] {
+                [u, v, w] => (u, v, w),
+                [u, v] => (u, v, 1.0),
+                [u] => (u, 0.0, 1.0),
+                _ => make_error!(WrongNumberOfArguments, "Expected 1, 2 or 3 arguments"),
+            }),
 
             // Free-form curve / surface attributes
+            // TODO: Use rational information
             "cstype" => {
-                let _rational: bool;
-                let geometry = match args.len() {
-                    2 if args[0] == "rat" => {
-                        _rational = true;
-                        args[1]
-                    }
-                    1 => {
-                        _rational = false;
-                        args[0]
-                    }
+                let geometry = match args {
+                    ["rat", ty] => *ty,
+                    [ty] => *ty,
                     _ => make_error!(WrongTypeOfArguments, "Expected 'rat xxx' or 'xxx' format"),
                 };
 
@@ -113,14 +117,11 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     ),
                 }
             }
-            "deg" => {
-                let args = parse_args(args)?;
-                match args.len() {
-                    2 => unimplemented!(), // (deg_u, deg_v)
-                    1 => unimplemented!(), // (deg_u)
-                    _ => make_error!(WrongNumberOfArguments, "Expected 1 or 2 arguments"),
-                }
-            }
+            "deg" => match parse_args(args)?[..] {
+                [_deg_u, _deg_v] => unimplemented!(),
+                [_deg_u] => unimplemented!(),
+                _ => make_error!(WrongNumberOfArguments, "Expected 1 or 2 arguments"),
+            },
             "bmat" => unimplemented!(),
             "step" => unimplemented!(),
 
@@ -132,138 +133,42 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                     points.push(v);
                 }
             }
-            "l" => {
-                if args.len() < 2 {
-                    make_error!(WrongNumberOfArguments, "Expected at least 2 arguments")
+            "l" => match args {
+                [] => make_error!(WrongNumberOfArguments, "Expected at least 2 arguments"),
+                [first, rest @ ..] => {
+                    if args.len() < 2 {
+                        make_error!(WrongNumberOfArguments, "Expected at least 2 arguments")
+                    }
+
+                    let line = parse_args! {
+                        first, rest,
+                        [p] => Line::P[translate_index(&positions, p.parse()?)],
+                        [p, t] => Line::PT[(translate_index(&positions, p.parse()?), translate_index(&tex_coords, t.parse()?))],
+                        ! => make_error!(WrongTypeOfArguments, "Unexpected vertex format, expected `#`, or `#/#`")
+                    };
+
+                    lines.push(line);
                 }
-                let mut args = args.iter();
-                let first = args.next().unwrap();
-                let rest = args;
-
-                let group = parse_vertex_group(first)?;
-
-                let line = match group {
-                    (p, 0, 0) => {
-                        let mut points = vec![translate_index(&positions, p)];
-                        for gs in rest {
-                            let group = parse_vertex_group(gs)?;
-                            if group.1 != 0 || group.2 != 0 {
-                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
-                            }
-
-                            points.push(translate_index(&positions, group.0));
-                        }
-                        Line::P(points)
+            },
+            "fo" | "f" => match args {
+                [] => make_error!(WrongNumberOfArguments, "Expected at least 3 arguments"),
+                [first, rest @ ..] => {
+                    if args.len() < 3 {
+                        make_error!(WrongNumberOfArguments, "Expected at least 3 arguments")
                     }
-                    (p, t, 0) => {
-                        let mut points = vec![(
-                            translate_index(&positions, p),
-                            translate_index(&tex_coords, t),
-                        )];
-                        for gs in rest {
-                            let group = parse_vertex_group(gs)?;
-                            if group.2 != 0 {
-                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
-                            }
 
-                            points.push((
-                                translate_index(&positions, group.0),
-                                translate_index(&tex_coords, group.1),
-                            ));
-                        }
-                        Line::PT(points)
-                    }
-                    _ => {
-                        make_error!(
-                            WrongTypeOfArguments,
-                            "Unexpected vertex format, expected `#` or `#/#`"
-                        );
-                    }
-                };
-                lines.push(line);
-            }
-            "fo" | "f" => {
-                if args.len() < 3 {
-                    make_error!(WrongNumberOfArguments, "Expected at least 3 arguments")
+                    let polygon = parse_args! {
+                        first, rest,
+                        [p] => Polygon::P[translate_index(&positions, p.parse()?)],
+                        [p, t] => Polygon::PT[(translate_index(&positions, p.parse()?), translate_index(&tex_coords, t.parse()?))],
+                        [p, "", n] => Polygon::PN[(translate_index(&positions, p.parse()?), translate_index(&normals, n.parse()?))],
+                        [p, t, n] => Polygon::PTN[(translate_index(&positions, p.parse()?), translate_index(&tex_coords, t.parse()?), translate_index(&normals, n.parse()?))],
+                        ! => make_error!(WrongTypeOfArguments, "Unexpected vertex format, expected `#`, `#/#`, `#//#`, or `#/#/#`")
+                    };
+
+                    polygons.push(polygon);
                 }
-
-                let mut args = args.iter();
-                let first = args.next().unwrap();
-                let rest = args;
-
-                let group = parse_vertex_group(first)?;
-
-                let polygon = match group {
-                    (p, 0, 0) => {
-                        let mut polygon = vec![translate_index(&positions, p)];
-                        for gs in rest {
-                            let group = parse_vertex_group(gs)?;
-                            if group.1 != 0 || group.2 != 0 {
-                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
-                            }
-
-                            polygon.push(translate_index(&positions, group.0));
-                        }
-
-                        Polygon::P(polygon)
-                    }
-                    (p, t, 0) => {
-                        let mut polygon = vec![(
-                            translate_index(&positions, p),
-                            translate_index(&tex_coords, t),
-                        )];
-                        for gs in rest {
-                            let group = parse_vertex_group(gs)?;
-                            if group.2 != 0 {
-                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
-                            }
-
-                            polygon.push((
-                                translate_index(&positions, group.0),
-                                translate_index(&tex_coords, group.1),
-                            ));
-                        }
-
-                        Polygon::PT(polygon)
-                    }
-                    (p, 0, n) => {
-                        let mut polygon =
-                            vec![(translate_index(&positions, p), translate_index(&normals, n))];
-                        for gs in rest {
-                            let group = parse_vertex_group(gs)?;
-                            if group.1 != 0 {
-                                make_error!(WrongTypeOfArguments, "Unexpected vertex format");
-                            }
-
-                            polygon.push((
-                                translate_index(&positions, group.0),
-                                translate_index(&normals, group.2),
-                            ));
-                        }
-
-                        Polygon::PN(polygon)
-                    }
-                    (p, t, n) => {
-                        let mut polygon = vec![(
-                            translate_index(&positions, p),
-                            translate_index(&tex_coords, t),
-                            translate_index(&normals, n),
-                        )];
-                        for gs in rest {
-                            let group = parse_vertex_group(gs)?;
-                            polygon.push((
-                                translate_index(&positions, group.0),
-                                translate_index(&tex_coords, group.1),
-                                translate_index(&normals, group.2),
-                            ));
-                        }
-
-                        Polygon::PTN(polygon)
-                    }
-                };
-
-                polygons.push(polygon);
-            }
+            },
             "curv" => unimplemented!(),
             "curv2" => unimplemented!(),
             "surf" => unimplemented!(),
@@ -280,27 +185,28 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "con" => unimplemented!(),
 
             // Grouping
-            "g" => match args.len() {
-                1 => group_builder.start(args[0].to_string()),
+            "g" => match args {
+                [name] => group_builder.start((*name).to_string()),
                 _ => make_error!(
                     WrongNumberOfArguments,
                     "Expected group name parameter, but nothing has been supplied"
                 ),
             },
-            "s" => match args.len() {
-                1 if (args[0] == "off" || args[0] == "0") => smoothing_builder.end(),
-                1 => smoothing_builder.start(args[0].parse()?),
+            "s" => match args {
+                ["off"] | ["0"] => smoothing_builder.end(),
+                [param] => smoothing_builder.start(param.parse()?),
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
-            "mg" => match args.len() {
-                1 if (args[0] == "off" || args[0] == "0") => merging_builder.end(),
-                1 => merging_builder.start(args[0].parse()?),
+            "mg" => match args {
+                ["off"] | ["0"] => merging_builder.end(),
+                [param] => merging_builder.start(param.parse()?),
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "o" => {
-                name = match args.len() {
-                    0 => None,
+                name = match args {
+                    [] => None,
                     _ => Some(args.join(" ")),
+                    // TODO: "name a  b" will be parsed as "name a b"
                 }
             }
 
@@ -309,8 +215,8 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "c_interp" => unimplemented!(),
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
-            "usemtl" => match args.len() {
-                1 => mesh_builder.start(args[0].to_string()),
+            "usemtl" => match args {
+                [material] => mesh_builder.start((*material).to_string()),
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mtllib" => {
@@ -356,21 +262,9 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     })
 }
 
-// Parses the vertex group in the face statement, missing entries
-// are indicated with a 0 value
-fn parse_vertex_group(s: &str) -> ObjResult<(i32, i32, i32)> {
-    let mut indices = s.split('/');
-
-    let first = indices.next().unwrap_or("");
-    let second = indices.next().unwrap_or("");
-    let third = indices.next().unwrap_or("");
-
-    let first = first.parse()?;
-    let second = if second == "" { 0 } else { second.parse()? };
-
-    let third = if third == "" { 0 } else { third.parse()? };
-
-    Ok((first, second, third))
+/// Splits a string with '/'.
+fn split_vertex_group(input: &str) -> Vec<&str> {
+    input.split('/').collect()
 }
 
 /// Counts current total count of parsed `points`, `lines` and `polygons`.
