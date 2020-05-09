@@ -31,7 +31,7 @@ pub mod raw;
 pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
 
 use crate::raw::object::Polygon;
-use num::FromPrimitive;
+use num_traits::FromPrimitive;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::hash_map::{Entry, HashMap};
 use std::io::BufRead;
