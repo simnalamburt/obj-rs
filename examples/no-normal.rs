@@ -7,9 +7,9 @@
 
 extern crate obj;
 
-use obj::{Obj, ObjError, Position, load_obj};
-use std::io::BufReader;
+use obj::{load_obj, Obj, ObjError, Position};
 use std::fs::File;
+use std::io::BufReader;
 
 fn main() -> Result<(), ObjError> {
     let input = BufReader::new(File::open("tests/fixtures/dome.obj")?);

@@ -12,11 +12,11 @@ extern crate obj;
 #[cfg(feature = "glium-support")]
 fn main() {
     use glium::glutin::dpi::LogicalSize;
-    use glium::Program;
     use glium::glutin::event::{Event, WindowEvent};
     use glium::glutin::event_loop::{ControlFlow, EventLoop};
     use glium::glutin::window::WindowBuilder;
     use glium::glutin::ContextBuilder;
+    use glium::Program;
     use obj::*;
     use std::fs::File;
     use std::io::BufReader;
@@ -98,9 +98,10 @@ fn main() {
 
         match event {
             Event::LoopDestroyed => return,
-            Event::WindowEvent { event: WindowEvent::CloseRequested, .. } => {
-                *control_flow = ControlFlow::Exit
-            }
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                ..
+            } => *control_flow = ControlFlow::Exit,
             Event::RedrawRequested(_) => {
                 // draw
                 use glium::Surface;
@@ -112,7 +113,6 @@ fn main() {
             }
             _ => (),
         }
-
     });
 }
 
