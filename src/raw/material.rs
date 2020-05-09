@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use std::io::prelude::*;
-use std::mem::replace;
+use std::mem::take;
 
 use crate::error::ObjResult;
 use crate::raw::lexer::lex;
@@ -22,7 +22,7 @@ pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
             "newmtl" => {
                 // Finish whatever material we were parsing
                 if let Some(name) = name.take() {
-                    materials.insert(name, replace(&mut mat, Material::default()));
+                    materials.insert(name, take(&mut mat));
                 }
 
                 match args.len() {

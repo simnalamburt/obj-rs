@@ -39,10 +39,10 @@ macro_rules! implmnt {
 impl fmt::Display for ObjError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            &ObjError::Io(ref e) => e.fmt(f),
-            &ObjError::ParseInt(ref e) => e.fmt(f),
-            &ObjError::ParseFloat(ref e) => e.fmt(f),
-            &ObjError::Load(ref e) => e.fmt(f),
+            ObjError::Io(ref e) => e.fmt(f),
+            ObjError::ParseInt(ref e) => e.fmt(f),
+            ObjError::ParseFloat(ref e) => e.fmt(f),
+            ObjError::Load(ref e) => e.fmt(f),
         }
     }
 }

@@ -37,10 +37,9 @@ where
                 // we want (&[&str]), this is safe because the args vector is
                 // cleared after the callback returns, meaning the raw pointers don't
                 // outlive the data they're pointing to.
-                unsafe {
-                    let args: &[&str] = std::mem::transmute(&args[..]);
-                    callback(stmt, args)?;
-                }
+                callback(stmt, unsafe {
+                    &*(&args[..] as *const [*const str] as *const [&str])
+                })?;
                 // Clear the args buffer for reuse on the next iteration
                 args.clear();
             }

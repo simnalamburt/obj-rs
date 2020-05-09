@@ -65,8 +65,8 @@ impl<V: FromRawVertex<I>, I> Obj<V, I> {
 
         Ok(Obj {
             name: raw.name,
-            vertices: vertices,
-            indices: indices,
+            vertices,
+            indices,
         })
     }
 }

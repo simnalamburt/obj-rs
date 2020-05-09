@@ -20,7 +20,7 @@ use crate::raw::util::parse_args;
 //
 // If the index is > 0 then it's simply the position in the list such
 // that 1 is the first vertex.
-fn translate_index<T>(collection: &Vec<T>, signed_index: i32) -> usize {
+fn translate_index<T>(collection: &[T], signed_index: i32) -> usize {
     if signed_index < 0 {
         let abs = -signed_index as usize;
         collection.len() - abs
@@ -314,9 +314,8 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mtllib" => {
-                // TODO: .push_all()
                 material_libraries.reserve(args.len());
-                for path in args {
+                for &path in args {
                     material_libraries.push(path.to_string());
                 }
             }
@@ -338,17 +337,17 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     merging_builder.end();
 
     Ok(RawObj {
-        name: name,
-        material_libraries: material_libraries,
+        name,
+        material_libraries,
 
-        positions: positions,
-        tex_coords: tex_coords,
-        normals: normals,
-        param_vertices: param_vertices,
+        positions,
+        tex_coords,
+        normals,
+        param_vertices,
 
-        points: points,
-        lines: lines,
-        polygons: polygons,
+        points,
+        lines,
+        polygons,
 
         groups: group_builder.result,
         meshes: mesh_builder.result,
@@ -389,9 +388,9 @@ impl Counter {
         polygons: *const Vec<Polygon>,
     ) -> Self {
         Counter {
-            points: points,
-            lines: lines,
-            polygons: polygons,
+            points,
+            lines,
+            polygons,
         }
     }
 
@@ -414,7 +413,7 @@ impl Counter {
         GroupBuilder {
             counter: self,
             current: Some(input),
-            result: result,
+            result,
         }
     }
 
