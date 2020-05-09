@@ -70,7 +70,14 @@ pub struct LoadError {
     message: &'static str,
 }
 
-/// A list specifying general categories of load error.
+impl LoadError {
+    /// Outputs the detailed cause of loading an OBJ failing.
+    pub fn kind(&self) -> &LoadErrorKind {
+        &self.kind
+    }
+}
+
+/// Enum to store the various types of errors that can cause loading an OBJ to fail.
 #[derive(Copy, PartialEq, Eq, Clone, Debug)]
 pub enum LoadErrorKind {
     /// Met unexpected statement.
