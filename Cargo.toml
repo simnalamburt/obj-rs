@@ -8,6 +8,7 @@ documentation = "https://docs.rs/obj-rs/"
 license = "Apache-2.0/MIT"
 keywords = ["graphics", "obj", "WaveFront", "3D", "parser"]
 readme = "README.md"
+edition = "2018"
 
 description = """
 Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats.
@@ -35,4 +36,3 @@ glium = "0.26.0"
 
 [[example]]
 name = "no-normal"
-edition = "2018"

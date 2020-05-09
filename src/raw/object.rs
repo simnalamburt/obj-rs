@@ -1,7 +1,7 @@
 //! Parses `.obj` format which stores 3D mesh data
 
-use error::ObjResult;
-use raw::lexer::lex;
+use crate::error::ObjResult;
+use crate::raw::lexer::lex;
 use std::collections::HashMap;
 use std::io::BufRead;
 use vec_map::VecMap;
@@ -523,7 +523,7 @@ impl Group {
 /// Custom trait to interface `HashMap` and `VecMap`.
 trait Map<K: Key, V> {
     /// Interface of `insert` function.
-    fn insert(&mut self, K, V) -> Option<V>;
+    fn insert(&mut self, _: K, _: V) -> Option<V>;
     /// Interface of `get_mut` function.
     fn get_mut(&mut self, k: &K) -> Option<&mut V>;
     /// Interface of `remove` function.

@@ -1,4 +1,4 @@
-use error::ObjResult;
+use crate::error::ObjResult;
 use std;
 use std::io::prelude::*;
 

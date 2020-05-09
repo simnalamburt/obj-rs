@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::io::prelude::*;
 use std::mem::replace;
 
-use error::ObjResult;
-use raw::lexer::lex;
+use crate::error::ObjResult;
+use crate::raw::lexer::lex;
 
 /// Parses &[&str] into &[f32].
 macro_rules! f {

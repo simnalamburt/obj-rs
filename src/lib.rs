@@ -37,9 +37,9 @@ extern crate serde_derive;
 mod error;
 pub mod raw;
 
-pub use error::{LoadError, LoadErrorKind, ObjError, ObjResult};
+pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
+use crate::raw::object::Polygon;
 use num::{FromPrimitive, Integer};
-use raw::object::Polygon;
 use std::collections::hash_map::{Entry, HashMap};
 use std::io::BufRead;
 
