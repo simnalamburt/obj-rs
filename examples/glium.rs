@@ -12,6 +12,7 @@ fn main() {
     use glium::glutin::event_loop::{ControlFlow, EventLoop};
     use glium::glutin::window::WindowBuilder;
     use glium::glutin::ContextBuilder;
+    use glium::uniform;
     use glium::Program;
     use obj::*;
     use std::fs::File;
