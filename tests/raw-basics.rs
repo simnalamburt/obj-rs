@@ -1,4 +1,4 @@
-extern crate obj;
+use obj;
 
 use obj::raw::{parse_obj, RawObj};
 

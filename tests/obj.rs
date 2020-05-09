@@ -1,5 +1,3 @@
-extern crate obj;
-
 use obj::*;
 use std::fs::File;
 use std::io::BufReader;

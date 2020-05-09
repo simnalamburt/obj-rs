@@ -1,5 +1,3 @@
-extern crate obj;
-
 use obj::raw::object::Range;
 use obj::raw::*;
 use std::fs::File;

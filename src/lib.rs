@@ -27,8 +27,6 @@ dome.indices;
 #[cfg(feature = "glium-support")]
 #[macro_use]
 extern crate glium;
-extern crate num;
-extern crate vec_map;
 
 #[macro_use]
 extern crate serde_derive;

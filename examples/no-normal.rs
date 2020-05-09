@@ -5,8 +5,6 @@
 //!
 //!     cargo run --example no-normal
 
-extern crate obj;
-
 use obj::{load_obj, Obj, ObjError, Position};
 use std::fs::File;
 use std::io::BufReader;

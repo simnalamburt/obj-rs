@@ -1,5 +1,3 @@
-extern crate obj;
-
 use obj::raw::material::{parse_mtl, Material, MtlColor, MtlTextureMap, RawMtl};
 
 fn fixture(filename: &str) -> RawMtl {

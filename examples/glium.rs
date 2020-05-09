@@ -5,9 +5,6 @@
 //!
 //!     cargo run --example glium --features glium-support
 
-extern crate glium;
-extern crate obj;
-
 #[cfg(feature = "glium-support")]
 fn main() {
     use glium::glutin::dpi::LogicalSize;

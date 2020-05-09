@@ -37,7 +37,7 @@ macro_rules! implmnt {
 }
 
 impl fmt::Display for ObjError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             &ObjError::Io(ref e) => e.fmt(f),
             &ObjError::ParseInt(ref e) => e.fmt(f),
@@ -95,7 +95,7 @@ impl LoadError {
 impl Error for LoadError {}
 
 impl fmt::Display for LoadError {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
         let msg = match self.kind {
             LoadErrorKind::UnexpectedStatement => "Met unexpected statement",
             LoadErrorKind::WrongNumberOfArguments => "Received wrong number of arguments",
