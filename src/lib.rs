@@ -31,7 +31,7 @@ pub mod raw;
 pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
 
 use crate::raw::object::Polygon;
-use num::{FromPrimitive, Integer};
+use num::FromPrimitive;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::hash_map::{Entry, HashMap};
 use std::io::BufRead;
@@ -93,7 +93,7 @@ pub struct Vertex {
 #[cfg(feature = "glium-support")]
 implement_vertex!(Vertex, position, normal);
 
-impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for Vertex {
+impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
     fn process(
         positions: Vec<(f32, f32, f32, f32)>,
         normals: Vec<(f32, f32, f32)>,
@@ -165,7 +165,7 @@ pub struct Position {
 #[cfg(feature = "glium-support")]
 implement_vertex!(Position, position);
 
-impl<I: FromPrimitive + Integer> FromRawVertex<I> for Position {
+impl<I: FromPrimitive> FromRawVertex<I> for Position {
     fn process(
         vertices: Vec<(f32, f32, f32, f32)>,
         _: Vec<(f32, f32, f32)>,
@@ -226,7 +226,7 @@ pub struct TexturedVertex {
 #[cfg(feature = "glium-support")]
 implement_vertex!(TexturedVertex, position, normal, texture);
 
-impl<I: FromPrimitive + Integer + Copy> FromRawVertex<I> for TexturedVertex {
+impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
     fn process(
         positions: Vec<(f32, f32, f32, f32)>,
         normals: Vec<(f32, f32, f32)>,
