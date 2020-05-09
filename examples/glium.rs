@@ -5,7 +5,6 @@
 //!
 //!     cargo run --example glium --features glium-support
 
-#[macro_use]
 extern crate glium;
 extern crate obj;
 
