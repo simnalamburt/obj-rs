@@ -1,0 +1,4 @@
+[workspace]
+members = [
+    "obj-rs",
+]
