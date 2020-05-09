@@ -3,9 +3,9 @@
 //!
 //! Execute it with the command below
 //!
-//!     cargo run --example glium --features glium-support
+//!     cargo run --example glium --features glium
 
-#[cfg(feature = "glium-support")]
+#[cfg(feature = "glium")]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     use glium::glutin::dpi::LogicalSize;
     use glium::glutin::event::{Event, WindowEvent};
@@ -112,12 +112,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 }
 
-#[cfg(not(feature = "glium-support"))]
+#[cfg(not(feature = "glium"))]
 fn main() {
     println!(
         "\n\
-    Please execute it with \x1b[4m--features glium-support\x1b[24m the option
+    Please execute it with \x1b[4m--features glium\x1b[24m the option
 
-    $ \x1b[33mcargo run --example glium --features glium-support\x1b[0m\n"
+    $ \x1b[33mcargo run --example glium --features glium\x1b[0m\n"
     );
 }

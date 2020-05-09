@@ -31,7 +31,7 @@ Glium support
 ```toml
 [dependencies]
 glium = "0.26"
-obj-rs = { version = "0.6", features = ["glium-support"] }
+obj-rs = { version = "0.6", features = ["glium"] }
 ```
 ```rust
 use std::fs::File;
@@ -48,7 +48,7 @@ let ib = obj.index_buffer(&display)?;
 Please see the [working sample] for the further details. Use can execute it with
 the command below.
 ```bash
-cargo run --example glium --features glium-support
+cargo run --example glium --features glium
 ```
 
 <br>

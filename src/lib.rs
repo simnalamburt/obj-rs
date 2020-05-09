@@ -37,7 +37,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::collections::hash_map::{Entry, HashMap};
 use std::io::BufRead;
 
-#[cfg(feature = "glium-support")]
+#[cfg(feature = "glium")]
 use glium::implement_vertex;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
@@ -91,7 +91,7 @@ pub struct Vertex {
     pub normal: [f32; 3],
 }
 
-#[cfg(feature = "glium-support")]
+#[cfg(feature = "glium")]
 implement_vertex!(Vertex, position, normal);
 
 impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
@@ -163,7 +163,7 @@ pub struct Position {
     pub position: [f32; 3],
 }
 
-#[cfg(feature = "glium-support")]
+#[cfg(feature = "glium")]
 implement_vertex!(Position, position);
 
 impl<I: FromPrimitive> FromRawVertex<I> for Position {
@@ -224,7 +224,7 @@ pub struct TexturedVertex {
     pub texture: [f32; 3],
 }
 
-#[cfg(feature = "glium-support")]
+#[cfg(feature = "glium")]
 implement_vertex!(TexturedVertex, position, normal, texture);
 
 impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
@@ -280,7 +280,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
     }
 }
 
-#[cfg(feature = "glium-support")]
+#[cfg(feature = "glium")]
 mod glium_support {
     use super::Obj;
     use glium::backend::Facade;

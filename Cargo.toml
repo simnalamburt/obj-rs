@@ -18,6 +18,7 @@ Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats.
 name = "obj"
 
 [features]
+# This feature is kept for backwards compatibility. Use feature "glium" instead.
 glium-support = ["glium"]
 
 [dependencies]

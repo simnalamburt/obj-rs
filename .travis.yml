@@ -11,7 +11,7 @@ language: rust
 
 env:
   - FLAGS=
-  - FLAGS="--features glium-support"
+  - FLAGS="--features glium"
 script:
   - cargo build --verbose $(echo $FLAGS)
   - cargo test  --verbose $(echo $FLAGS)
