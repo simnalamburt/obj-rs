@@ -24,22 +24,20 @@ dome.indices;
 
 #![deny(missing_docs)]
 
-#[cfg(feature = "glium-support")]
-#[macro_use]
-extern crate glium;
-
-#[macro_use]
-extern crate serde_derive;
-
 #[macro_use]
 mod error;
 pub mod raw;
 
 pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
+
 use crate::raw::object::Polygon;
 use num::{FromPrimitive, Integer};
+use serde_derive::{Deserialize, Serialize};
 use std::collections::hash_map::{Entry, HashMap};
 use std::io::BufRead;
+
+#[cfg(feature = "glium-support")]
+use glium::implement_vertex;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
