@@ -1,6 +1,10 @@
 use obj::raw::material::{parse_mtl, Material, MtlColor, MtlTextureMap, RawMtl};
+use obj::ObjResult;
+use std::error::Error;
 
-fn fixture(filename: &str) -> RawMtl {
+type TestResult = Result<(), Box<dyn Error>>;
+
+fn fixture(filename: &str) -> ObjResult<RawMtl> {
     use std::fs::File;
     use std::io::BufReader;
     use std::path::Path;
@@ -16,15 +20,15 @@ fn fixture(filename: &str) -> RawMtl {
     };
     let input = BufReader::new(file);
 
-    parse_mtl(input).unwrap()
+    parse_mtl(input)
 }
 
 #[test]
-fn cube() {
-    let mtl = fixture("cube.mtl");
+fn cube() -> TestResult {
+    let mtl = fixture("cube.mtl")?;
     assert_eq!(mtl.materials.len(), 1);
 
-    let mat = mtl.materials.get("Material").unwrap();
+    let mat = mtl.materials.get("Material").ok_or("not found")?;
     assert_eq!(
         mat,
         &Material {
@@ -41,14 +45,16 @@ fn cube() {
             ..Material::default()
         }
     );
+
+    Ok(())
 }
 
 #[test]
-fn untitled() {
-    let mtl = fixture("untitled.mtl");
+fn untitled() -> TestResult {
+    let mtl = fixture("untitled.mtl")?;
     assert_eq!(mtl.materials.len(), 2);
 
-    let mat = mtl.materials.get("Material").unwrap();
+    let mat = mtl.materials.get("Material").ok_or("not found")?;
     assert_eq!(
         mat,
         &Material {
@@ -63,7 +69,7 @@ fn untitled() {
         }
     );
 
-    let mat = mtl.materials.get("None").unwrap();
+    let mat = mtl.materials.get("None").ok_or("not found")?;
     assert_eq!(
         mat,
         &Material {
@@ -76,4 +82,6 @@ fn untitled() {
             ..Material::default()
         }
     );
+
+    Ok(())
 }

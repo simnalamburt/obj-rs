@@ -1,7 +1,10 @@
 use obj::raw::object::Range;
 use obj::raw::*;
+use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
+
+type TestResult = Result<(), Box<dyn Error>>;
 
 macro_rules! test {
     ($($lhs:expr, $rhs:expr)*) => ({
@@ -41,13 +44,13 @@ macro_rules! eq {
 macro_rules! stderr {
     ($($arg:tt)*) => ({
         use std::io::Write;
-        writeln!(&mut std::io::stderr(), $($arg)*).unwrap()
+        writeln!(&mut std::io::stderr(), $($arg)*)?
     })
 }
 
 #[test]
-fn dup_groupnames() {
-    let input = BufReader::new(File::open("tests/fixtures/group.obj").unwrap());
+fn dup_groupnames() -> TestResult {
+    let input = BufReader::new(File::open("tests/fixtures/group.obj")?);
     let raw = match parse_obj(input) {
         Ok(raw) => raw,
         Err(e) => panic!(e),
@@ -65,4 +68,6 @@ fn dup_groupnames() {
         raw.smoothing_groups[2].polygons.len(),     1
         raw.smoothing_groups[2].polygons[0],        Range { start: 3, end: 6 }
     }
+
+    Ok(())
 }

@@ -1,24 +1,16 @@
-use obj;
-
 use obj::raw::{parse_obj, RawObj};
+use obj::ObjResult;
+use std::error::Error;
 
-fn fixture(filename: &str) -> RawObj {
+type TestResult = Result<(), Box<dyn Error>>;
+
+fn fixture(name: &str) -> ObjResult<RawObj> {
     use std::fs::File;
     use std::io::BufReader;
-    use std::path::Path;
 
-    let path = Path::new("tests").join("fixtures").join(filename);
-    let file = match File::open(&path) {
-        Ok(f) => f,
-        Err(e) => panic!(
-            "Failed to open \"{}\". \x1b[31m{}\x1b[0m",
-            path.to_string_lossy(),
-            e
-        ),
-    };
+    let file = File::open(format!("tests/fixtures/{}", name))?;
     let input = BufReader::new(file);
-
-    parse_obj(input).unwrap()
+    parse_obj(input)
 }
 
 macro_rules! test_v4 {
@@ -26,10 +18,10 @@ macro_rules! test_v4 {
         let mut index = 0usize;
         $(
             let (x, y, z, w) = $lhs[index];
-            eq!(x, stringify!($x).parse().unwrap(), stringify!($lhs[index].x));
-            eq!(y, stringify!($y).parse().unwrap(), stringify!($lhs[index].y));
-            eq!(z, stringify!($z).parse().unwrap(), stringify!($lhs[index].z));
-            eq!(w, stringify!($w).parse().unwrap(), stringify!($lhs[index].w));
+            eq!(x, stringify!($x).parse()?, stringify!($lhs[index].x));
+            eq!(y, stringify!($y).parse()?, stringify!($lhs[index].y));
+            eq!(z, stringify!($z).parse()?, stringify!($lhs[index].z));
+            eq!(w, stringify!($w).parse()?, stringify!($lhs[index].w));
             index += 1;
         )*
         eq!($lhs.len(), index);
@@ -41,9 +33,9 @@ macro_rules! test_v3 {
         let mut index = 0usize;
         $(
             let (x, y, z) = $lhs[index];
-            eq!(x, stringify!($x).parse().unwrap(), stringify!($lhs[index].x));
-            eq!(y, stringify!($y).parse().unwrap(), stringify!($lhs[index].y));
-            eq!(z, stringify!($z).parse().unwrap(), stringify!($lhs[index].z));
+            eq!(x, stringify!($x).parse()?, stringify!($lhs[index].x));
+            eq!(y, stringify!($y).parse()?, stringify!($lhs[index].y));
+            eq!(z, stringify!($z).parse()?, stringify!($lhs[index].z));
             index += 1;
         )*
         eq!($lhs.len(), index);
@@ -92,8 +84,8 @@ macro_rules! eq {
 }
 
 #[test]
-fn empty() {
-    let obj = fixture("empty.obj");
+fn empty() -> TestResult {
+    let obj = fixture("empty.obj")?;
 
     test! {
         obj.name,                       None
@@ -113,11 +105,13 @@ fn empty() {
         obj.smoothing_groups.len(),     0
         obj.merging_groups.len(),       0
     }
+
+    Ok(())
 }
 
 #[test]
-fn cube() {
-    let obj = fixture("cube.obj");
+fn cube() -> TestResult {
+    let obj = fixture("cube.obj")?;
 
     test! {
         obj.name,                       Some("Cube".to_string())
@@ -177,24 +171,29 @@ fn cube() {
         }
     };
 
-    test! {
-        obj.groups.get("default").unwrap().points.len(),        0
-        obj.groups.get("default").unwrap().lines.len(),         0
-        obj.groups.get("default").unwrap().polygons.len(),      1
-        obj.groups.get("default").unwrap().polygons[0].start,   0
-        obj.groups.get("default").unwrap().polygons[0].end,     6
+    let default_group = obj.groups.get("default").ok_or("not found")?;
+    let mesh = obj.meshes.get("Material").ok_or("not found")?;
 
-        obj.meshes.get("Material").unwrap().points.len(),       0
-        obj.meshes.get("Material").unwrap().lines.len(),        0
-        obj.meshes.get("Material").unwrap().polygons.len(),     1
-        obj.meshes.get("Material").unwrap().polygons[0].start,  0
-        obj.meshes.get("Material").unwrap().polygons[0].end,    6
+    test! {
+        default_group.points.len(),         0
+        default_group.lines.len(),          0
+        default_group.polygons.len(),       1
+        default_group.polygons[0].start,    0
+        default_group.polygons[0].end,      6
+
+        mesh.points.len(),      0
+        mesh.lines.len(),       0
+        mesh.polygons.len(),    1
+        mesh.polygons[0].start, 0
+        mesh.polygons[0].end,   6
     };
+
+    Ok(())
 }
 
 #[test]
-fn dome() {
-    let obj = fixture("dome.obj");
+fn dome() -> TestResult {
+    let obj = fixture("dome.obj")?;
 
     test! {
         obj.name,                       Some("Dome".to_string())
@@ -318,18 +317,21 @@ fn dome() {
         }
     };
 
-    test! {
-        obj.groups.get("default").unwrap().points.len(),        0
-        obj.groups.get("default").unwrap().lines.len(),         0
-        obj.groups.get("default").unwrap().polygons.len(),      1
-        obj.groups.get("default").unwrap().polygons[0].start,   0
-        obj.groups.get("default").unwrap().polygons[0].end,     62
+    let default_group = obj.groups.get("default").ok_or("not found")?;
+    let mesh = obj.meshes.get("None").ok_or("not found")?;
 
-        obj.meshes.get("None").unwrap().points.len(),           0
-        obj.meshes.get("None").unwrap().lines.len(),            0
-        obj.meshes.get("None").unwrap().polygons.len(),         1
-        obj.meshes.get("None").unwrap().polygons[0].start,      0
-        obj.meshes.get("None").unwrap().polygons[0].end,        62
+    test! {
+        default_group.points.len(),         0
+        default_group.lines.len(),          0
+        default_group.polygons.len(),       1
+        default_group.polygons[0].start,    0
+        default_group.polygons[0].end,      62
+
+        mesh.points.len(),      0
+        mesh.lines.len(),       0
+        mesh.polygons.len(),    1
+        mesh.polygons[0].start, 0
+        mesh.polygons[0].end,   62
 
         obj.smoothing_groups[1].points.len(),                   0
         obj.smoothing_groups[1].lines.len(),                    0
@@ -343,25 +345,29 @@ fn dome() {
         obj.smoothing_groups[2].polygons[0].start,              56
         obj.smoothing_groups[2].polygons[0].end,                62
     };
+
+    Ok(())
 }
 
 #[test]
-fn sponza() {
+fn sponza() -> TestResult {
     // Sponza atrium model, it's reasonably big and more importantly uses negative indexes
     // for some of the face specifications.
-    let obj = fixture("sponza.obj");
+    let obj = fixture("sponza.obj")?;
 
     test! {
         obj.name,              Some("sponza.lwo".to_owned())
         obj.positions.len(),   39742
         obj.polygons.len(),    36347
     }
+
+    Ok(())
 }
 
 #[test]
-fn lines_points() {
+fn lines_points() -> TestResult {
     // Basic test for lines and points geometry statements
-    let obj = fixture("lines_points.obj");
+    let obj = fixture("lines_points.obj")?;
 
     test! {
         obj.name,             Some("lines.obj".to_owned())
@@ -370,4 +376,6 @@ fn lines_points() {
         obj.lines.len(),      2
         obj.points.len(),     3
     }
+
+    Ok(())
 }
