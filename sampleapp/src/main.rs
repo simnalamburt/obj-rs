@@ -6,8 +6,6 @@ use glium::glutin::ContextBuilder;
 use glium::uniform;
 use glium::Program;
 use obj::{load_obj, Obj};
-use std::fs::File;
-use std::io::BufReader;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let event_loop = EventLoop::new();
@@ -21,8 +19,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let display = glium::Display::new(window, context, &event_loop)?;
 
-    let input = BufReader::new(File::open("tests/fixtures/normal-cone.obj")?);
-    let obj: Obj = load_obj(input)?;
+    let input = include_bytes!("../../obj-rs/tests/fixtures/normal-cone.obj");
+    let obj: Obj = load_obj(&input[..])?;
 
     let vb = obj.vertex_buffer(&display)?;
     let ib = obj.index_buffer(&display)?;
