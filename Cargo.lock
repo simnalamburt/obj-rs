@@ -1312,6 +1312,7 @@ dependencies = [
  "glium",
  "num-traits",
  "serde",
+ "thiserror",
  "vulkano",
 ]
 
