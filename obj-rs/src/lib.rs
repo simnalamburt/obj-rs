@@ -40,6 +40,8 @@ use std::io::BufRead;
 use glium::implement_vertex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+#[cfg_attr(feature = "vulkano", macro_use)]
+extern crate vulkano;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
@@ -86,6 +88,7 @@ pub trait FromRawVertex<I>: Sized {
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "vulkano", derive(Default))]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -95,6 +98,8 @@ pub struct Vertex {
 
 #[cfg(feature = "glium")]
 implement_vertex!(Vertex, position, normal);
+#[cfg(feature = "vulkano")]
+impl_vertex!(Vertex, position, normal);
 
 impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
     fn process(
@@ -161,6 +166,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
 /// Vertex data type of `Obj` which contains only position data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "vulkano", derive(Default))]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -168,6 +174,8 @@ pub struct Position {
 
 #[cfg(feature = "glium")]
 implement_vertex!(Position, position);
+#[cfg(feature = "vulkano")]
+impl_vertex!(Position, position);
 
 impl<I: FromPrimitive> FromRawVertex<I> for Position {
     fn process(
@@ -219,6 +227,7 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
 /// Vertex data type of `Obj` which contains position, normal and texture data of a vertex.
 #[derive(Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "vulkano", derive(Default))]
 pub struct TexturedVertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -230,6 +239,8 @@ pub struct TexturedVertex {
 
 #[cfg(feature = "glium")]
 implement_vertex!(TexturedVertex, position, normal, texture);
+#[cfg(feature = "vulkano")]
+impl_vertex!(TexturedVertex, position, normal, texture);
 
 impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
     fn process(

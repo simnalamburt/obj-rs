@@ -27,6 +27,7 @@ glium-support = ["glium"]
 
 [dependencies]
 glium = { version = "0.26.0", default-features = false, optional = true }
+vulkano = {version = "0.19.0", default-features = false, optional = true}
 vec_map = "0.8.2"
 serde = { version = "1.0", features = ["derive"], optional = true }
 num-traits = "0.2.11"
