@@ -8,4 +8,4 @@ edition = "2018"
 
 [dependencies]
 glium = "0.26"
-obj-rs = { path = "../obj-rs", default-features = false, vulkano=false, features = ["glium"] }
+obj-rs = { path = "../obj-rs", default-features = false, features = ["glium"] }
