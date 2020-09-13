@@ -2,6 +2,7 @@
 members = [
     "obj-rs",
     "sampleapp",
+    "sampleapp-vulkano"
 ]
 
 default-members = ["obj-rs"]
