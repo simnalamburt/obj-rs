@@ -2,6 +2,10 @@
 extern crate vulkano;
 extern crate obj;
 
+use nalgebra::Perspective3;
+use nalgebra::Isometry3;
+use nalgebra::Vector3;
+use nalgebra::Point3;
 use vulkano::command_buffer::DynamicState;
 use vulkano::command_buffer::AutoCommandBufferBuilder;
 use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
@@ -78,6 +82,7 @@ mod fs {
         
         void main() {
             f_color = vec4(clamp(dot(v_normal, -light_position), 0.0f, 1.0f) * vec3(1.0f, 0.93f, 0.56f), 1.0f);
+            //f_color = vec4(v_normal, 1.0);
         }
         "
     }
@@ -87,7 +92,9 @@ fn main() {
 
     let event_loop = EventLoop::new();
 
-    let vk_instance = match Instance::new(None, &InstanceExtensions::none(), None) {
+    let extensions = vulkano_win::required_extensions();
+
+    let vk_instance = match Instance::new(None, &extensions, None) {
         Ok(i) => i,
         Err(err) => panic!("Couldn't build instance: {:?}", err)
     };
@@ -100,7 +107,14 @@ fn main() {
         .find(|&q| q.supports_graphics())
         .expect("no graphics queue available on physical device");
     
-    let (logical_device, mut queues) = Device::new(physical_device, &Features::none(), &DeviceExtensions::none(),
+    let device_extensions = DeviceExtensions {
+        khr_swapchain : true,
+        .. DeviceExtensions::none()
+    };
+
+    println!("physical device name: {:?}", &physical_device.name());
+
+    let (logical_device, mut queues) = Device::new(physical_device, &Features::none(), &device_extensions,
                                         [(q_family, 1.0)].iter().cloned()).expect("failed to create logical device");
     let graphics_queue = queues.next().unwrap();
 
@@ -116,6 +130,7 @@ fn main() {
         let alpha = caps.supported_composite_alpha.iter().next().unwrap();
         let format = caps.supported_formats[0].0;
         let dimensions: [u32; 2] = surface.window().inner_size().into();
+        println!("format type: {:?}", &caps.supported_formats[1]);
 
         Swapchain::new(
             logical_device.clone(),
@@ -136,6 +151,7 @@ fn main() {
         .unwrap()
     };
 
+
     let uniform_buffer = CpuBufferPool::<vs::ty::Data>::new(logical_device.clone(), BufferUsage::all());
 
     let vs = vs::Shader::load(logical_device.clone()).unwrap();
@@ -146,7 +162,7 @@ fn main() {
             color: {
                 load: Clear,
                 store: Store,
-                format: Format::R8G8B8A8Unorm,
+                format: Format::B8G8R8A8Unorm,
                 samples: 1,
             },
             depth: {
@@ -183,8 +199,8 @@ fn main() {
             winit::event::Event::RedrawEventsCleared => {
                 previous_frame_end.as_mut().unwrap().cleanup_finished();
 
+                let dimensions: [u32 ; 2] = surface.window().inner_size().into();
                 if recreate_swap {
-                    let dimensions: [u32 ; 2] = surface.window().inner_size().into();
                     let (new_swap, new_images) = match swapchain.recreate_with_dimensions(dimensions) {
                         Ok(r) => r,
                         Err(SwapchainCreationError::UnsupportedDimensions) => return,
@@ -204,14 +220,25 @@ fn main() {
                 }
 
                 let uniform_subbuffer = {
-                    let mvp : Matrix4<f32> = Matrix4::new(
-                         2.356724, 0.000000, -0.217148, -0.216930,
-                         0.000000, 2.414214,  0.000000,  0.000000,
-                        -0.523716, 0.000000, -0.977164, -0.976187,
-                         0.000000, 0.000000,  9.128673,  9.219544f32
-                    );
+                    // let mvp : Matrix4<f32> = Matrix4::new(
+                    //      -2.356724, 0.000000, -0.217148, -0.216930,
+                    //      0.000000, -2.414214,  0.000000,  0.000000,
+                    //     -0.523716, 0.000000, -0.977164, -0.976187,
+                    //      0.000000, 0.000000,  9.128673,  9.219544f32
+                    // );
+                    let model = Isometry3::new(Vector3::x(), nalgebra::zero());
 
-                    let light_pos = [-1.0, -1.0, -1.0f32];
+                    let eye    = Point3::new(0.0, 0.0, 1.0);
+                    let target = Point3::new(1.0, 0.0, 0.0);
+                    let view   = Isometry3::look_at_rh(&eye, &target, &-Vector3::y());
+
+                    let aspect_ratio = dimensions[0] as f32 / dimensions[1] as f32;
+                    
+                    let projection = Perspective3::new(aspect_ratio, 3.14 / 2.0, 0.1, 1000.0);
+
+                    let mvp = projection.into_inner() * (view * model).to_homogeneous();
+
+                    let light_pos = [1.0, 1.0, 1.0f32];
 
                     let uniform_data = vs::ty::Data {
                         mvp: mvp.into(),
@@ -253,7 +280,7 @@ fn main() {
                 builder.begin_render_pass(
                     framebuffers[image_num].clone(),
                     false,
-                    vec![[0.0, 0.0, 1.0, 1.0].into(), 1f32.into()],
+                    vec![[1.0, 0.0, 0.0, 1.0].into(), 1f32.into()],
                 )
                 .unwrap()
                 .draw_indexed(pipeline.clone(), 
