@@ -2,43 +2,30 @@ extern crate obj;
 extern crate vulkano;
 
 use crate::vulkano::sync::GpuFuture;
-use nalgebra::Isometry3;
-use nalgebra::Perspective3;
-use nalgebra::Point3;
-use nalgebra::Vector3;
+use nalgebra::{Isometry3, Perspective3, Point3, Vector3};
 use obj::{load_obj, Obj};
 use std::sync::Arc;
-use vulkano::buffer::BufferUsage;
-use vulkano::buffer::CpuAccessibleBuffer;
-use vulkano::buffer::CpuBufferPool;
-use vulkano::command_buffer::AutoCommandBufferBuilder;
-use vulkano::command_buffer::DynamicState;
-use vulkano::descriptor::descriptor_set::PersistentDescriptorSet;
-use vulkano::device::Device;
-use vulkano::device::DeviceExtensions;
-use vulkano::device::Features;
-use vulkano::format::Format;
-use vulkano::framebuffer::Framebuffer;
-use vulkano::framebuffer::FramebufferAbstract;
-use vulkano::framebuffer::RenderPassAbstract;
-use vulkano::framebuffer::Subpass;
-use vulkano::image::AttachmentImage;
-use vulkano::image::ImageUsage;
-use vulkano::image::SwapchainImage;
-use vulkano::instance::Instance;
-use vulkano::instance::PhysicalDevice;
-use vulkano::pipeline::viewport::Viewport;
-use vulkano::pipeline::GraphicsPipeline;
-use vulkano::pipeline::GraphicsPipelineAbstract;
-use vulkano::swapchain::SwapchainCreationError;
-use vulkano::swapchain::{
-    AcquireError, ColorSpace, FullscreenExclusive, PresentMode, SurfaceTransform, Swapchain,
+use vulkano::{
+    buffer::{BufferUsage, CpuAccessibleBuffer, CpuBufferPool},
+    command_buffer::{AutoCommandBufferBuilder, DynamicState},
+    descriptor::descriptor_set::PersistentDescriptorSet,
+    device::{Device, DeviceExtensions, Features},
+    format::Format,
+    framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract, Subpass},
+    image::{AttachmentImage, ImageUsage, SwapchainImage},
+    instance::{Instance, PhysicalDevice},
+    pipeline::{viewport::Viewport, GraphicsPipeline, GraphicsPipelineAbstract},
+    swapchain::{
+        AcquireError, ColorSpace, FullscreenExclusive, PresentMode, SurfaceTransform, Swapchain,
+        SwapchainCreationError,
+    },
+    sync::FlushError,
 };
-use vulkano::sync::FlushError;
 use vulkano_win::VkSurfaceBuild;
-use winit::event::Event::WindowEvent;
-use winit::window::Window;
-use winit::{event_loop::ControlFlow, event_loop::EventLoop, window::WindowBuilder};
+use winit::{
+    event::Event::WindowEvent, event_loop::ControlFlow, event_loop::EventLoop, window::Window,
+    window::WindowBuilder,
+};
 
 mod vs {
     vulkano_shaders::shader! {
