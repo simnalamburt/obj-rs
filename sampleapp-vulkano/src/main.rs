@@ -130,7 +130,6 @@ fn main() {
         let alpha = caps.supported_composite_alpha.iter().next().unwrap();
         let format = caps.supported_formats[0].0;
         let dimensions: [u32; 2] = surface.window().inner_size().into();
-        println!("format type: {:?}", &caps.supported_formats[1]);
 
         Swapchain::new(
             logical_device.clone(),
@@ -220,20 +219,11 @@ fn main() {
                 }
 
                 let uniform_subbuffer = {
-                    // let mvp : Matrix4<f32> = Matrix4::new(
-                    //      -2.356724, 0.000000, -0.217148, -0.216930,
-                    //      0.000000, -2.414214,  0.000000,  0.000000,
-                    //     -0.523716, 0.000000, -0.977164, -0.976187,
-                    //      0.000000, 0.000000,  9.128673,  9.219544f32
-                    // );
-                    let model = Isometry3::new(Vector3::x(), nalgebra::zero());
-
-                    let eye    = Point3::new(0.0, 0.0, 1.0);
+                    let eye    = Point3::new(0.0, 0.0, -5.0);
                     let target = Point3::new(1.0, 0.0, 0.0);
                     let view   = Isometry3::look_at_rh(&eye, &target, &-Vector3::y());
-
+                    let model = Isometry3::new(Vector3::x(), nalgebra::zero());
                     let aspect_ratio = dimensions[0] as f32 / dimensions[1] as f32;
-                    
                     let projection = Perspective3::new(aspect_ratio, 3.14 / 2.0, 0.1, 1000.0);
 
                     let mvp = projection.into_inner() * (view * model).to_homogeneous();
@@ -280,7 +270,7 @@ fn main() {
                 builder.begin_render_pass(
                     framebuffers[image_num].clone(),
                     false,
-                    vec![[1.0, 0.0, 0.0, 1.0].into(), 1f32.into()],
+                    vec![[0.0, 0.0, 0.0, 1.0].into(), 1f32.into()],
                 )
                 .unwrap()
                 .draw_indexed(pipeline.clone(), 

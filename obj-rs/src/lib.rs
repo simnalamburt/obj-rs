@@ -40,6 +40,8 @@ use std::io::BufRead;
 use glium::implement_vertex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "vulkano")]
 #[cfg_attr(feature = "vulkano", macro_use)]
 extern crate vulkano;
 
