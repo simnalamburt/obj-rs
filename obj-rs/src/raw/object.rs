@@ -94,10 +94,10 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
     let mut polygons = Vec::new();
 
     let counter = Counter::new(&points, &lines, &polygons);
-    let mut group_builder = counter.hash_map("default".to_string());
-    let mut mesh_builder = counter.hash_map(String::new());
-    let mut smoothing_builder = counter.vec_map();
-    let mut merging_builder = counter.vec_map();
+    let mut group_builder = GroupBuilder::with_default(&counter, String::from("default"));
+    let mut mesh_builder = GroupBuilder::with_default(&counter, String::new());
+    let mut smoothing_builder = GroupBuilder::new(&counter);
+    let mut merging_builder = GroupBuilder::new(&counter);
 
     lex(input, |stmt, args: &[&str]| {
         match stmt {
@@ -325,27 +325,6 @@ impl Counter {
             )
         }
     }
-
-    /// Creates a `HashMap<String, Group>` builder which references `self` as counter.
-    fn hash_map(&self, input: String) -> GroupBuilder<'_, HashMap<String, Group>, String> {
-        let mut result = HashMap::with_capacity(1);
-        result.insert(input.clone(), Group::new((0, 0, 0)));
-
-        GroupBuilder {
-            counter: self,
-            current: Some(input),
-            result,
-        }
-    }
-
-    /// Creates a `VecMap<Group>` builder which references `self` as counter.
-    fn vec_map(&self) -> GroupBuilder<'_, VecMap<Group>, usize> {
-        GroupBuilder {
-            counter: self,
-            current: None,
-            result: VecMap::new(),
-        }
-    }
 }
 
 /// Helper for creating `groups`, `meshes`, `smoothing_groups` and `merging_groups` member of
@@ -362,6 +341,25 @@ where
     T: Map<K, Group>,
     K: Clone + Key,
 {
+    fn new(counter: &'a Counter) -> Self {
+        GroupBuilder {
+            counter,
+            current: None,
+            result: T::new(),
+        }
+    }
+
+    fn with_default(counter: &'a Counter, default: K) -> Self {
+        let mut result = T::with_capacity(1);
+        result.insert(default.clone(), Group::new((0, 0, 0)));
+
+        GroupBuilder {
+            counter,
+            current: Some(default),
+            result,
+        }
+    }
+
     /// Starts a group whose name is `input`.
     fn start(&mut self, input: K) {
         let count = self.counter.get();
@@ -455,6 +453,8 @@ impl Group {
 
 /// Custom trait to interface `HashMap` and `VecMap`.
 trait Map<K: Key, V> {
+    fn new() -> Self;
+    fn with_capacity(capacity: usize) -> Self;
     /// Interface of `insert` function.
     fn insert(&mut self, _: K, _: V) -> Option<V>;
     /// Interface of `get_mut` function.
@@ -464,6 +464,12 @@ trait Map<K: Key, V> {
 }
 
 impl<V> Map<String, V> for HashMap<String, V> {
+    fn new() -> Self {
+        HashMap::new()
+    }
+    fn with_capacity(capacity: usize) -> Self {
+        HashMap::with_capacity(capacity)
+    }
     fn insert(&mut self, k: String, v: V) -> Option<V> {
         self.insert(k, v)
     }
@@ -476,6 +482,12 @@ impl<V> Map<String, V> for HashMap<String, V> {
 }
 
 impl<V> Map<usize, V> for VecMap<V> {
+    fn new() -> Self {
+        VecMap::new()
+    }
+    fn with_capacity(capacity: usize) -> Self {
+        VecMap::with_capacity(capacity)
+    }
     fn insert(&mut self, k: usize, v: V) -> Option<V> {
         self.insert(k, v)
     }
