@@ -92,6 +92,8 @@ pub enum LoadErrorKind {
     InsufficientData,
     /// Received index value out of range.
     IndexOutOfRange,
+    /// A line is expected after the backslash (\).
+    BackslashAtEOF,
 }
 
 impl LoadError {
@@ -114,6 +116,7 @@ impl fmt::Display for LoadError {
             UntriangulatedModel => "Model should be triangulated first to be loaded properly",
             InsufficientData => "Model cannot be transformed into requested form",
             IndexOutOfRange => "Received index value out of range",
+            BackslashAtEOF => r"A line is expected after the backslash (\)",
         };
 
         write!(fmt, "{}: {}", msg, self.message)

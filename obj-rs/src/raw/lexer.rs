@@ -1,51 +1,106 @@
-use crate::error::ObjResult;
-use std::io::BufRead;
+use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
+use std::io::{BufRead, Lines, Result};
+use std::iter::Map;
+
+fn strip_comment(mut line: String) -> String {
+    if let Some(idx) = line.find('#') {
+        line.truncate(idx)
+    }
+    line
+}
+
+#[test]
+fn test_strip_commect() {
+    macro_rules! t {
+        ($input:expr => $output:expr) => {
+            assert_eq!(strip_comment(String::from($input)), String::from($output));
+        };
+    }
+
+    t!("Hello, world!" => "Hello, world!");
+    t!("abc # def" => "abc ");
+    t!("한글 # 한글" => "한글 ");
+    t!("" => "");
+}
+
+pub struct Lexer<T> {
+    stripped_lines: Map<Lines<T>, fn(Result<String>) -> Result<String>>,
+}
+
+impl<T: BufRead> Lexer<T> {
+    pub fn new(input: T) -> Self {
+        Lexer {
+            stripped_lines: input.lines().map(|result| result.map(strip_comment)),
+        }
+    }
+}
+
+impl<T: BufRead> Iterator for Lexer<T> {
+    type Item = ObjResult<String>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        // Check if maybe_line has finished
+        let maybe_line;
+        match self.stripped_lines.next() {
+            None => return None,
+            Some(val) => maybe_line = val,
+        }
+
+        // Check if maybe_line has errored
+        let line;
+        match maybe_line {
+            Err(e) => return Some(Err(ObjError::Io(e))),
+            Ok(val) => line = val,
+        }
+
+        // Merge lines connected with backslashes
+        let mut buffer = String::new();
+        match line.strip_suffix('\\') {
+            None => buffer.push_str(&line),
+            Some(stripped) => {
+                buffer.push_str(stripped);
+                buffer.push(' ');
+
+                // Search for the next lines
+                loop {
+                    let line;
+                    match self.stripped_lines.next() {
+                        None => {
+                            return Some(Err(ObjError::Load(LoadError::new(
+                                LoadErrorKind::BackslashAtEOF,
+                                "Expected a line, but met an EOF",
+                            ))))
+                        }
+                        Some(Err(e)) => return Some(Err(ObjError::Io(e))),
+                        Some(Ok(val)) => line = val,
+                    }
+                    match line.strip_suffix('\\') {
+                        Some(stripped) => {
+                            buffer.push_str(stripped);
+                            buffer.push(' ');
+                        }
+                        None => {
+                            buffer.push_str(&line);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        Some(Ok(buffer))
+    }
+}
 
 pub fn lex<T, F>(input: T, mut callback: F) -> ObjResult<()>
 where
     T: BufRead,
     F: FnMut(&str, &[&str]) -> ObjResult<()>,
 {
-    // This is a buffer of the "arguments" for each line, it uses raw pointers
-    // in order to allow it to be re-used across iterations.
-    let mut args: Vec<*const str> = Vec::new();
-
-    // This is a buffer for continued lines joined by '\'.
-    let mut multi_line = String::new();
-
-    for line in input.lines() {
-        let line = line?;
-        let line = line.split('#').next().unwrap(); // Remove comments
-
-        if let Some(without_backslash) = line.strip_suffix('\\') {
-            multi_line.push_str(without_backslash);
-            multi_line.push(' '); // Insert a space to delimit the following lines
-            continue;
+    for maybe_buffer in Lexer::new(input) {
+        if let [stmt, ref args @ ..] = maybe_buffer?.split_whitespace().collect::<Vec<_>>()[..] {
+            callback(stmt, args)?
         }
-
-        multi_line.push_str(line); // Append the current line
-
-        {
-            let mut words = multi_line.split_whitespace();
-
-            if let Some(stmt) = words.next() {
-                // Add the rest of line to the args buffer, the &str coerces to *const str
-                for w in words {
-                    args.push(w);
-                }
-                // Transmute the slice we get from args (&[*const str]) to the type
-                // we want (&[&str]), this is safe because the args vector is
-                // cleared after the callback returns, meaning the raw pointers don't
-                // outlive the data they're pointing to.
-                callback(stmt, unsafe {
-                    &*(&args[..] as *const [*const str] as *const [&str])
-                })?;
-                // Clear the args buffer for reuse on the next iteration
-                args.clear();
-            }
-        }
-
-        multi_line.clear();
     }
 
     Ok(())
