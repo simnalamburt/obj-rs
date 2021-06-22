@@ -46,7 +46,7 @@ fn dup_groupnames() -> TestResult {
     let input = BufReader::new(File::open("tests/fixtures/group.obj")?);
     let raw = match parse_obj(input) {
         Ok(raw) => raw,
-        Err(e) => panic!(e),
+        Err(e) => panic!("{}", e),
     };
 
     test! {
