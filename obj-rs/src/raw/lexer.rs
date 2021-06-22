@@ -17,8 +17,8 @@ where
         let line = line?;
         let line = line.split('#').next().unwrap(); // Remove comments
 
-        if line.ends_with('\\') {
-            multi_line.push_str(&line[..line.len() - 1]);
+        if let Some(without_backslash) = line.strip_suffix('\\') {
+            multi_line.push_str(without_backslash);
             multi_line.push(' '); // Insert a space to delimit the following lines
             continue;
         }
