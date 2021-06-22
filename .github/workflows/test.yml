@@ -11,7 +11,7 @@ jobs:
     - run: cargo fmt --all -- --check
     - run: cargo build
     - run: cargo test
-    - run: cargo clippy -- -D warnings
+    - run: cargo clippy
 
   sample:
     name: Test sample app
