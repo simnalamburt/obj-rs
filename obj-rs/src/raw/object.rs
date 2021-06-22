@@ -327,7 +327,7 @@ impl Counter {
     }
 
     /// Creates a `HashMap<String, Group>` builder which references `self` as counter.
-    fn hash_map<'a>(&'a self, input: String) -> GroupBuilder<'a, HashMap<String, Group>, String> {
+    fn hash_map(&self, input: String) -> GroupBuilder<'_, HashMap<String, Group>, String> {
         let mut result = HashMap::with_capacity(1);
         result.insert(input.clone(), Group::new((0, 0, 0)));
 
@@ -339,7 +339,7 @@ impl Counter {
     }
 
     /// Creates a `VecMap<Group>` builder which references `self` as counter.
-    fn vec_map<'a>(&'a self) -> GroupBuilder<'a, VecMap<Group>, usize> {
+    fn vec_map(&self) -> GroupBuilder<'_, VecMap<Group>, usize> {
         GroupBuilder {
             counter: self,
             current: None,
