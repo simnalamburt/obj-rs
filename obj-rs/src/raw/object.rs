@@ -372,14 +372,12 @@ where
                 assert!(res.is_some());
             }
         }
-        (|| {
-            if let Some(ref mut group) = self.result.get_mut(&input) {
-                group.start(count);
-                return;
-            }
+        if let Some(ref mut group) = self.result.get_mut(&input) {
+            group.start(count);
+        } else {
             let res = self.result.insert(input.clone(), Group::new(count));
             assert!(res.is_none());
-        })();
+        }
         self.current = Some(input);
     }
 
