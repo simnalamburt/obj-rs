@@ -487,6 +487,11 @@ impl<V> Map<usize, V> for VecMap<V> {
         VecMap::with_capacity(capacity)
     }
     fn insert(&mut self, k: usize, v: V) -> Option<V> {
+        // Biggest group number will be 67108864, which is large enough.
+        // It will consume 64MiB of memory in the worst case.
+        if k > 64 * (1 << 20) {
+            panic!("Too big group number will be treated as error instead of panic in the future.");
+        }
         self.insert(k, v)
     }
     fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
