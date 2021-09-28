@@ -94,6 +94,8 @@ pub enum LoadErrorKind {
     IndexOutOfRange,
     /// A line is expected after the backslash (\).
     BackslashAtEOF,
+    /// Group number exceeded limitation.
+    TooBigGroupNumber,
 }
 
 impl LoadError {
@@ -117,6 +119,7 @@ impl fmt::Display for LoadError {
             InsufficientData => "Model cannot be transformed into requested form",
             IndexOutOfRange => "Received index value out of range",
             BackslashAtEOF => r"A line is expected after the backslash (\)",
+            TooBigGroupNumber => "Group number exceeded limitation.",
         };
 
         write!(fmt, "{}: {}", msg, self.message)

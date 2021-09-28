@@ -52,6 +52,7 @@ pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V
 }
 
 /// 3D model object loaded from wavefront OBJ.
+#[derive(Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Obj<V = Vertex, I = u16> {
     /// Object's name.
