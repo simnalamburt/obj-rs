@@ -213,7 +213,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
 
             // Grouping
             "g" => match args {
-                [name] => group_builder.start((*name).to_string()),
+                [name] => group_builder.try_start((*name).to_string())?,
                 _ => make_error!(
                     WrongNumberOfArguments,
                     "Expected group name parameter, but nothing has been supplied"
@@ -221,12 +221,12 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             },
             "s" => match args {
                 ["off"] | ["0"] => smoothing_builder.end(),
-                [param] => smoothing_builder.start(param.parse()?),
+                [param] => smoothing_builder.try_start(param.parse()?)?,
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mg" => match args {
                 ["off"] | ["0"] => merging_builder.end(),
-                [param] => merging_builder.start(param.parse()?),
+                [param] => merging_builder.try_start(param.parse()?)?,
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "o" => {
@@ -243,7 +243,7 @@ pub fn parse_obj<T: BufRead>(input: T) -> ObjResult<RawObj> {
             "d_interp" => unimplemented!(),
             "lod" => unimplemented!(),
             "usemtl" => match args {
-                [material] => mesh_builder.start((*material).to_string()),
+                [material] => mesh_builder.try_start((*material).to_string())?,
                 _ => make_error!(WrongNumberOfArguments, "Expected only 1 argument"),
             },
             "mtllib" => {
@@ -351,7 +351,9 @@ where
 
     fn with_default(counter: &'a Counter, default: K) -> Self {
         let mut result = T::with_capacity(1);
-        result.insert(default.clone(), Group::new((0, 0, 0)));
+        result
+            .try_insert(default.clone(), Group::new((0, 0, 0)))
+            .unwrap();
 
         GroupBuilder {
             counter,
@@ -361,11 +363,11 @@ where
     }
 
     /// Starts a group whose name is `input`.
-    fn start(&mut self, input: K) {
+    fn try_start(&mut self, input: K) -> ObjResult<()> {
         let count = self.counter.get();
         if let Some(ref current) = self.current {
             if *current == input {
-                return;
+                return Ok(());
             }
             if self.result.get_mut(current).unwrap().end(count) {
                 let res = self.result.remove(&current);
@@ -375,10 +377,11 @@ where
         if let Some(ref mut group) = self.result.get_mut(&input) {
             group.start(count);
         } else {
-            let res = self.result.insert(input.clone(), Group::new(count));
+            let res = self.result.try_insert(input.clone(), Group::new(count))?;
             assert!(res.is_none());
         }
         self.current = Some(input);
+        Ok(())
     }
 
     /// Ends a current group.
@@ -454,7 +457,7 @@ trait Map<K: Key, V> {
     fn new() -> Self;
     fn with_capacity(capacity: usize) -> Self;
     /// Interface of `insert` function.
-    fn insert(&mut self, _: K, _: V) -> Option<V>;
+    fn try_insert(&mut self, _: K, _: V) -> ObjResult<Option<V>>;
     /// Interface of `get_mut` function.
     fn get_mut(&mut self, k: &K) -> Option<&mut V>;
     /// Interface of `remove` function.
@@ -468,8 +471,8 @@ impl<V> Map<String, V> for HashMap<String, V> {
     fn with_capacity(capacity: usize) -> Self {
         HashMap::with_capacity(capacity)
     }
-    fn insert(&mut self, k: String, v: V) -> Option<V> {
-        self.insert(k, v)
+    fn try_insert(&mut self, k: String, v: V) -> ObjResult<Option<V>> {
+        Ok(self.insert(k, v))
     }
     fn get_mut(&mut self, k: &String) -> Option<&mut V> {
         self.get_mut(k)
@@ -486,13 +489,18 @@ impl<V> Map<usize, V> for VecMap<V> {
     fn with_capacity(capacity: usize) -> Self {
         VecMap::with_capacity(capacity)
     }
-    fn insert(&mut self, k: usize, v: V) -> Option<V> {
+    fn try_insert(&mut self, k: usize, v: V) -> ObjResult<Option<V>> {
+        use crate::error::{LoadError, LoadErrorKind, ObjError};
+
         // Biggest group number will be 67108864, which is large enough.
         // It will consume 64MiB of memory in the worst case.
         if k > 64 * (1 << 20) {
-            panic!("Too big group number will be treated as error instead of panic in the future.");
+            return Err(ObjError::Load(LoadError::new(
+                LoadErrorKind::TooBigGroupNumber,
+                "Currently biggest group number allowed is 67108864.",
+            )));
         }
-        self.insert(k, v)
+        Ok(self.insert(k, v))
     }
     fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
         self.get_mut(*k)
