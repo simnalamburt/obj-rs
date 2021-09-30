@@ -395,20 +395,24 @@ where
 
     /// Ends a current group.
     fn end(&mut self) {
-        if let Some(ref current) = self.current {
-            if self
-                .result
-                .get_mut(current)
-                .unwrap()
-                .end(self.counter.get())
-            {
-                let result = self.result.remove(current);
-                assert!(result.is_some());
+        match mem::replace(&mut self.current, None) {
+            // Closed group twice, do nothing
+            None => return,
+            // Closing a group
+            Some(current) => {
+                match self.result.entry(current) {
+                    Entry::Vacant(_) => unreachable!(),
+                    Entry::Occupied(mut e) => {
+                        let count = self.counter.get();
+                        let was_empty_group = e.get_mut().end(count);
+                        // Remove the past group if the past group is empty
+                        if was_empty_group {
+                            e.remove();
+                        }
+                    }
+                }
             }
-        } else {
-            return;
         }
-        self.current = None;
     }
 }
 
