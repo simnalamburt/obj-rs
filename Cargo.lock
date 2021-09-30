@@ -1108,7 +1108,7 @@ dependencies = [
 
 [[package]]
 name = "obj-rs"
-version = "0.6.3"
+version = "0.6.4"
 dependencies = [
  "glium",
  "num-traits",
