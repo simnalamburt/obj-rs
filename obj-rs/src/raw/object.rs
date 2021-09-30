@@ -390,14 +390,14 @@ where
         self.result
             .entry(input)
             .and_modify(|e| e.start(count))
-            .or_insert(Group::new(count));
+            .or_insert_with(|| Group::new(count));
     }
 
     /// Ends a current group.
     fn end(&mut self) {
         match mem::replace(&mut self.current, None) {
             // Closed group twice, do nothing
-            None => return,
+            None => {}
             // Closing a group
             Some(current) => {
                 match self.result.entry(current) {
