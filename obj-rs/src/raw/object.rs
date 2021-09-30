@@ -1,8 +1,10 @@
 //! Parses `.obj` format which stores 3D mesh data
 
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::io::BufRead;
+use std::mem;
 
 use crate::error::ObjResult;
 use crate::raw::lexer::lex;
@@ -362,22 +364,33 @@ where
     /// Starts a group whose name is `input`.
     fn start(&mut self, input: K) {
         let count = self.counter.get();
-        if let Some(ref current) = self.current {
-            if *current == input {
-                return;
+
+        match self.current {
+            // Started same group twice, do nothing
+            Some(ref current) if *current == input => return,
+            // Changing group
+            Some(ref mut current) => {
+                // Close the past group and start a new one
+                let past = mem::replace(current, input.clone());
+                match self.result.entry(past) {
+                    Entry::Vacant(_) => unreachable!(),
+                    Entry::Occupied(mut e) => {
+                        let was_empty_group = e.get_mut().end(count);
+                        // Remove the past group if the past group is empty
+                        if was_empty_group {
+                            e.remove();
+                        }
+                    }
+                }
             }
-            if self.result.get_mut(current).unwrap().end(count) {
-                let res = self.result.remove(&current);
-                assert!(res.is_some());
-            }
+            // Starting a new group
+            None => self.current = Some(input.clone()),
         }
-        if let Some(ref mut group) = self.result.get_mut(&input) {
-            group.start(count);
-        } else {
-            let res = self.result.insert(input.clone(), Group::new(count));
-            assert!(res.is_none());
-        }
-        self.current = Some(input);
+
+        self.result
+            .entry(input)
+            .and_modify(|e| e.start(count))
+            .or_insert(Group::new(count));
     }
 
     /// Ends a current group.
