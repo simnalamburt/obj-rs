@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 use std::io::BufRead;
-use vec_map::VecMap;
 
 use crate::error::ObjResult;
 use crate::raw::lexer::lex;
@@ -452,11 +451,15 @@ impl Group {
     }
 }
 
-/// Custom trait to interface `HashMap` and `VecMap`.
+/// Custom trait to interface `HashMap`.
+///
+/// TODO: Remove
 trait Map<K: Key, V> {
     fn new() -> Self;
     fn with_capacity(capacity: usize) -> Self;
     /// Interface of `insert` function.
+    ///
+    /// TODO: It'll never fail
     fn try_insert(&mut self, _: K, _: V) -> ObjResult<Option<V>>;
     /// Interface of `get_mut` function.
     fn get_mut(&mut self, k: &K) -> Option<&mut V>;
@@ -482,31 +485,21 @@ impl<V> Map<String, V> for HashMap<String, V> {
     }
 }
 
-impl<V> Map<usize, V> for VecMap<V> {
+impl<V> Map<usize, V> for HashMap<usize, V> {
     fn new() -> Self {
-        VecMap::new()
+        HashMap::new()
     }
     fn with_capacity(capacity: usize) -> Self {
-        VecMap::with_capacity(capacity)
+        HashMap::with_capacity(capacity)
     }
     fn try_insert(&mut self, k: usize, v: V) -> ObjResult<Option<V>> {
-        use crate::error::{LoadError, LoadErrorKind, ObjError};
-
-        // Biggest group number will be 67108864, which is large enough.
-        // It will consume 64MiB of memory in the worst case.
-        if k > 64 * (1 << 20) {
-            return Err(ObjError::Load(LoadError::new(
-                LoadErrorKind::TooBigGroupNumber,
-                "Currently biggest group number allowed is 67108864.",
-            )));
-        }
         Ok(self.insert(k, v))
     }
     fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        self.get_mut(*k)
+        self.get_mut(k)
     }
     fn remove(&mut self, k: &usize) -> Option<V> {
-        self.remove(*k)
+        self.remove(k)
     }
 }
 
@@ -544,9 +537,9 @@ pub struct RawObj {
     /// Geometries which consist in a same material.
     pub meshes: HashMap<String, Group>,
     /// Smoothing groups.
-    pub smoothing_groups: VecMap<Group>,
+    pub smoothing_groups: HashMap<usize, Group>,
     /// Merging groups.
-    pub merging_groups: VecMap<Group>,
+    pub merging_groups: HashMap<usize, Group>,
 }
 
 /// The `Point` type which stores the index of the position vector.

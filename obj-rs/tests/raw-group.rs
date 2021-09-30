@@ -51,15 +51,15 @@ fn dup_groupnames() -> TestResult {
 
     test! {
         raw.smoothing_groups.len(),                 2
-        raw.smoothing_groups[1].points.len(),       0
-        raw.smoothing_groups[1].lines.len(),        0
-        raw.smoothing_groups[1].polygons.len(),     2
-        raw.smoothing_groups[1].polygons[0],        Range { start: 0, end: 3 }
-        raw.smoothing_groups[1].polygons[1],        Range { start: 6, end: 9 }
-        raw.smoothing_groups[2].points.len(),       0
-        raw.smoothing_groups[2].lines.len(),        0
-        raw.smoothing_groups[2].polygons.len(),     1
-        raw.smoothing_groups[2].polygons[0],        Range { start: 3, end: 6 }
+        raw.smoothing_groups[&1].points.len(),       0
+        raw.smoothing_groups[&1].lines.len(),        0
+        raw.smoothing_groups[&1].polygons.len(),     2
+        raw.smoothing_groups[&1].polygons[0],        Range { start: 0, end: 3 }
+        raw.smoothing_groups[&1].polygons[1],        Range { start: 6, end: 9 }
+        raw.smoothing_groups[&2].points.len(),       0
+        raw.smoothing_groups[&2].lines.len(),        0
+        raw.smoothing_groups[&2].polygons.len(),     1
+        raw.smoothing_groups[&2].polygons[0],        Range { start: 3, end: 6 }
     }
 
     Ok(())

@@ -333,17 +333,17 @@ fn dome() -> TestResult {
         mesh.polygons[0].start, 0
         mesh.polygons[0].end,   62
 
-        obj.smoothing_groups[1].points.len(),                   0
-        obj.smoothing_groups[1].lines.len(),                    0
-        obj.smoothing_groups[1].polygons.len(),                 1
-        obj.smoothing_groups[1].polygons[0].start,              0
-        obj.smoothing_groups[1].polygons[0].end,                56
+        obj.smoothing_groups[&1].points.len(),                   0
+        obj.smoothing_groups[&1].lines.len(),                    0
+        obj.smoothing_groups[&1].polygons.len(),                 1
+        obj.smoothing_groups[&1].polygons[0].start,              0
+        obj.smoothing_groups[&1].polygons[0].end,                56
 
-        obj.smoothing_groups[2].points.len(),                   0
-        obj.smoothing_groups[2].lines.len(),                    0
-        obj.smoothing_groups[2].polygons.len(),                 1
-        obj.smoothing_groups[2].polygons[0].start,              56
-        obj.smoothing_groups[2].polygons[0].end,                62
+        obj.smoothing_groups[&2].points.len(),                   0
+        obj.smoothing_groups[&2].lines.len(),                    0
+        obj.smoothing_groups[&2].polygons.len(),                 1
+        obj.smoothing_groups[&2].polygons[0].start,              56
+        obj.smoothing_groups[&2].polygons[0].end,                62
     };
 
     Ok(())
