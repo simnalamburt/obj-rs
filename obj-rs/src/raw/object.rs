@@ -331,8 +331,8 @@ impl Counter {
 /// `Obj`.
 struct GroupBuilder<'a, K> {
     counter: &'a Counter,
-    current: Option<K>, // Some(K) if some group has been started
-    // None    otherwise
+    /// `Some(K)` if some group has been started, `None` otherwise.
+    current: Option<K>,
     result: HashMap<K, Group>,
 }
 
