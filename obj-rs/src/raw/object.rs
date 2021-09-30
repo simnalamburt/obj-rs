@@ -1,6 +1,7 @@
 //! Parses `.obj` format which stores 3D mesh data
 
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::io::BufRead;
 
 use crate::error::ObjResult;
@@ -328,28 +329,27 @@ impl Counter {
 
 /// Helper for creating `groups`, `meshes`, `smoothing_groups` and `merging_groups` member of
 /// `Obj`.
-struct GroupBuilder<'a, T, K> {
+struct GroupBuilder<'a, K> {
     counter: &'a Counter,
     current: Option<K>, // Some(K) if some group has been started
     // None    otherwise
-    result: T,
+    result: HashMap<K, Group>,
 }
 
-impl<'a, T, K> GroupBuilder<'a, T, K>
+impl<'a, K> GroupBuilder<'a, K>
 where
-    T: Map<K, Group>,
-    K: Clone + Key,
+    K: Clone + Eq + Hash,
 {
     fn new(counter: &'a Counter) -> Self {
         GroupBuilder {
             counter,
             current: None,
-            result: T::new(),
+            result: HashMap::new(),
         }
     }
 
     fn with_default(counter: &'a Counter, default: K) -> Self {
-        let mut result = T::with_capacity(1);
+        let mut result = HashMap::with_capacity(1);
         result.insert(default.clone(), Group::new((0, 0, 0)));
 
         GroupBuilder {
@@ -447,62 +447,6 @@ impl Group {
         self.points.is_empty() && self.lines.is_empty() && self.polygons.is_empty()
     }
 }
-
-/// Custom trait to interface `HashMap`.
-///
-/// TODO: Remove
-trait Map<K: Key, V> {
-    fn new() -> Self;
-    fn with_capacity(capacity: usize) -> Self;
-    /// Interface of `insert` function.
-    fn insert(&mut self, _: K, _: V) -> Option<V>;
-    /// Interface of `get_mut` function.
-    fn get_mut(&mut self, k: &K) -> Option<&mut V>;
-    /// Interface of `remove` function.
-    fn remove(&mut self, k: &K) -> Option<V>;
-}
-
-impl<V> Map<String, V> for HashMap<String, V> {
-    fn new() -> Self {
-        HashMap::new()
-    }
-    fn with_capacity(capacity: usize) -> Self {
-        HashMap::with_capacity(capacity)
-    }
-    fn insert(&mut self, k: String, v: V) -> Option<V> {
-        self.insert(k, v)
-    }
-    fn get_mut(&mut self, k: &String) -> Option<&mut V> {
-        self.get_mut(k)
-    }
-    fn remove(&mut self, k: &String) -> Option<V> {
-        self.remove(k)
-    }
-}
-
-impl<V> Map<usize, V> for HashMap<usize, V> {
-    fn new() -> Self {
-        HashMap::new()
-    }
-    fn with_capacity(capacity: usize) -> Self {
-        HashMap::with_capacity(capacity)
-    }
-    fn insert(&mut self, k: usize, v: V) -> Option<V> {
-        self.insert(k, v)
-    }
-    fn get_mut(&mut self, k: &usize) -> Option<&mut V> {
-        self.get_mut(k)
-    }
-    fn remove(&mut self, k: &usize) -> Option<V> {
-        self.remove(k)
-    }
-}
-
-/// A trait which should be implemented by a type passed into `Key` of `Map`.
-trait Key: Eq {}
-
-impl Key for String {}
-impl Key for usize {}
 
 /// Low-level Rust binding for `.obj` format.
 pub struct RawObj {
