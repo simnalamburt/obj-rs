@@ -131,6 +131,6 @@ macro_rules! make_error {
         return Err(::std::convert::From::from($crate::error::LoadError::new(
             $crate::error::LoadErrorKind::$kind,
             $message,
-        )));
+        )))
     };
 }

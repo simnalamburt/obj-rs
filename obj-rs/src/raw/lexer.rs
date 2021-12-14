@@ -23,8 +23,10 @@ fn test_strip_commect() {
     t!("" => "");
 }
 
+type StrippedLines<T> = Map<Lines<T>, fn(Result<String>) -> Result<String>>;
+
 pub struct Lexer<T> {
-    stripped_lines: Map<Lines<T>, fn(Result<String>) -> Result<String>>,
+    stripped_lines: StrippedLines<T>,
 }
 
 impl<T: BufRead> Lexer<T> {
