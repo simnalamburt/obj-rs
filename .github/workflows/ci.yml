@@ -3,11 +3,14 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        glium: ["", "glium-support"]
     steps:
       - uses: actions/checkout@v2
-      - run: cargo build
-      - run: cargo test
-      - run: cargo clippy --workspace --no-deps -- -D warnings
+      - run: cargo build --features '${{ matrix.glium }}'
+      - run: cargo test --features '${{ matrix.glium }}'
+      - run: cargo clippy --features '${{ matrix.glium }}' --workspace --no-deps -- -D warnings
       - run: cargo fmt -- --check
 
   sample:
