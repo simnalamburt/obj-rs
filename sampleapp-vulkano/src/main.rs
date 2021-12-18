@@ -237,7 +237,8 @@ fn main() {
                 let view = Isometry3::look_at_rh(&eye, &target, &-Vector3::y());
                 let model = Isometry3::new(Vector3::x(), nalgebra::zero());
                 let aspect_ratio = dimensions[0] as f32 / dimensions[1] as f32;
-                let projection = Perspective3::new(aspect_ratio, std::f32::consts::PI / 2.0, 0.1, 1000.0);
+                let projection =
+                    Perspective3::new(aspect_ratio, std::f32::consts::PI / 2.0, 0.1, 1000.0);
 
                 let mvp = projection.into_inner() * (view * model).to_homogeneous();
 
