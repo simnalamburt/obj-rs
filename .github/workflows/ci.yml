@@ -17,9 +17,8 @@ jobs:
     name: Test sample app
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         project: [sampleapp, sampleapp-vulkano]
-    if: matrix.os != 'windows-latest' || matrix.project != 'sampleapp-vulkano'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -27,3 +26,13 @@ jobs:
       - run: cargo test -p '${{ matrix.project }}'
       - run: cargo clippy -p '${{ matrix.project }}' --no-deps -- -D warnings
       - run: cargo fmt -p '${{ matrix.project }}' -- --check
+
+  sample-windows:
+    name: Test sample app on Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: cargo build -p sampleapp
+      - run: cargo test -p sampleapp
+      - run: cargo clippy -p sampleapp --no-deps -- -D warnings
+      - run: cargo fmt -p sampleapp -- --check
