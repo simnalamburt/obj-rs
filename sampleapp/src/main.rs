@@ -82,7 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         *control_flow = ControlFlow::Wait;
 
         match event {
-            Event::LoopDestroyed => return,
+            Event::LoopDestroyed => {}
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
@@ -96,7 +96,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 target.draw(&vb, &ib, &program, &uniforms, &params).unwrap();
                 target.finish().unwrap();
             }
-            _ => (),
+            _ => {}
         }
     });
 }
