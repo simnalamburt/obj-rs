@@ -19,6 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         project: [sampleapp, sampleapp-vulkano]
+    if: matrix.os != 'windows-latest' || matrix.project != 'sampleapp-vulkano'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
