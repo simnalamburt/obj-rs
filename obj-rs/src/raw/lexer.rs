@@ -42,18 +42,16 @@ impl<T: BufRead> Iterator for Lexer<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // Check if maybe_line has finished
-        let maybe_line;
-        match self.stripped_lines.next() {
+        let maybe_line = match self.stripped_lines.next() {
             None => return None,
-            Some(val) => maybe_line = val,
-        }
+            Some(val) => val,
+        };
 
         // Check if maybe_line has errored
-        let line;
-        match maybe_line {
+        let line = match maybe_line {
             Err(e) => return Some(Err(ObjError::Io(e))),
-            Ok(val) => line = val,
-        }
+            Ok(val) => val,
+        };
 
         // Merge lines connected with backslashes
         let mut buffer = String::new();
