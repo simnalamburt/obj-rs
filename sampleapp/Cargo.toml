@@ -2,10 +2,10 @@
 name = "sampleapp"
 version = "0.1.0"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glium = "0.29"
+glium = "0.31"
 obj-rs = { path = "../obj-rs", default-features = false, features = ["glium"] }
