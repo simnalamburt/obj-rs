@@ -13,7 +13,7 @@ use std::io::BufReader;
 use obj::{load_obj, Obj};
 
 let input = BufReader::new(File::open("tests/fixtures/dome.obj"))?;
-let mobel: Obj = load_obj(input)?;
+let model: Obj = load_obj(input)?;
 
 // Do whatever you want
 model.vertices;
