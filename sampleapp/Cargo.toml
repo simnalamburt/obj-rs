@@ -7,5 +7,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glium = "0.31"
+glium = "0.32.1"
 obj-rs = { path = "../obj-rs", default-features = false, features = ["glium"] }
