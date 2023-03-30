@@ -42,8 +42,9 @@ use glium::implement_vertex;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "vulkano")]
-#[cfg_attr(feature = "vulkano", macro_use)]
-extern crate vulkano;
+use bytemuck::{Pod, Zeroable};
+#[cfg(feature = "vulkano")]
+use vulkano::impl_vertex;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
@@ -91,6 +92,8 @@ pub trait FromRawVertex<I>: Sized {
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
 #[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "vulkano", repr(C))]
+#[cfg_attr(feature = "vulkano", derive(Zeroable, Pod))]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -168,6 +171,8 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
 /// Vertex data type of `Obj` which contains only position data of a vertex.
 #[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "vulkano", repr(C))]
+#[cfg_attr(feature = "vulkano", derive(Zeroable, Pod))]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -228,6 +233,8 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
 /// Vertex data type of `Obj` which contains position, normal and texture data of a vertex.
 #[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "vulkano", repr(C))]
+#[cfg_attr(feature = "vulkano", derive(Zeroable, Pod))]
 pub struct TexturedVertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],

@@ -2,14 +2,15 @@
 name = "sampleapp-vulkano"
 version = "0.1.0"
 authors = ["Govind Venkatesh <venakteshgovind1@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vulkano = "0.19.0"
-vulkano-win = "0.19"
-vulkano-shaders = "0.19.0"
-winit = "0.22.2"
-nalgebra = "0.27"
+vulkano = "0.32"
+vulkano-win = "0.32"
+vulkano-shaders = "0.32"
+winit = "0.27"
+nalgebra = "0.32"
 obj-rs = { path = "../obj-rs", default-features = false, features = ["vulkano"] }
+bytemuck = "1"

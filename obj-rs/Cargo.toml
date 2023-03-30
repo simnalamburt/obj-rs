@@ -22,11 +22,23 @@ name = "obj"
 
 [features]
 default = ["serde"]
+
+serde = ["dep:serde"]
+glium = ["dep:glium"]
+vulkano = ["dep:vulkano", "dep:bytemuck"]
+
 # This feature is kept for backwards compatibility. Use feature "glium" instead.
 glium-support = ["glium"]
 
 [dependencies]
-glium = { version = ">=0.26.0, <0.33.0", default-features = false, optional = true }
-vulkano = {version = "0.19.0", optional = true}
-serde = { version = "1.0", features = ["derive"], optional = true }
 num-traits = "0.2.11"
+
+# Optional serde support (on by default)
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+# Optional glium support
+glium = { version = ">=0.26.0, <0.33.0", default-features = false, optional = true }
+
+# Optional vulkano support
+vulkano = { version = ">=0.19.0, <0.33.0", optional = true }
+bytemuck = { version = "1", optional = true }
