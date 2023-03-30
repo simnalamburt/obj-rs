@@ -49,7 +49,6 @@ macro_rules! parse_args {
 // that 1 is the first vertex.
 fn try_index<T>(collection: &[T], input: &str) -> ObjResult<usize> {
     use crate::error::{LoadError, LoadErrorKind, ObjError};
-    use std::convert::TryInto;
 
     let len: isize = collection.len().try_into().map_err(|_| {
         ObjError::Load(LoadError::new(

@@ -2,7 +2,7 @@
 name = "obj-rs"
 version = "0.7.0"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 description = """
 Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats.
