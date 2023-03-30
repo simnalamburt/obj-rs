@@ -25,12 +25,12 @@ dome.indices;
 
 #![deny(missing_docs)]
 
-#[macro_use]
 mod error;
 pub mod raw;
 
 pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
 
+use crate::error::make_error;
 use crate::raw::object::Polygon;
 use num_traits::FromPrimitive;
 use std::collections::hash_map::{Entry, HashMap};

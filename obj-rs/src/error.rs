@@ -134,3 +134,5 @@ macro_rules! make_error {
         )))
     };
 }
+
+pub(crate) use make_error;

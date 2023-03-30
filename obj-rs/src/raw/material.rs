@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::io::BufRead;
 use std::mem::take;
 
-use crate::error::ObjResult;
+use crate::error::{make_error, ObjResult};
 use crate::raw::lexer::lex;
 use crate::raw::util::parse_args;
 
