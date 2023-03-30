@@ -89,9 +89,8 @@ pub trait FromRawVertex<I>: Sized {
 }
 
 /// Vertex data type of `Obj` which contains position and normal data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug)]
+#[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "vulkano", derive(Default))]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -167,9 +166,8 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
 }
 
 /// Vertex data type of `Obj` which contains only position data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug)]
+#[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "vulkano", derive(Default))]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -228,9 +226,8 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
 }
 
 /// Vertex data type of `Obj` which contains position, normal and texture data of a vertex.
-#[derive(Copy, PartialEq, Clone, Debug)]
+#[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "vulkano", derive(Default))]
 pub struct TexturedVertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
