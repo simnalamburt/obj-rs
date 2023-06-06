@@ -5,7 +5,7 @@ See [Documentation] for the further details.
 
 ```toml
 [dependencies]
-obj-rs = "0.6"
+obj-rs = "0.7"
 ```
 ```rust
 use std::fs::File;
