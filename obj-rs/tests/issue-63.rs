@@ -29,6 +29,9 @@ fn issue_63() {
         test_case.push_str(format!("f {i}/1/1 {j}/1/1 {k}/1/1\n").as_str())
     }
 
+    load_obj::<obj::TexturedVertex, _, u16>(Cursor::new(&test_case))
+        .expect("this should load properly");
+
     do_test::<obj::Position>(&test_case);
     do_test::<obj::Vertex>(&test_case);
     do_test::<obj::TexturedVertex>(&test_case);
