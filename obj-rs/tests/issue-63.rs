@@ -1,4 +1,4 @@
-use obj::{load_obj};
+use obj::load_obj;
 use std::io::Cursor;
 
 fn do_test<V: obj::FromRawVertex<u8> + std::fmt::Debug>(test_case: &str) {
@@ -22,7 +22,7 @@ fn issue_63() {
         test_case.push_str(format!("v {i}.0 {i}.0 {i}.0\n").as_str());
     }
     test_case.push_str("vt 0.0 0.0\nvn 0.0 0.0 1.0\n");
-    for i in 0..(1000-2) {
+    for i in 0..(1000 - 2) {
         let i = i + 1;
         let j = i + 1;
         let k = i + 2;
