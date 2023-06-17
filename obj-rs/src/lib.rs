@@ -117,7 +117,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
             let mut cache = HashMap::new();
-            let mut map = |pi: usize, ni: usize| {
+            let mut map = |pi: usize, ni: usize| -> ObjResult<()> {
                 // Look up cache
                 let index = match cache.entry((pi, ni)) {
                     // Cache miss -> make new, store it on cache
@@ -128,8 +128,13 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
                             position: [p.0, p.1, p.2],
                             normal: [n.0, n.1, n.2],
                         };
-                        let index = I::from_usize(vb.len())
-                            .expect("Unable to convert the index from usize");
+                        let index = match I::from_usize(vb.len()) {
+                            Some(val) => val,
+                            None => make_error!(
+                                IndexOutOfRange,
+                                "Unable to convert the index from usize"
+                            ),
+                        };
                         vb.push(vertex);
                         entry.insert(index);
                         index
@@ -137,7 +142,8 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
                     // Cache hit -> use it
                     Entry::Occupied(entry) => *entry.get(),
                 };
-                ib.push(index)
+                ib.push(index);
+                Ok(())
             };
 
             for polygon in polygons {
@@ -148,12 +154,12 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
                     ),
                     Polygon::PN(ref vec) if vec.len() == 3 => {
                         for &(pi, ni) in vec {
-                            map(pi, ni)
+                            map(pi, ni)?;
                         }
                     }
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
                         for &(pi, _, ni) in vec {
-                            map(pi, ni)
+                            map(pi, ni)?;
                         }
                     }
                     _ => make_error!(
@@ -198,25 +204,29 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
             .collect();
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
-            let mut map = |pi: usize| {
-                ib.push(I::from_usize(pi).expect("Unable to convert the index from usize"))
+            let mut map = |pi: usize| -> ObjResult<()> {
+                ib.push(match I::from_usize(pi) {
+                    Some(val) => val,
+                    None => make_error!(IndexOutOfRange, "Unable to convert the index from usize"),
+                });
+                Ok(())
             };
 
             for polygon in polygons {
                 match polygon {
                     Polygon::P(ref vec) if vec.len() == 3 => {
                         for &pi in vec {
-                            map(pi)
+                            map(pi)?
                         }
                     }
                     Polygon::PT(ref vec) | Polygon::PN(ref vec) if vec.len() == 3 => {
                         for &(pi, _) in vec {
-                            map(pi)
+                            map(pi)?
                         }
                     }
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
                         for &(pi, _, _) in vec {
-                            map(pi)
+                            map(pi)?
                         }
                     }
                     _ => make_error!(
@@ -260,7 +270,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
         let mut ib = Vec::with_capacity(polygons.len() * 3);
         {
             let mut cache = HashMap::new();
-            let mut map = |pi: usize, ni: usize, ti: usize| {
+            let mut map = |pi: usize, ni: usize, ti: usize| -> ObjResult<()> {
                 // Look up cache
                 let index = match cache.entry((pi, ni, ti)) {
                     // Cache miss -> make new, store it on cache
@@ -273,8 +283,13 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
                             normal: [n.0, n.1, n.2],
                             texture: [t.0, t.1, t.2],
                         };
-                        let index = I::from_usize(vb.len())
-                            .expect("Unable to convert the index from usize");
+                        let index = match I::from_usize(vb.len()) {
+                            Some(val) => val,
+                            None => make_error!(
+                                IndexOutOfRange,
+                                "Unable to convert the index from usize"
+                            ),
+                        };
                         vb.push(vertex);
                         entry.insert(index);
                         index
@@ -282,7 +297,8 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
                     // Cache hit -> use it
                     Entry::Occupied(entry) => *entry.get(),
                 };
-                ib.push(index)
+                ib.push(index);
+                Ok(())
             };
 
             for polygon in polygons {
@@ -291,7 +307,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
                     Polygon::PT(_) => make_error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
                     Polygon::PN(_) => make_error!(InsufficientData, "Tried to extract texture data which are not contained in the model"),
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
-                        for &(pi, ti, ni) in vec { map(pi, ni, ti) }
+                        for &(pi, ti, ni) in vec { map(pi, ni, ti)? }
                     }
                     _ => make_error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
                 }
