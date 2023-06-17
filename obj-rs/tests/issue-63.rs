@@ -1,11 +1,15 @@
 use obj::{load_obj};
 use std::io::Cursor;
 
-fn do_test<V: obj::FromRawVertex<u16> + std::fmt::Debug>(test_case: &str) {
+fn do_test<V: obj::FromRawVertex<u8> + std::fmt::Debug>(test_case: &str) {
     let err = load_obj::<V, _, _>(Cursor::new(test_case))
         .expect_err("Should error out due to index out of bounds");
     if let obj::ObjError::Load(err) = err {
-        assert!(matches!(err.kind(), obj::LoadErrorKind::IndexOutOfRange));
+        let expected_error = obj::LoadError::new(
+            obj::LoadErrorKind::IndexOutOfRange,
+            "Unable to convert the index from usize",
+        );
+        assert_eq!(err.to_string(), expected_error.to_string());
     } else {
         panic!("Expected a LoadError");
     }
@@ -19,6 +23,7 @@ fn issue_63() {
     }
     test_case.push_str("vt 0.0 0.0\nvn 0.0 0.0 1.0\n");
     for i in 0..(1000-2) {
+        let i = i + 1;
         let j = i + 1;
         let k = i + 2;
         test_case.push_str(format!("f {i}/1/1 {j}/1/1 {k}/1/1\n").as_str())
