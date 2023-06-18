@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["parse_mtl","Parses a wavefront `.mtl` format *(incomplete)*"]],"struct":[["RawMtl","Low-level Rust binding for `.mtl` format *(incomplete)*."]]});

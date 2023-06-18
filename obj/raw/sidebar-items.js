@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["material","Parses `.mtl` format which stores material data"],["object","Parses `.obj` format which stores 3D mesh data"]]});
