@@ -394,7 +394,7 @@ where
 
     /// Ends a current group.
     fn end(&mut self) {
-        match mem::replace(&mut self.current, None) {
+        match self.current.take() {
             // Closed group twice, do nothing
             None => {}
             // Closing a group
