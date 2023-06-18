@@ -7,7 +7,8 @@ jobs:
       matrix:
         glium: ["", "glium-support"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
       - run: cargo build --features '${{ matrix.glium }}'
       - run: cargo test --features '${{ matrix.glium }}'
       - run: cargo clippy --features '${{ matrix.glium }}' --no-deps -- -D warnings
@@ -21,7 +22,8 @@ jobs:
         project: [sampleapp, sampleapp-vulkano]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
       - run: cargo build -p '${{ matrix.project }}'
       - run: cargo test -p '${{ matrix.project }}'
       - run: cargo clippy -p '${{ matrix.project }}' --no-deps -- -D warnings
@@ -31,7 +33,8 @@ jobs:
     name: Test sample app on Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - uses: Swatinem/rust-cache@v2
       - run: cargo build -p sampleapp
       - run: cargo test -p sampleapp
       - run: cargo clippy -p sampleapp --no-deps -- -D warnings
