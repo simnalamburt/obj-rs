@@ -20,9 +20,9 @@ model.vertices;
 model.indices;
 ```
 
-![Rendered image of cute Rilakkuma](https://simnalamburt.github.io/obj-rs/screenshot.png)
+<img alt="Rendered image of cute Rilakkuma" src="https://i.hyeon.me/obj-rs/bear.png" width=300>
 
-<br>
+&nbsp;
 
 Glium support
 --------
@@ -51,7 +51,7 @@ the command below.
 cargo run -p sampleapp
 ```
 
-<br>
+&nbsp;
 
 --------
 *obj-rs* is primarily distributed under the terms of both the [Apache License
