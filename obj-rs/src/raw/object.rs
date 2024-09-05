@@ -465,6 +465,7 @@ impl Group {
 }
 
 /// Low-level Rust binding for `.obj` format.
+#[derive(Clone, Debug)]
 pub struct RawObj {
     /// Name of the object.
     pub name: Option<String>,
