@@ -416,7 +416,7 @@ where
 }
 
 /// Constant which is used to represent undefined bound of range.
-const UNDEFINED: usize = ::std::usize::MAX;
+const UNDEFINED: usize = usize::MAX;
 
 impl Group {
     fn new(count: (usize, usize, usize)) -> Self {
