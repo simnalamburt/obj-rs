@@ -1,29 +1,25 @@
-use glium::glutin::dpi::LogicalSize;
-use glium::glutin::event::{Event, WindowEvent};
-use glium::glutin::event_loop::{ControlFlow, EventLoop};
-use glium::glutin::window::WindowBuilder;
-use glium::glutin::ContextBuilder;
+use glium::backend::glutin::SimpleWindowBuilder;
+use glium::backend::Facade;
 use glium::uniform;
+use glium::winit::event::{Event, WindowEvent};
+use glium::winit::event_loop::{ControlFlow, EventLoop};
 use glium::Program;
 use obj::{load_obj, Obj};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let event_loop = EventLoop::new();
+    let event_loop = EventLoop::new()?;
 
     // building the display, ie. the main object
-    let window = WindowBuilder::new()
-        .with_inner_size(LogicalSize::new(500.0, 400.0))
-        .with_title("obj-rs");
-
-    let context = ContextBuilder::new();
-
-    let display = glium::Display::new(window, context, &event_loop)?;
+    let (_window, display) = SimpleWindowBuilder::new()
+        .with_inner_size(500, 400)
+        .with_title("obj-rs")
+        .build(&event_loop);
 
     let input = include_bytes!("../../obj-rs/tests/fixtures/normal-cone.obj");
     let obj: Obj = load_obj(&input[..])?;
 
-    let vb = obj.vertex_buffer(&display)?;
-    let ib = obj.index_buffer(&display)?;
+    let vb = obj.vertex_buffer(display.get_context())?;
+    let ib = obj.index_buffer(display.get_context())?;
 
     let program = Program::from_source(
         &display,
@@ -78,16 +74,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // Main loop
-    event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Wait;
+    #[allow(deprecated, reason = "TODO: Migrate this into `.run_app()` later")]
+    event_loop.run(move |event, active_event_loop| {
+        active_event_loop.set_control_flow(ControlFlow::Wait);
 
         match event {
-            Event::LoopDestroyed => {}
+            Event::LoopExiting => {}
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
                 ..
-            } => *control_flow = ControlFlow::Exit,
-            Event::RedrawRequested(_) => {
+            } => active_event_loop.exit(),
+            Event::WindowEvent {
+                event: WindowEvent::RedrawRequested,
+                ..
+            } => {
                 // draw
                 use glium::Surface;
 
@@ -98,5 +98,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             _ => {}
         }
-    });
+    })?;
+
+    Ok(())
 }
