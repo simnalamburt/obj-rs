@@ -4,5 +4,5 @@ members = [
     "sampleapp",
     "sampleapp-vulkano"
 ]
-
 default-members = ["obj-rs"]
+resolver = "2"
