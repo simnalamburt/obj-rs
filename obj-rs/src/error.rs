@@ -78,7 +78,7 @@ impl LoadError {
 }
 
 /// Enum to store the various types of errors that can cause loading an OBJ to fail.
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum LoadErrorKind {
     /// Met unexpected statement.
     UnexpectedStatement,

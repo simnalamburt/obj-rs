@@ -126,7 +126,7 @@ fn parse_texture_map(args: &[&str]) -> ObjResult<MtlTextureMap> {
 }
 
 /// Low-level Rust binding for `.mtl` format *(incomplete)*.
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct RawMtl {
     /// Map from the material name to its properties
     pub materials: HashMap<String, Material>,

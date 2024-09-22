@@ -465,7 +465,7 @@ impl Group {
 }
 
 /// Low-level Rust binding for `.obj` format.
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct RawObj {
     /// Name of the object.
     pub name: Option<String>,
@@ -502,7 +502,7 @@ pub struct RawObj {
 pub type Point = usize;
 
 /// The `Line` type.
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Line {
     /// A series of line segments which contain only the position data of each vertex
     P(Vec<usize>),
@@ -512,7 +512,7 @@ pub enum Line {
 }
 
 /// The `Polygon` type.
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Polygon {
     /// A polygon which contains only the position data of each vertex.
     P(Vec<usize>),
@@ -525,7 +525,7 @@ pub enum Polygon {
 }
 
 /// A group which contains ranges of points, lines and polygons
-#[derive(Clone, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Group {
     /// Multiple range of points
     pub points: Vec<Range>,
@@ -536,7 +536,7 @@ pub struct Group {
 }
 
 /// A struct which represent `[start, end)` range.
-#[derive(Copy, PartialEq, Eq, Clone, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Range {
     /// The lower bound of the range (inclusive).
     pub start: usize,

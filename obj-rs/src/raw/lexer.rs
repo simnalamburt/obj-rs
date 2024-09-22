@@ -25,6 +25,7 @@ fn test_strip_commect() {
 
 type StrippedLines<T> = Map<Lines<T>, fn(Result<String>) -> Result<String>>;
 
+#[derive(Debug)]
 pub struct Lexer<T> {
     stripped_lines: StrippedLines<T>,
 }
