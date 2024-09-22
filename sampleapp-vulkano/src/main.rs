@@ -162,7 +162,7 @@ fn main() {
             ..BufferUsage::empty()
         },
         false,
-        obj.vertices.into_iter(),
+        obj.vertices,
     )
     .unwrap();
     let index_buffer = CpuAccessibleBuffer::from_iter(
@@ -172,7 +172,7 @@ fn main() {
             ..BufferUsage::empty()
         },
         false,
-        obj.indices.into_iter(),
+        obj.indices,
     )
     .unwrap();
 
@@ -298,7 +298,7 @@ fn main() {
                     uniform_buffer.from_data(uniform_data).unwrap()
                 };
 
-                let layout = pipeline.layout().set_layouts().get(0).unwrap();
+                let layout = pipeline.layout().set_layouts().first().unwrap();
                 let set = PersistentDescriptorSet::new(
                     &descriptor_set_allocator,
                     layout.clone(),
