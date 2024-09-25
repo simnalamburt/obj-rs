@@ -30,7 +30,7 @@ pub mod raw;
 
 pub use crate::error::{LoadError, LoadErrorKind, ObjError, ObjResult};
 
-use crate::error::make_error;
+use crate::error::{index_out_of_range, make_error};
 use crate::raw::object::Polygon;
 use num_traits::FromPrimitive;
 use std::collections::hash_map::{Entry, HashMap};
@@ -130,10 +130,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
                         };
                         let index = match I::from_usize(vb.len()) {
                             Some(val) => val,
-                            None => make_error!(
-                                IndexOutOfRange,
-                                "Unable to convert the index from usize"
-                            ),
+                            None => return index_out_of_range::<_, I>(vb.len()),
                         };
                         vb.push(vertex);
                         entry.insert(index);
@@ -207,7 +204,7 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
             let mut map = |pi: usize| -> ObjResult<()> {
                 ib.push(match I::from_usize(pi) {
                     Some(val) => val,
-                    None => make_error!(IndexOutOfRange, "Unable to convert the index from usize"),
+                    None => return index_out_of_range::<_, I>(pi),
                 });
                 Ok(())
             };
@@ -285,10 +282,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
                         };
                         let index = match I::from_usize(vb.len()) {
                             Some(val) => val,
-                            None => make_error!(
-                                IndexOutOfRange,
-                                "Unable to convert the index from usize"
-                            ),
+                            None => return index_out_of_range::<_, I>(vb.len()),
                         };
                         vb.push(vertex);
                         entry.insert(index);

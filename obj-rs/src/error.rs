@@ -67,7 +67,7 @@ implmnt!(Load, LoadError);
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct LoadError {
     kind: LoadErrorKind,
-    message: &'static str,
+    message: String,
 }
 
 impl LoadError {
@@ -101,6 +101,7 @@ pub enum LoadErrorKind {
 impl LoadError {
     /// Creates a new custom error from a specified kind and message.
     pub fn new(kind: LoadErrorKind, message: &'static str) -> Self {
+        let message = message.to_string();
         LoadError { kind, message }
     }
 }
@@ -136,3 +137,13 @@ macro_rules! make_error {
 }
 
 pub(crate) use make_error;
+
+pub(super) fn index_out_of_range<T, I>(index: usize) -> ObjResult<T> {
+    let name = std::any::type_name::<I>();
+    Err(ObjError::Load(LoadError {
+        kind: LoadErrorKind::IndexOutOfRange,
+        message: format!(
+            "Given index type '{name}' is not large enough to contain the index '{index}'"
+        ),
+    }))
+}

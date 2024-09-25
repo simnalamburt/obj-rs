@@ -5,11 +5,7 @@ fn do_test<V: obj::FromRawVertex<u8> + std::fmt::Debug>(test_case: &str) {
     let err = load_obj::<V, _, _>(Cursor::new(test_case))
         .expect_err("Should error out due to index out of bounds");
     if let obj::ObjError::Load(err) = err {
-        let expected_error = obj::LoadError::new(
-            obj::LoadErrorKind::IndexOutOfRange,
-            "Unable to convert the index from usize",
-        );
-        assert_eq!(err.to_string(), expected_error.to_string());
+        assert_eq!(*err.kind(), obj::LoadErrorKind::IndexOutOfRange);
     } else {
         panic!("Expected a LoadError");
     }
