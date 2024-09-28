@@ -1,6 +1,6 @@
 [package]
 name = "obj-rs"
-version = "0.7.3"
+version = "0.7.4"
 authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
 edition = "2021"
 
