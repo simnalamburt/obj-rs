@@ -1,6 +1,5 @@
 //! Contains helper structs for error handling
 
-use std::convert::From;
 use std::error::Error;
 use std::fmt;
 use std::io;
@@ -100,8 +99,16 @@ pub enum LoadErrorKind {
 
 impl LoadError {
     /// Creates a new custom error from a specified kind and message.
+    #[deprecated(
+        since = "0.7.4",
+        note = "You shouldn’t need to create a LoadError instance on your own."
+    )]
     pub fn new(kind: LoadErrorKind, message: &'static str) -> Self {
         let message = message.to_string();
+        LoadError { kind, message }
+    }
+
+    pub(crate) fn new_internal(kind: LoadErrorKind, message: String) -> Self {
         LoadError { kind, message }
     }
 }
@@ -129,10 +136,12 @@ impl fmt::Display for LoadError {
 
 macro_rules! make_error {
     ($kind:ident, $message:expr) => {
-        return Err(::std::convert::From::from($crate::error::LoadError::new(
-            $crate::error::LoadErrorKind::$kind,
-            $message,
-        )))
+        return Err($crate::error::ObjError::Load(
+            $crate::error::LoadError::new_internal(
+                $crate::error::LoadErrorKind::$kind,
+                $message.to_string(),
+            ),
+        ))
     };
 }
 

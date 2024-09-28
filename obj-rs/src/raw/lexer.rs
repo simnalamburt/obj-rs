@@ -67,9 +67,9 @@ impl<T: BufRead> Iterator for Lexer<T> {
                     let line;
                     match self.stripped_lines.next() {
                         None => {
-                            return Some(Err(ObjError::Load(LoadError::new(
+                            return Some(Err(ObjError::Load(LoadError::new_internal(
                                 LoadErrorKind::BackslashAtEOF,
-                                "Expected a line, but met an EOF",
+                                "Expected a line, but met an EOF".to_string(),
                             ))))
                         }
                         Some(Err(e)) => return Some(Err(ObjError::Io(e))),

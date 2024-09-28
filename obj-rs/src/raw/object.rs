@@ -51,9 +51,9 @@ fn try_index<T>(collection: &[T], input: &str) -> ObjResult<usize> {
     use crate::error::{LoadError, LoadErrorKind, ObjError};
 
     let len: isize = collection.len().try_into().map_err(|_| {
-        ObjError::Load(LoadError::new(
+        ObjError::Load(LoadError::new_internal(
             LoadErrorKind::IndexOutOfRange,
-            "Too many items in collection",
+            "Too many items in collection".to_string(),
         ))
     })?;
 
