@@ -16,7 +16,7 @@ dome.indices;
 # Ok::<(), obj::ObjError>(())
 ```
 
-<img src="https://simnalamburt.github.io/obj-rs/screenshot.png" style="max-width:100%">
+<img alt="Rendered image of cute Rilakkuma" src="https://i.hyeon.me/obj-rs/bear.png" style="max-width:100%">
 
 [obj]: https://en.wikipedia.org/wiki/Wavefront_.obj_file
 [GitHub]: https://github.com/simnalamburt/obj-rs
