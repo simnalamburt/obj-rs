@@ -30,8 +30,8 @@ Glium support
 
 ```toml
 [dependencies]
-glium = "0.26"
-obj-rs = { version = "0.6", features = ["glium"] }
+glium = "0.35"
+obj-rs = { version = "0.7", features = ["glium"] }
 ```
 ```rust
 use std::fs::File;
