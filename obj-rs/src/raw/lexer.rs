@@ -43,10 +43,7 @@ impl<T: BufRead> Iterator for Lexer<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // Check if maybe_line has finished
-        let maybe_line = match self.stripped_lines.next() {
-            None => return None,
-            Some(val) => val,
-        };
+        let maybe_line = self.stripped_lines.next()?;
 
         // Check if maybe_line has errored
         let line = match maybe_line {
