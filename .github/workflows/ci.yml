@@ -2,15 +2,13 @@ on: [push, pull_request]
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         glium: ["", "glium-support"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --features '${{ matrix.glium }}'
       - run: cargo test --features '${{ matrix.glium }}'
@@ -21,14 +19,12 @@ jobs:
     name: Test sample app
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-24.04, macos-latest]
         project: [sampleapp, sampleapp-vulkano]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
       - run: cargo build -p '${{ matrix.project }}'
       - run: cargo test -p '${{ matrix.project }}'
@@ -41,8 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
       - run: cargo build -p sampleapp
       - run: cargo test -p sampleapp
