@@ -23,6 +23,11 @@ jobs:
         project: [sampleapp, sampleapp-vulkano]
     runs-on: ${{ matrix.os }}
     steps:
+      - if: matrix.os == 'ubuntu-24.04'
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: libfontconfig-dev
+          version: 0
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
