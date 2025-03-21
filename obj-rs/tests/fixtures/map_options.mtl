@@ -1,0 +1,42 @@
+# Test MTL file with comprehensive materials and options
+
+# Material 1 - Tests basic colors and properties
+newmtl BasicMaterial
+# ambient color RGB
+Ka 0.5 0.6 0.7
+# diffuse color RGB
+Kd 0.8 0.9 1.0
+# specular color RGB
+Ks 1.0 1.0 1.0
+# emissive color RGB
+Ke 0.1 0.1 0.1
+# transparency
+Tf 0.9 0.9 0.9
+# specular exponent
+Ns 100.0
+# dissolve factor
+Ni 1.5
+# illumination model
+illum 2
+# sharpness
+d 0.9
+
+# Material 2 - Tests all texture maps
+newmtl TextureMaps
+# ambient texture map
+map_Ka ambient.png
+# with offset and scale
+map_Kd -o 0.1 0.2 0.3 -s 2.0 3.0 4.0 diffuse.png
+# with turbulence
+map_Ks -t 0.05 0.05 0.0 specular.png
+# with resolution
+map_Ke -texres 512 emissive.png
+# with clamping
+map_d -clamp on dissolve.png
+# bump map with multiplier and base/gain
+bump -bm 2.5 -mm 0.2 0.8 normal.png
+
+# Material 3 - Tests texture blending options
+newmtl BlendingOptions
+# with blending options
+map_Kd -blendu on -blendv off texture.png
