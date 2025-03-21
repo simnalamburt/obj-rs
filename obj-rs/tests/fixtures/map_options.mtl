@@ -34,7 +34,7 @@ map_Ke -texres 512 emissive.png
 # with clamping
 map_d -clamp on dissolve.png
 # bump map with multiplier and base/gain
-bump -bm 2.5 -mm 0.2 0.8 normal.png
+bump -bm 2.5 -mm 0.2 0.8 -clamp off normal.png
 
 # Material 3 - Tests texture blending options
 newmtl BlendingOptions

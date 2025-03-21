@@ -133,6 +133,7 @@ fn mtl_map_options() -> TestResult {
         assert_eq!(b_map.file, "normal.png");
         assert_eq!(b_map.bump_multiplier, 2.5);
         assert_eq!(b_map.base_gain, [0.2, 0.8]);
+        assert_eq!(b_map.clamping, false);
     }
 
     // material #3 BlendingOptions

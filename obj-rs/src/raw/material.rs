@@ -254,7 +254,18 @@ where
 
             "-clamp" => {
                 // Set clamping flag
-                texture_map.clamping = true;
+                 let value = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(
+                            WrongNumberOfArguments,
+                            "Missing on/off value for -clamp option"
+                        )
+                    }
+                }
+                .to_lowercase();
+
+                texture_map.clamping = value == "on" || value == "true";
             }
 
             "-mm" => {
