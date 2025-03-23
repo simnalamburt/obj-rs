@@ -39,7 +39,10 @@ fn cube() -> TestResult {
             specular_exponent: Some(96.078431),
             optical_density: Some(1.0),
             illumination_model: Some(2),
-            diffuse_map: Some(MtlTextureMap::default().file("cube-uv-num.png")),
+            diffuse_map: Some(MtlTextureMap {
+                file: "cube-uv-num.png".to_string(),
+                ..MtlTextureMap::default()
+            }),
             ..Material::default()
         }
     );
