@@ -254,7 +254,7 @@ where
 
             "-clamp" => {
                 // Set clamping flag
-                 let value = match iter.next() {
+                let value = match iter.next() {
                     Some(&val) => val,
                     None => {
                         make_error!(
