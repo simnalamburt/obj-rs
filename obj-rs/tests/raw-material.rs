@@ -1,4 +1,4 @@
-use obj::raw::material::{parse_mtl, Material, MtlColor, MtlTextureMap, RawMtl};
+use obj::raw::material::{parse_mtl, Material, MtlColor, MtlTextureChannel, MtlTextureMap, RawMtl};
 use obj::ObjResult;
 use std::error::Error;
 
@@ -130,6 +130,7 @@ fn mtl_map_options() -> TestResult {
             .clone()
             .ok_or("dissolve_map not found")?;
         assert_eq!(ds_map.file, "dissolve.png");
+        assert_eq!(ds_map.channel, MtlTextureChannel::Blue);
         assert_eq!(ds_map.clamping, true);
 
         let b_map = tex_maps.bump_map.clone().ok_or("bump_map not found")?;

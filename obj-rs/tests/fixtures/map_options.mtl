@@ -31,8 +31,8 @@ map_Kd -o 0.1 0.2 0.3 -s 2.0 3.0 4.0 diffuse.png
 map_Ks -t 0.05 0.05 0.0 specular.png
 # with resolution
 map_Ke -texres 512 emissive.png
-# with clamping
-map_d -clamp on dissolve.png
+# with clamping and channel blue
+map_d -clamp on -imfchan b dissolve.png
 # bump map with multiplier and base/gain
 bump -bm 2.5 -mm 0.2 0.8 -clamp off normal.png
 

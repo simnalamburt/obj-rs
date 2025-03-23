@@ -4,8 +4,10 @@ use crate::error::{make_error, ObjResult};
 use crate::raw::lexer::lex;
 use crate::raw::util::parse_args;
 use std::collections::HashMap;
+use std::fmt;
 use std::io::BufRead;
 use std::mem::take;
+use std::str::FromStr;
 
 /// Parses a wavefront `.mtl` format *(incomplete)*
 pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
@@ -319,6 +321,22 @@ where
                 texture_map.blend_v = value == "on" || value == "true";
             }
 
+            "-imfchan" => {
+                // Set image file channel
+                let value = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(
+                            WrongNumberOfArguments,
+                            "Missing channel value for -imfchan option"
+                        )
+                    }
+                }
+                .to_lowercase();
+
+                texture_map.channel = MtlTextureChannel::from_str(&value).unwrap();
+            }
+
             // Skip unknown options
             _ => {}
         }
@@ -383,6 +401,53 @@ pub enum MtlColor {
     Spectral(String, f32),
 }
 
+/// A texture channel specified usually via -imfchan option in an `.mtl` file
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub enum MtlTextureChannel {
+    /// Red channel
+    Red,
+    /// Green channel
+    Green,
+    /// Blue channel
+    Blue,
+    /// Matte channel
+    Matte,
+    /// Luminance channel
+    Luminance,
+    /// Z-Depth channel
+    Depth,
+}
+
+impl FromStr for MtlTextureChannel {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "r" => Ok(MtlTextureChannel::Red),
+            "g" => Ok(MtlTextureChannel::Green),
+            "b" => Ok(MtlTextureChannel::Blue),
+            "m" => Ok(MtlTextureChannel::Matte),
+            "l" => Ok(MtlTextureChannel::Luminance),
+            "z" => Ok(MtlTextureChannel::Depth),
+            _ => Err(format!("Invalid texture channel: {}", s)),
+        }
+    }
+}
+
+impl fmt::Display for MtlTextureChannel {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            MtlTextureChannel::Red => "r",
+            MtlTextureChannel::Green => "g",
+            MtlTextureChannel::Blue => "b",
+            MtlTextureChannel::Matte => "m",
+            MtlTextureChannel::Luminance => "l",
+            MtlTextureChannel::Depth => "z",
+        };
+        write!(f, "{}", s)
+    }
+}
+
 /// A texture map specified in a `.mtl` file
 #[derive(Clone, PartialEq, Debug)]
 pub struct MtlTextureMap {
@@ -415,6 +480,9 @@ pub struct MtlTextureMap {
 
     /// Vertical texture blending flag
     pub blend_v: bool,
+
+    /// Texture channel
+    pub channel: MtlTextureChannel,
 }
 
 impl Default for MtlTextureMap {
@@ -430,6 +498,7 @@ impl Default for MtlTextureMap {
             base_gain: [0.0, 1.0],
             blend_u: false,
             blend_v: false,
+            channel: MtlTextureChannel::Red,
         }
     }
 }
