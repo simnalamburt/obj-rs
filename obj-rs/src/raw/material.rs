@@ -1,12 +1,13 @@
 //! Parses `.mtl` format which stores material data
 
-use std::collections::HashMap;
-use std::io::BufRead;
-use std::mem::take;
-
 use crate::error::{make_error, ObjResult};
 use crate::raw::lexer::lex;
 use crate::raw::util::parse_args;
+use std::collections::HashMap;
+use std::fmt;
+use std::io::BufRead;
+use std::mem::take;
+use std::str::FromStr;
 
 /// Parses a wavefront `.mtl` format *(incomplete)*
 pub fn parse_mtl<T: BufRead>(input: T) -> ObjResult<RawMtl> {
@@ -117,12 +118,231 @@ fn parse_color(args: &[&str]) -> ObjResult<MtlColor> {
 
 /// Parses a texture map specification from the arguments of a statement
 fn parse_texture_map(args: &[&str]) -> ObjResult<MtlTextureMap> {
-    match args {
-        [file] => Ok(MtlTextureMap {
-            file: (*file).to_string(),
-        }),
-        _ => make_error!(WrongNumberOfArguments, "Expected exactly 1 argument"),
+    if args.is_empty() {
+        make_error!(WrongNumberOfArguments, "Expected at least 1 argument");
     }
+
+    let mut texture_map = MtlTextureMap::default();
+
+    // Format:
+    //      map_** [-option args] filename
+    //
+    // See:
+    //      https://paulbourke.net/dataformats/mtl
+
+    // Last argument is always the filename
+    if let Some(&filename) = args.last() {
+        texture_map.file = filename.to_string();
+    } else {
+        make_error!(WrongNumberOfArguments, "Expected at least a filename")
+    }
+
+    // Process all options (therefore all arguments except the last one)
+    let options_iter = args.iter().take(args.len() - 1).peekable();
+    parse_options_and_args(&mut texture_map, options_iter)?;
+
+    Ok(texture_map)
+}
+
+/// Parses options and their arguments and applies them to the texture map
+fn parse_options_and_args<'a, I>(
+    texture_map: &mut MtlTextureMap,
+    mut iter: std::iter::Peekable<I>,
+) -> ObjResult<()>
+where
+    I: Iterator<Item = &'a &'a str>,
+{
+    while let Some(&option) = iter.next() {
+        match option {
+            "-bm" => {
+                // Parse bump multiplier
+                if let Some(&value) = iter.next() {
+                    texture_map.bump_multiplier = value.parse::<f32>()?;
+                } else {
+                    make_error!(WrongNumberOfArguments, "Missing bump value for -bm option");
+                }
+            }
+
+            "-o" => {
+                // Parse three coordinates (u,v,w) for texture origin offset
+                let u = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing u value for -o option")
+                    }
+                };
+
+                let v = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing v value for -o option")
+                    }
+                };
+
+                let w = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing w value for -o option")
+                    }
+                };
+
+                texture_map.origin_offset =
+                    [u.parse::<f32>()?, v.parse::<f32>()?, w.parse::<f32>()?];
+            }
+
+            "-s" => {
+                // Parse three coordinates (u,v,w) for texture scale
+                let u = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing u value for -s option")
+                    }
+                };
+
+                let v = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing v value for -s option")
+                    }
+                };
+
+                let w = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing w value for -s option")
+                    }
+                };
+
+                texture_map.scale = [u.parse::<f32>()?, v.parse::<f32>()?, w.parse::<f32>()?];
+            }
+
+            "-t" => {
+                // Parse three coordinates (u,v,w) for texture turbulence
+                let u = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing u value for -t option")
+                    }
+                };
+
+                let v = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing v value for -t option")
+                    }
+                };
+
+                let w = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing w value for -t option")
+                    }
+                };
+
+                texture_map.turbulence = [u.parse::<f32>()?, v.parse::<f32>()?, w.parse::<f32>()?];
+            }
+
+            "-texres" => {
+                // Parse texture resolution
+                if let Some(&value) = iter.next() {
+                    texture_map.resolution = value.parse::<u32>()?;
+                } else {
+                    make_error!(
+                        WrongNumberOfArguments,
+                        "Missing resolution value for -texres option"
+                    );
+                }
+            }
+
+            "-clamp" => {
+                // Set clamping flag
+                let value = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(
+                            WrongNumberOfArguments,
+                            "Missing on/off value for -clamp option"
+                        )
+                    }
+                }
+                .to_lowercase();
+
+                texture_map.clamping = value == "on" || value == "true";
+            }
+
+            "-mm" => {
+                // Parse two values for base and gain
+                let base = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing base value for -mm option")
+                    }
+                };
+
+                let gain = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(WrongNumberOfArguments, "Missing gain value for -mm option")
+                    }
+                };
+
+                texture_map.base_gain = [base.parse::<f32>()?, gain.parse::<f32>()?];
+            }
+
+            "-blendu" => {
+                // Set horizontal texture blending flag
+                let value = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(
+                            WrongNumberOfArguments,
+                            "Missing on/off value for -blendu option"
+                        )
+                    }
+                }
+                .to_lowercase();
+
+                texture_map.blend_u = value == "on" || value == "true";
+            }
+
+            "-blendv" => {
+                // Set vertical texture blending flag
+                let value = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(
+                            WrongNumberOfArguments,
+                            "Missing on/off value for -blendv option"
+                        )
+                    }
+                }
+                .to_lowercase();
+
+                texture_map.blend_v = value == "on" || value == "true";
+            }
+
+            "-imfchan" => {
+                // Set image file channel
+                let value = match iter.next() {
+                    Some(&val) => val,
+                    None => {
+                        make_error!(
+                            WrongNumberOfArguments,
+                            "Missing channel value for -imfchan option"
+                        )
+                    }
+                }
+                .to_lowercase();
+
+                texture_map.channel = MtlTextureChannel::from_str(&value).unwrap();
+            }
+
+            // Skip unknown options
+            _ => {}
+        }
+    }
+
+    Ok(())
 }
 
 /// Low-level Rust binding for `.mtl` format *(incomplete)*.
@@ -181,10 +401,104 @@ pub enum MtlColor {
     Spectral(String, f32),
 }
 
-/// A texture map specified in a `.mtl` file
+/// A texture channel specified usually via -imfchan option in an `.mtl` file
 #[derive(Clone, PartialEq, Eq, Debug)]
+pub enum MtlTextureChannel {
+    /// Red channel
+    Red,
+    /// Green channel
+    Green,
+    /// Blue channel
+    Blue,
+    /// Matte channel
+    Matte,
+    /// Luminance channel
+    Luminance,
+    /// Z-Depth channel
+    Depth,
+}
+
+impl FromStr for MtlTextureChannel {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "r" => Ok(MtlTextureChannel::Red),
+            "g" => Ok(MtlTextureChannel::Green),
+            "b" => Ok(MtlTextureChannel::Blue),
+            "m" => Ok(MtlTextureChannel::Matte),
+            "l" => Ok(MtlTextureChannel::Luminance),
+            "z" => Ok(MtlTextureChannel::Depth),
+            _ => Err(format!("Invalid texture channel: {}", s)),
+        }
+    }
+}
+
+impl fmt::Display for MtlTextureChannel {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            MtlTextureChannel::Red => "r",
+            MtlTextureChannel::Green => "g",
+            MtlTextureChannel::Blue => "b",
+            MtlTextureChannel::Matte => "m",
+            MtlTextureChannel::Luminance => "l",
+            MtlTextureChannel::Depth => "z",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+/// A texture map specified in a `.mtl` file
+#[derive(Clone, PartialEq, Debug)]
 pub struct MtlTextureMap {
     /// The name of the texture file
     pub file: String,
-    // TODO: support arguments to the texture map
+
+    /// Bump multiplier (increases/decreases bump effect)
+    pub bump_multiplier: f32,
+
+    /// Texture origin offset (shifts texture placement)
+    pub origin_offset: [f32; 3],
+
+    /// Texture scale (stretches or compresses texture)
+    pub scale: [f32; 3],
+
+    /// Texture turbulence (adds noise to texture)
+    pub turbulence: [f32; 3],
+
+    /// Texture resolution (sets resolution for procedural textures)
+    pub resolution: u32,
+
+    /// Texture clamp (clamps texture to edges)
+    pub clamping: bool,
+
+    /// Base/gain (adjusts brightness and contrast)
+    pub base_gain: [f32; 2],
+
+    /// Horizontal texture blending flag
+    pub blend_u: bool,
+
+    /// Vertical texture blending flag
+    pub blend_v: bool,
+
+    /// Texture channel
+    pub channel: MtlTextureChannel,
+}
+
+impl Default for MtlTextureMap {
+    fn default() -> Self {
+        Self {
+            file: String::new(),
+            bump_multiplier: 1.0,
+            origin_offset: [0.0; 3],
+            scale: [1.0; 3],
+            turbulence: [0.0; 3],
+            resolution: 1,
+            clamping: false,
+            base_gain: [0.0, 1.0],
+            blend_u: false,
+            blend_v: false,
+            channel: MtlTextureChannel::Red,
+        }
+    }
 }
