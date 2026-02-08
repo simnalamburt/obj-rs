@@ -1,24 +1,17 @@
 [package]
 name = "obj-rs"
 version = "0.7.4"
-authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-edition = "2021"
-
-description = """
-Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats.
-"""
-
-documentation = "https://docs.rs/obj-rs/"
-readme = "README.md"
-homepage = "https://github.com/simnalamburt/obj-rs"
-repository = "https://github.com/simnalamburt/obj-rs"
-license = "Apache-2.0 OR MIT"
+description = "Wavefront obj parser for Rust. It handles both 'obj' and 'mtl' formats."
 keywords = ["graphics", "obj", "WaveFront", "3D", "parser"]
 categories = ["parsing", "rendering::data-formats"]
 
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
 [lib]
 name = "obj"
-
 
 [features]
 default = ["serde"]

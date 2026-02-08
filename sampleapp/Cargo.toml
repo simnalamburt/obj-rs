@@ -1,11 +1,15 @@
 [package]
 name = "sampleapp"
-version = "0.1.0"
-authors = ["Hyeon Kim <simnalamburt@gmail.com>"]
-edition = "2021"
+publish = false
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 glium = "0.35"
+
 obj-rs = { path = "../obj-rs", default-features = false, features = ["glium"] }

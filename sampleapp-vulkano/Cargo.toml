@@ -1,8 +1,11 @@
 [package]
 name = "sampleapp-vulkano"
-version = "0.1.0"
-authors = ["Govind Venkatesh <venakteshgovind1@gmail.com>"]
-edition = "2021"
+publish = false
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,5 +15,6 @@ vulkano-win = "0.32"
 vulkano-shaders = "0.32"
 winit = "0.27"
 nalgebra = "0.32"
-obj-rs = { path = "../obj-rs", default-features = false, features = ["vulkano"] }
 bytemuck = "1"
+
+obj-rs = { path = "../obj-rs", default-features = false, features = ["vulkano"] }

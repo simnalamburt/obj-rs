@@ -6,3 +6,12 @@ members = [
 ]
 default-members = ["obj-rs"]
 resolver = "2"
+
+[workspace.package]
+authors = [
+    "Jihyeon Kim <simnalamburt@gmail.com>",
+    "Govind Venkatesh <venakteshgovind1@gmail.com>",
+]
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/simnalamburt/obj-rs"
