@@ -14,7 +14,7 @@ use vulkano::{
         SubpassContents, SubpassEndInfo, allocator::StandardCommandBufferAllocator,
     },
     descriptor_set::{
-        PersistentDescriptorSet, WriteDescriptorSet, allocator::StandardDescriptorSetAllocator,
+        DescriptorSet, WriteDescriptorSet, allocator::StandardDescriptorSetAllocator,
     },
     device::{
         Device, DeviceCreateInfo, DeviceExtensions, DeviceOwned, QueueCreateInfo, QueueFlags,
@@ -50,7 +50,7 @@ use vulkano::{
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::Window,
 };
 
 fn main() {
@@ -58,8 +58,8 @@ fn main() {
     // `triangle` example if you haven't done so yet.
 
     let library = VulkanLibrary::new().unwrap();
-    let event_loop = EventLoop::new();
-    let required_extensions = Surface::required_extensions(&event_loop);
+    let event_loop = EventLoop::new().unwrap();
+    let required_extensions = Surface::required_extensions(&event_loop).unwrap();
     let instance = Instance::new(
         library,
         InstanceCreateInfo {
@@ -70,7 +70,12 @@ fn main() {
         },
     )
     .unwrap();
-    let window = Arc::new(WindowBuilder::new().build(&event_loop).unwrap());
+    #[allow(deprecated)]
+    let window = Arc::new(
+        event_loop
+            .create_window(Window::default_attributes())
+            .unwrap(),
+    );
     let surface = Surface::from_window(instance.clone(), window.clone()).unwrap();
 
     let device_extensions = DeviceExtensions {
@@ -235,184 +240,208 @@ fn main() {
     let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
     let rotation_start = Instant::now();
 
-    let descriptor_set_allocator =
-        StandardDescriptorSetAllocator::new(device.clone(), Default::default());
-    let command_buffer_allocator =
-        StandardCommandBufferAllocator::new(device.clone(), Default::default());
+    let descriptor_set_allocator = Arc::new(StandardDescriptorSetAllocator::new(
+        device.clone(),
+        Default::default(),
+    ));
+    let command_buffer_allocator = Arc::new(StandardCommandBufferAllocator::new(
+        device.clone(),
+        Default::default(),
+    ));
 
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            }
-            Event::WindowEvent {
-                event: WindowEvent::Resized(_),
-                ..
-            } => {
-                recreate_swapchain = true;
-            }
-            Event::RedrawEventsCleared => {
-                let dimensions = window.inner_size();
-                if dimensions.width == 0 || dimensions.height == 0 {
-                    return;
-                }
-
-                previous_frame_end.as_mut().unwrap().cleanup_finished();
-
-                if recreate_swapchain {
-                    let (new_swapchain, new_images) =
-                        match swapchain.recreate(SwapchainCreateInfo {
-                            image_extent: dimensions.into(),
-                            ..swapchain.create_info()
-                        }) {
-                            Ok(r) => r,
-                            Err(Validated::ValidationError(_)) => return,
-                            Err(Validated::Error(VulkanError::OutOfDate)) => return,
-                            Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
-                        };
-
-                    swapchain = new_swapchain;
-                    let (new_pipeline, new_framebuffers) = window_size_dependent_setup(
-                        &memory_allocator,
-                        &vs,
-                        &fs,
-                        &new_images,
-                        render_pass.clone(),
-                    );
-                    pipeline = new_pipeline;
-                    framebuffers = new_framebuffers;
-                    recreate_swapchain = false;
-                }
-
-                let uniform_buffer_subbuffer = {
-                    let elapsed = rotation_start.elapsed();
-                    let t =
-                        elapsed.as_secs() as f64 + elapsed.subsec_nanos() as f64 / 1_000_000_000.0;
-                    let theta = t * 5.0;
-
-                    // note: this teapot was meant for OpenGL where the origin is at the lower left
-                    //       instead the origin is at the upper left in Vulkan, so we reverse the Y axis
-                    let aspect_ratio =
-                        swapchain.image_extent()[0] as f32 / swapchain.image_extent()[1] as f32;
-
-                    let eye = Point3::new(0.0, theta.sin() as f32, -3.0);
-                    let target = Point3::new(1.0, 0.0, 0.0);
-                    let view = Isometry3::look_at_rh(&eye, &target, &-Vector3::y());
-                    let model = Isometry3::new(Vector3::x(), nalgebra::zero());
-                    let projection =
-                        Perspective3::new(aspect_ratio, std::f32::consts::PI / 2.0, 0.1, 1000.0);
-
-                    let mvp = projection.into_inner() * (view * model).to_homogeneous();
-
-                    let light_pos = [1.0, 1.0, 1.0f32];
-
-                    let uniform_data = vs::Data {
-                        mvp: mvp.into(),
-                        light: light_pos,
-                    };
-
-                    let subbuffer = uniform_buffer_allocator.allocate_sized().unwrap();
-                    *subbuffer.write().unwrap() = uniform_data;
-                    subbuffer
-                };
-
-                let layout = pipeline.layout().set_layouts().first().unwrap();
-                let set = PersistentDescriptorSet::new(
-                    &descriptor_set_allocator,
-                    layout.clone(),
-                    [WriteDescriptorSet::buffer(0, uniform_buffer_subbuffer)],
-                    [],
-                )
-                .unwrap();
-
-                let (image_index, suboptimal, acquire_future) =
-                    match acquire_next_image(swapchain.clone(), None) {
-                        Ok(r) => r,
-                        Err(Validated::Error(VulkanError::OutOfDate)) => {
-                            recreate_swapchain = true;
-                            return;
-                        }
-                        Err(e) => panic!("Failed to acquire next image: {:?}", e),
-                    };
-
-                if suboptimal {
+    event_loop.set_control_flow(ControlFlow::Poll);
+    #[allow(deprecated)]
+    event_loop
+        .run(move |event, event_loop| {
+            match event {
+                Event::WindowEvent {
+                    window_id,
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } if window_id == window.id() => event_loop.exit(),
+                Event::WindowEvent {
+                    window_id,
+                    event: WindowEvent::Resized(_),
+                    ..
+                } if window_id == window.id() => {
                     recreate_swapchain = true;
                 }
+                Event::WindowEvent {
+                    window_id,
+                    event: WindowEvent::RedrawRequested,
+                    ..
+                } if window_id == window.id() => {
+                    let dimensions = window.inner_size();
+                    if dimensions.width == 0 || dimensions.height == 0 {
+                        return;
+                    }
 
-                let mut builder = AutoCommandBufferBuilder::primary(
-                    &command_buffer_allocator,
-                    queue.queue_family_index(),
-                    CommandBufferUsage::OneTimeSubmit,
-                )
-                .unwrap();
-                builder
-                    .begin_render_pass(
-                        RenderPassBeginInfo {
-                            clear_values: vec![
-                                Some([42.0 / 255.0, 42.0 / 255.0, 46.0 / 255.0, 1.0].into()),
-                                Some(1f32.into()),
-                            ],
-                            ..RenderPassBeginInfo::framebuffer(
-                                framebuffers[image_index as usize].clone(),
-                            )
-                        },
-                        SubpassBeginInfo {
-                            contents: SubpassContents::Inline,
-                            ..Default::default()
-                        },
+                    previous_frame_end.as_mut().unwrap().cleanup_finished();
+
+                    if recreate_swapchain {
+                        let (new_swapchain, new_images) =
+                            match swapchain.recreate(SwapchainCreateInfo {
+                                image_extent: dimensions.into(),
+                                ..swapchain.create_info()
+                            }) {
+                                Ok(r) => r,
+                                Err(Validated::ValidationError(_)) => return,
+                                Err(Validated::Error(VulkanError::OutOfDate)) => return,
+                                Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+                            };
+
+                        swapchain = new_swapchain;
+                        let (new_pipeline, new_framebuffers) = window_size_dependent_setup(
+                            &memory_allocator,
+                            &vs,
+                            &fs,
+                            &new_images,
+                            render_pass.clone(),
+                        );
+                        pipeline = new_pipeline;
+                        framebuffers = new_framebuffers;
+                        recreate_swapchain = false;
+                    }
+
+                    let uniform_buffer_subbuffer = {
+                        let elapsed = rotation_start.elapsed();
+                        let t = elapsed.as_secs() as f64
+                            + elapsed.subsec_nanos() as f64 / 1_000_000_000.0;
+                        let theta = t * 5.0;
+
+                        // note: this teapot was meant for OpenGL where the origin is at the lower left
+                        //       instead the origin is at the upper left in Vulkan, so we reverse the Y axis
+                        let aspect_ratio =
+                            swapchain.image_extent()[0] as f32 / swapchain.image_extent()[1] as f32;
+
+                        let eye = Point3::new(0.0, theta.sin() as f32, -3.0);
+                        let target = Point3::new(1.0, 0.0, 0.0);
+                        let view = Isometry3::look_at_rh(&eye, &target, &-Vector3::y());
+                        let model = Isometry3::new(Vector3::x(), nalgebra::zero());
+                        let projection = Perspective3::new(
+                            aspect_ratio,
+                            std::f32::consts::PI / 2.0,
+                            0.1,
+                            1000.0,
+                        );
+
+                        let mvp = projection.into_inner() * (view * model).to_homogeneous();
+
+                        let light_pos = [1.0, 1.0, 1.0f32];
+
+                        let uniform_data = vs::Data {
+                            mvp: mvp.into(),
+                            light: light_pos,
+                        };
+
+                        let subbuffer = uniform_buffer_allocator.allocate_sized().unwrap();
+                        *subbuffer.write().unwrap() = uniform_data;
+                        subbuffer
+                    };
+
+                    let layout = pipeline.layout().set_layouts().first().unwrap();
+                    let set = DescriptorSet::new(
+                        descriptor_set_allocator.clone(),
+                        layout.clone(),
+                        [WriteDescriptorSet::buffer(0, uniform_buffer_subbuffer)],
+                        [],
                     )
-                    .unwrap()
-                    .bind_pipeline_graphics(pipeline.clone())
-                    .unwrap()
-                    .bind_descriptor_sets(
-                        PipelineBindPoint::Graphics,
-                        pipeline.layout().clone(),
-                        0,
-                        set,
-                    )
-                    .unwrap()
-                    .bind_vertex_buffers(0, vertex_buffer.clone())
-                    .unwrap()
-                    .bind_index_buffer(index_buffer.clone())
-                    .unwrap()
-                    .draw_indexed(index_buffer.len() as u32, 1, 0, 0, 0)
-                    .unwrap()
-                    .end_render_pass(SubpassEndInfo::default())
                     .unwrap();
-                let command_buffer = builder.build().unwrap();
 
-                let future = previous_frame_end
-                    .take()
-                    .unwrap()
-                    .join(acquire_future)
-                    .then_execute(queue.clone(), command_buffer)
-                    .unwrap()
-                    .then_swapchain_present(
-                        queue.clone(),
-                        SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index),
-                    )
-                    .then_signal_fence_and_flush();
+                    let (image_index, suboptimal, acquire_future) =
+                        match acquire_next_image(swapchain.clone(), None) {
+                            Ok(r) => r,
+                            Err(Validated::Error(VulkanError::OutOfDate)) => {
+                                recreate_swapchain = true;
+                                return;
+                            }
+                            Err(e) => panic!("Failed to acquire next image: {:?}", e),
+                        };
 
-                match future {
-                    Ok(future) => {
-                        previous_frame_end = Some(future.boxed());
-                    }
-                    Err(Validated::Error(VulkanError::OutOfDate)) => {
+                    if suboptimal {
                         recreate_swapchain = true;
-                        previous_frame_end = Some(sync::now(device.clone()).boxed());
                     }
-                    Err(e) => {
-                        println!("Failed to flush future: {:?}", e);
-                        previous_frame_end = Some(sync::now(device.clone()).boxed());
+
+                    let mut builder = AutoCommandBufferBuilder::primary(
+                        command_buffer_allocator.clone(),
+                        queue.queue_family_index(),
+                        CommandBufferUsage::OneTimeSubmit,
+                    )
+                    .unwrap();
+                    builder
+                        .begin_render_pass(
+                            RenderPassBeginInfo {
+                                clear_values: vec![
+                                    Some([42.0 / 255.0, 42.0 / 255.0, 46.0 / 255.0, 1.0].into()),
+                                    Some(1f32.into()),
+                                ],
+                                ..RenderPassBeginInfo::framebuffer(
+                                    framebuffers[image_index as usize].clone(),
+                                )
+                            },
+                            SubpassBeginInfo {
+                                contents: SubpassContents::Inline,
+                                ..Default::default()
+                            },
+                        )
+                        .unwrap()
+                        .bind_pipeline_graphics(pipeline.clone())
+                        .unwrap()
+                        .bind_descriptor_sets(
+                            PipelineBindPoint::Graphics,
+                            pipeline.layout().clone(),
+                            0,
+                            set,
+                        )
+                        .unwrap()
+                        .bind_vertex_buffers(0, vertex_buffer.clone())
+                        .unwrap()
+                        .bind_index_buffer(index_buffer.clone())
+                        .unwrap();
+                    unsafe {
+                        builder
+                            .draw_indexed(index_buffer.len() as u32, 1, 0, 0, 0)
+                            .unwrap();
+                    }
+                    builder.end_render_pass(SubpassEndInfo::default()).unwrap();
+                    let command_buffer = builder.build().unwrap();
+
+                    let future = previous_frame_end
+                        .take()
+                        .unwrap()
+                        .join(acquire_future)
+                        .then_execute(queue.clone(), command_buffer)
+                        .unwrap()
+                        .then_swapchain_present(
+                            queue.clone(),
+                            SwapchainPresentInfo::swapchain_image_index(
+                                swapchain.clone(),
+                                image_index,
+                            ),
+                        )
+                        .then_signal_fence_and_flush();
+
+                    match future {
+                        Ok(future) => {
+                            previous_frame_end = Some(future.boxed());
+                        }
+                        Err(Validated::Error(VulkanError::OutOfDate)) => {
+                            recreate_swapchain = true;
+                            previous_frame_end = Some(sync::now(device.clone()).boxed());
+                        }
+                        Err(e) => {
+                            println!("Failed to flush future: {:?}", e);
+                            previous_frame_end = Some(sync::now(device.clone()).boxed());
+                        }
                     }
                 }
+                Event::AboutToWait => {
+                    window.request_redraw();
+                }
+                _ => (),
             }
-            _ => (),
-        }
-    });
+        })
+        .unwrap();
 }
 
 /// This method is called once during initialization, then again whenever the window is resized
@@ -466,9 +495,7 @@ fn window_size_dependent_setup(
     // https://computergraphics.stackexchange.com/questions/5742/vulkan-best-way-of-updating-pipeline-viewport
     let vs_entry = vs.entry_point("main").unwrap();
     let fs_entry = fs.entry_point("main").unwrap();
-    let vertex_input_state = obj::Vertex::per_vertex()
-        .definition(&vs_entry.info().input_interface)
-        .unwrap();
+    let vertex_input_state = obj::Vertex::per_vertex().definition(&vs_entry).unwrap();
 
     let stages = [
         PipelineShaderStageCreateInfo::new(vs_entry),
