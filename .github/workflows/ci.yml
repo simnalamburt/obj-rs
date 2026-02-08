@@ -19,15 +19,25 @@ jobs:
     name: Test sample app
     strategy:
       matrix:
-        os: [ubuntu-24.04, macos-latest]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
         project: [sampleapp, sampleapp-vulkano]
+        exclude:
+          # TODO: Run vulkano sample on Windows
+          - os: windows-latest
+            project: sampleapp-vulkano
     runs-on: ${{ matrix.os }}
     steps:
+      # Platform-specific dependencies
       - if: matrix.os == 'ubuntu-24.04'
         uses: awalsh128/cache-apt-pkgs-action@v1
         with:
           packages: libfontconfig-dev
           version: 0
+      - if: matrix.os == 'macos-latest' && matrix.project == 'sampleapp-vulkano'
+        run: |
+          brew install shaderc
+          cat <<< 'SHADERC_LIB_DIR=/opt/homebrew/opt/shaderc/lib' >> "${GITHUB_ENV}"
+
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -35,15 +45,3 @@ jobs:
       - run: cargo test -p '${{ matrix.project }}'
       - run: cargo clippy -p '${{ matrix.project }}' --no-deps -- -D warnings
       - run: cargo fmt -p '${{ matrix.project }}' -- --check
-
-  sample-windows:
-    name: Test sample app on Windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build -p sampleapp
-      - run: cargo test -p sampleapp
-      - run: cargo clippy -p sampleapp --no-deps -- -D warnings
-      - run: cargo fmt -p sampleapp -- --check
