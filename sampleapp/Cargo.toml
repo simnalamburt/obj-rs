@@ -10,6 +10,6 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glium = "0.35"
+glium = "0.36"
 
 obj-rs = { path = "../obj-rs", default-features = false, features = ["glium"] }
