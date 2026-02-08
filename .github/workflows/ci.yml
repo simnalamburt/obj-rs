@@ -28,11 +28,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       # Platform-specific dependencies
-      - if: matrix.os == 'ubuntu-24.04'
+      - if: matrix.os == 'ubuntu-24.04' && matrix.project == 'sampleapp-vulkano'
         uses: awalsh128/cache-apt-pkgs-action@v1
         with:
-          packages: libfontconfig-dev
-          version: 0
+          packages: libfontconfig-dev libshaderc-dev
+          version: 1
+      - if: matrix.os == 'ubuntu-24.04' && matrix.project == 'sampleapp-vulkano'
+        run: |
+          LIB='/usr/lib/x86_64-linux-gnu'
+          if [[ -f "${LIB}/libshaderc.so" ]] && [[ ! -e "${LIB}/libshaderc_shared.so" ]]; then
+            sudo ln -s "${LIB}/libshaderc.so" "${LIB}/libshaderc_shared.so"
+          fi
       - if: matrix.os == 'macos-latest' && matrix.project == 'sampleapp-vulkano'
         run: |
           brew install shaderc
