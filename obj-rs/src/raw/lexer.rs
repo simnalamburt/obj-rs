@@ -61,8 +61,7 @@ impl<T: BufRead> Iterator for Lexer<T> {
 
                 // Search for the next lines
                 loop {
-                    let line;
-                    match self.stripped_lines.next() {
+                    let line = match self.stripped_lines.next() {
                         None => {
                             return Some(Err(ObjError::Load(LoadError::new_internal(
                                 LoadErrorKind::BackslashAtEOF,
@@ -70,8 +69,8 @@ impl<T: BufRead> Iterator for Lexer<T> {
                             ))));
                         }
                         Some(Err(e)) => return Some(Err(ObjError::Io(e))),
-                        Some(Ok(val)) => line = val,
-                    }
+                        Some(Ok(val)) => val,
+                    };
                     match line.strip_suffix('\\') {
                         Some(stripped) => {
                             buffer.push_str(stripped);
