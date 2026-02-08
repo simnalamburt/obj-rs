@@ -13,6 +13,6 @@ repository.workspace = true
 vulkano = "0.35"
 vulkano-shaders = "0.35"
 winit = "0.30"
-nalgebra = "0.32"
+nalgebra = { version = "0.33", default-features = false, features = ["std"] }
 
 obj-rs = { path = "../obj-rs", default-features = false, features = ["vulkano"] }
