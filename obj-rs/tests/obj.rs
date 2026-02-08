@@ -1,4 +1,4 @@
-use obj::{load_obj, Obj, ObjResult, Position, TexturedVertex, Vertex};
+use obj::{Obj, ObjResult, Position, TexturedVertex, Vertex, load_obj};
 use std::fs::File;
 use std::io::{BufReader, Error};
 

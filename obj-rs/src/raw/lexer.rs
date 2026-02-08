@@ -67,7 +67,7 @@ impl<T: BufRead> Iterator for Lexer<T> {
                             return Some(Err(ObjError::Load(LoadError::new_internal(
                                 LoadErrorKind::BackslashAtEOF,
                                 "Expected a line, but met an EOF".to_string(),
-                            ))))
+                            ))));
                         }
                         Some(Err(e)) => return Some(Err(ObjError::Io(e))),
                         Some(Ok(val)) => line = val,
@@ -120,21 +120,23 @@ bmat u  1       -3      3       -1      0       3       -6      3       \
 bmat u  1       -3      3       -1      0       3       -6      3       0       0       3       -3      0       0       0       1
 "#;
 
-    assert!(lex(&mut input.as_bytes(), |stmt, args| {
-        match stmt {
-            "statement0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
-            "statement1" => assert_eq!(args, ["arg0", "arg1"]),
-            "statement2" => assert_eq!(args, ["Hello,", "world!"]),
-            "bmat" => assert_eq!(
-                args,
-                [
-                    "u", "1", "-3", "3", "-1", "0", "3", "-6", "3", "0", "0", "3", "-3", "0", "0",
-                    "0", "1"
-                ]
-            ),
-            _ => panic!("Unit test failed"),
-        }
-        Ok(())
-    })
-    .is_ok());
+    assert!(
+        lex(&mut input.as_bytes(), |stmt, args| {
+            match stmt {
+                "statement0" => assert_eq!(args, ["arg0", "arg1", "arg2"]),
+                "statement1" => assert_eq!(args, ["arg0", "arg1"]),
+                "statement2" => assert_eq!(args, ["Hello,", "world!"]),
+                "bmat" => assert_eq!(
+                    args,
+                    [
+                        "u", "1", "-3", "3", "-1", "0", "3", "-6", "3", "0", "0", "3", "-3", "0",
+                        "0", "0", "1"
+                    ]
+                ),
+                _ => panic!("Unit test failed"),
+            }
+            Ok(())
+        })
+        .is_ok()
+    );
 }

@@ -1,12 +1,12 @@
 //! Parses `.obj` format which stores 3D mesh data
 
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::hash::Hash;
 use std::io::BufRead;
 use std::mem;
 
-use crate::error::{make_error, ObjResult};
+use crate::error::{ObjResult, make_error};
 use crate::raw::lexer::lex;
 use crate::raw::util::parse_args;
 

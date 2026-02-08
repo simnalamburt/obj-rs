@@ -1,4 +1,4 @@
-use obj::{load_obj, Obj};
+use obj::{Obj, load_obj};
 use std::io::Cursor;
 
 #[test]

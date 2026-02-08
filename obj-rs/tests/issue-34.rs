@@ -1,4 +1,4 @@
-use obj::{load_obj, LoadError, LoadErrorKind, Obj, ObjError};
+use obj::{LoadError, LoadErrorKind, Obj, ObjError, load_obj};
 use std::io::Cursor;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;

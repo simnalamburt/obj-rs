@@ -1,5 +1,5 @@
-use obj::raw::{parse_obj, RawObj};
 use obj::ObjResult;
+use obj::raw::{RawObj, parse_obj};
 use std::error::Error;
 
 type TestResult = Result<(), Box<dyn Error>>;

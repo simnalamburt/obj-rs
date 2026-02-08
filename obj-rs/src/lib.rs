@@ -297,13 +297,27 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
 
             for polygon in polygons {
                 match polygon {
-                    Polygon::P(_) => make_error!(InsufficientData, "Tried to extract normal and texture data which are not contained in the model"),
-                    Polygon::PT(_) => make_error!(InsufficientData, "Tried to extract normal data which are not contained in the model"),
-                    Polygon::PN(_) => make_error!(InsufficientData, "Tried to extract texture data which are not contained in the model"),
+                    Polygon::P(_) => make_error!(
+                        InsufficientData,
+                        "Tried to extract normal and texture data which are not contained in the model"
+                    ),
+                    Polygon::PT(_) => make_error!(
+                        InsufficientData,
+                        "Tried to extract normal data which are not contained in the model"
+                    ),
+                    Polygon::PN(_) => make_error!(
+                        InsufficientData,
+                        "Tried to extract texture data which are not contained in the model"
+                    ),
                     Polygon::PTN(ref vec) if vec.len() == 3 => {
-                        for &(pi, ti, ni) in vec { map(pi, ni, ti)? }
+                        for &(pi, ti, ni) in vec {
+                            map(pi, ni, ti)?
+                        }
                     }
-                    _ => make_error!(UntriangulatedModel, "Model should be triangulated first to be loaded properly")
+                    _ => make_error!(
+                        UntriangulatedModel,
+                        "Model should be triangulated first to be loaded properly"
+                    ),
                 }
             }
         }
@@ -316,7 +330,7 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
 mod glium_support {
     use super::Obj;
     use glium::backend::Facade;
-    use glium::{index, vertex, IndexBuffer, VertexBuffer};
+    use glium::{IndexBuffer, VertexBuffer, index, vertex};
 
     impl<V: vertex::Vertex, I: glium::index::Index> Obj<V, I> {
         /// Retrieve glium-compatible vertex buffer from Obj

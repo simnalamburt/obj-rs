@@ -1,42 +1,42 @@
 //! Reference: https://github.com/vulkano-rs/vulkano/blob/v0.32.0/examples/src/bin/teapot/main.rs
 
 use nalgebra::{Isometry3, Perspective3, Point3, Vector3};
-use obj::{load_obj, Obj};
+use obj::{Obj, load_obj};
 use std::{sync::Arc, time::Instant};
 use vulkano::{
+    VulkanLibrary,
     buffer::{BufferUsage, CpuAccessibleBuffer, CpuBufferPool, TypedBufferAccess},
     command_buffer::{
-        allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder, CommandBufferUsage,
-        RenderPassBeginInfo, SubpassContents,
+        AutoCommandBufferBuilder, CommandBufferUsage, RenderPassBeginInfo, SubpassContents,
+        allocator::StandardCommandBufferAllocator,
     },
     descriptor_set::{
-        allocator::StandardDescriptorSetAllocator, PersistentDescriptorSet, WriteDescriptorSet,
+        PersistentDescriptorSet, WriteDescriptorSet, allocator::StandardDescriptorSetAllocator,
     },
     device::{
-        physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, DeviceOwned,
-        QueueCreateInfo,
+        Device, DeviceCreateInfo, DeviceExtensions, DeviceOwned, QueueCreateInfo,
+        physical::PhysicalDeviceType,
     },
     format::Format,
-    image::{view::ImageView, AttachmentImage, ImageAccess, ImageUsage, SwapchainImage},
+    image::{AttachmentImage, ImageAccess, ImageUsage, SwapchainImage, view::ImageView},
     instance::{Instance, InstanceCreateInfo},
     memory::allocator::{MemoryUsage, StandardMemoryAllocator},
     pipeline::{
+        GraphicsPipeline, Pipeline, PipelineBindPoint,
         graphics::{
             depth_stencil::DepthStencilState,
             input_assembly::InputAssemblyState,
             vertex_input::BuffersDefinition,
             viewport::{Viewport, ViewportState},
         },
-        GraphicsPipeline, Pipeline, PipelineBindPoint,
     },
     render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass},
     shader::ShaderModule,
     swapchain::{
-        acquire_next_image, AcquireError, Swapchain, SwapchainCreateInfo, SwapchainCreationError,
-        SwapchainPresentInfo,
+        AcquireError, Swapchain, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
+        acquire_next_image,
     },
     sync::{self, FlushError, GpuFuture},
-    VulkanLibrary,
 };
 use vulkano_win::VkSurfaceBuild;
 use winit::{

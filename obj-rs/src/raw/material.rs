@@ -1,6 +1,6 @@
 //! Parses `.mtl` format which stores material data
 
-use crate::error::{make_error, ObjResult};
+use crate::error::{ObjResult, make_error};
 use crate::raw::lexer::lex;
 use crate::raw::util::parse_args;
 use std::collections::HashMap;

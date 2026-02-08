@@ -1,10 +1,10 @@
-use glium::backend::glutin::SimpleWindowBuilder;
+use glium::Program;
 use glium::backend::Facade;
+use glium::backend::glutin::SimpleWindowBuilder;
 use glium::uniform;
 use glium::winit::event::{Event, WindowEvent};
 use glium::winit::event_loop::{ControlFlow, EventLoop};
-use glium::Program;
-use obj::{load_obj, Obj};
+use obj::{Obj, load_obj};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let event_loop = EventLoop::new()?;

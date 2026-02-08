@@ -1,5 +1,5 @@
-use obj::raw::material::{parse_mtl, Material, MtlColor, MtlTextureChannel, MtlTextureMap, RawMtl};
 use obj::ObjResult;
+use obj::raw::material::{Material, MtlColor, MtlTextureChannel, MtlTextureMap, RawMtl, parse_mtl};
 use std::error::Error;
 
 type TestResult = Result<(), Box<dyn Error>>;
