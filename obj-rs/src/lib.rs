@@ -42,8 +42,6 @@ use glium::implement_vertex;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "vulkano")]
-use bytemuck::{Pod, Zeroable};
-#[cfg(feature = "vulkano")]
 use vulkano::impl_vertex;
 
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
@@ -93,13 +91,17 @@ pub trait FromRawVertex<I>: Sized {
 #[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "vulkano", repr(C))]
-#[cfg_attr(feature = "vulkano", derive(Zeroable, Pod))]
 pub struct Vertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
     /// Normal vertor of a vertex.
     pub normal: [f32; 3],
 }
+
+#[cfg(feature = "vulkano")]
+unsafe impl bytemuck::Zeroable for Vertex {}
+#[cfg(feature = "vulkano")]
+unsafe impl bytemuck::Pod for Vertex {}
 
 #[cfg(feature = "glium")]
 implement_vertex!(Vertex, position, normal);
@@ -175,11 +177,15 @@ impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
 #[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "vulkano", repr(C))]
-#[cfg_attr(feature = "vulkano", derive(Zeroable, Pod))]
 pub struct Position {
     /// Position vector of a vertex.
     pub position: [f32; 3],
 }
+
+#[cfg(feature = "vulkano")]
+unsafe impl bytemuck::Zeroable for Position {}
+#[cfg(feature = "vulkano")]
+unsafe impl bytemuck::Pod for Position {}
 
 #[cfg(feature = "glium")]
 implement_vertex!(Position, position);
@@ -241,7 +247,6 @@ impl<I: FromPrimitive> FromRawVertex<I> for Position {
 #[derive(Default, Copy, PartialEq, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "vulkano", repr(C))]
-#[cfg_attr(feature = "vulkano", derive(Zeroable, Pod))]
 pub struct TexturedVertex {
     /// Position vector of a vertex.
     pub position: [f32; 3],
@@ -250,6 +255,11 @@ pub struct TexturedVertex {
     /// Texture of a vertex.
     pub texture: [f32; 3],
 }
+
+#[cfg(feature = "vulkano")]
+unsafe impl bytemuck::Zeroable for TexturedVertex {}
+#[cfg(feature = "vulkano")]
+unsafe impl bytemuck::Pod for TexturedVertex {}
 
 #[cfg(feature = "glium")]
 implement_vertex!(TexturedVertex, position, normal, texture);
