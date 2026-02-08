@@ -10,11 +10,10 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vulkano = "0.32"
-vulkano-win = "0.32"
-vulkano-shaders = "0.32"
-winit = "0.27"
+vulkano = "0.33"
+vulkano-win = "0.33"
+vulkano-shaders = "0.33"
+winit = "0.28"
 nalgebra = "0.32"
-bytemuck = "1"
 
 obj-rs = { path = "../obj-rs", default-features = false, features = ["vulkano"] }

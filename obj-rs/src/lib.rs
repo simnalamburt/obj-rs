@@ -41,9 +41,6 @@ use glium::implement_vertex;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "vulkano")]
-use vulkano::impl_vertex;
-
 /// Load a wavefront OBJ file into Rust & OpenGL friendly format.
 pub fn load_obj<V: FromRawVertex<I>, T: BufRead, I>(input: T) -> ObjResult<Obj<V, I>> {
     let raw = raw::parse_obj(input)?;
@@ -105,8 +102,6 @@ unsafe impl bytemuck::Pod for Vertex {}
 
 #[cfg(feature = "glium")]
 implement_vertex!(Vertex, position, normal);
-#[cfg(feature = "vulkano")]
-impl_vertex!(Vertex, position, normal);
 
 impl<I: FromPrimitive + Copy> FromRawVertex<I> for Vertex {
     fn process(
@@ -189,8 +184,6 @@ unsafe impl bytemuck::Pod for Position {}
 
 #[cfg(feature = "glium")]
 implement_vertex!(Position, position);
-#[cfg(feature = "vulkano")]
-impl_vertex!(Position, position);
 
 impl<I: FromPrimitive> FromRawVertex<I> for Position {
     fn process(
@@ -263,8 +256,20 @@ unsafe impl bytemuck::Pod for TexturedVertex {}
 
 #[cfg(feature = "glium")]
 implement_vertex!(TexturedVertex, position, normal, texture);
+
 #[cfg(feature = "vulkano")]
-impl_vertex!(TexturedVertex, position, normal, texture);
+#[allow(
+    deprecated,
+    reason = "Use of `impl_vertex` is indeed deprecated since vulkano 0.33.0 but it's required here for compatibility with older versions."
+)]
+mod vulkano_vertex_impls {
+    use super::{Position, TexturedVertex, Vertex};
+    use vulkano::impl_vertex;
+
+    impl_vertex!(Vertex, position, normal);
+    impl_vertex!(Position, position);
+    impl_vertex!(TexturedVertex, position, normal, texture);
+}
 
 impl<I: FromPrimitive + Copy> FromRawVertex<I> for TexturedVertex {
     fn process(

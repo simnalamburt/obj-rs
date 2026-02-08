@@ -5,7 +5,10 @@ use obj::{Obj, load_obj};
 use std::{sync::Arc, time::Instant};
 use vulkano::{
     VulkanLibrary,
-    buffer::{BufferUsage, CpuAccessibleBuffer, CpuBufferPool, TypedBufferAccess},
+    buffer::{
+        Buffer, BufferCreateInfo, BufferUsage,
+        allocator::{SubbufferAllocator, SubbufferAllocatorCreateInfo},
+    },
     command_buffer::{
         AutoCommandBufferBuilder, CommandBufferUsage, RenderPassBeginInfo, SubpassContents,
         allocator::StandardCommandBufferAllocator,
@@ -14,27 +17,27 @@ use vulkano::{
         PersistentDescriptorSet, WriteDescriptorSet, allocator::StandardDescriptorSetAllocator,
     },
     device::{
-        Device, DeviceCreateInfo, DeviceExtensions, DeviceOwned, QueueCreateInfo,
+        Device, DeviceCreateInfo, DeviceExtensions, DeviceOwned, QueueCreateInfo, QueueFlags,
         physical::PhysicalDeviceType,
     },
     format::Format,
     image::{AttachmentImage, ImageAccess, ImageUsage, SwapchainImage, view::ImageView},
     instance::{Instance, InstanceCreateInfo},
-    memory::allocator::{MemoryUsage, StandardMemoryAllocator},
+    memory::allocator::{AllocationCreateInfo, MemoryUsage, StandardMemoryAllocator},
     pipeline::{
         GraphicsPipeline, Pipeline, PipelineBindPoint,
         graphics::{
             depth_stencil::DepthStencilState,
             input_assembly::InputAssemblyState,
-            vertex_input::BuffersDefinition,
+            vertex_input::Vertex as _,
             viewport::{Viewport, ViewportState},
         },
     },
     render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass},
     shader::ShaderModule,
     swapchain::{
-        AcquireError, Swapchain, SwapchainCreateInfo, SwapchainCreationError, SwapchainPresentInfo,
-        acquire_next_image,
+        AcquireError, CompositeAlpha, Swapchain, SwapchainCreateInfo, SwapchainCreationError,
+        SwapchainPresentInfo, acquire_next_image,
     },
     sync::{self, FlushError, GpuFuture},
 };
@@ -80,7 +83,8 @@ fn main() {
                 .iter()
                 .enumerate()
                 .position(|(i, q)| {
-                    q.queue_flags.graphics && p.surface_support(i as u32, &surface).unwrap_or(false)
+                    q.queue_flags.intersects(QueueFlags::GRAPHICS)
+                        && p.surface_support(i as u32, &surface).unwrap_or(false)
                 })
                 .map(|i| (p, i as u32))
         })
@@ -136,15 +140,20 @@ fn main() {
                 min_image_count: surface_capabilities.min_image_count,
                 image_format,
                 image_extent: window.inner_size().into(),
-                image_usage: ImageUsage {
-                    color_attachment: true,
-                    ..ImageUsage::empty()
-                },
-                composite_alpha: surface_capabilities
-                    .supported_composite_alpha
-                    .iter()
-                    .next()
-                    .unwrap(),
+                image_usage: ImageUsage::COLOR_ATTACHMENT,
+                composite_alpha: [
+                    CompositeAlpha::Opaque,
+                    CompositeAlpha::Inherit,
+                    CompositeAlpha::PreMultiplied,
+                    CompositeAlpha::PostMultiplied,
+                ]
+                .into_iter()
+                .find(|alpha| {
+                    surface_capabilities
+                        .supported_composite_alpha
+                        .contains_enum(*alpha)
+                })
+                .unwrap(),
                 ..Default::default()
             },
         )
@@ -155,34 +164,40 @@ fn main() {
 
     let obj: Obj =
         load_obj(&include_bytes!("../../obj-rs/tests/fixtures/normal-cone.obj")[..]).unwrap();
-    let vertex_buffer = CpuAccessibleBuffer::from_iter(
+    let vertex_buffer = Buffer::from_iter(
         &memory_allocator,
-        BufferUsage {
-            vertex_buffer: true,
-            ..BufferUsage::empty()
+        BufferCreateInfo {
+            usage: BufferUsage::VERTEX_BUFFER,
+            ..Default::default()
         },
-        false,
+        AllocationCreateInfo {
+            usage: MemoryUsage::Upload,
+            ..Default::default()
+        },
         obj.vertices,
     )
     .unwrap();
-    let index_buffer = CpuAccessibleBuffer::from_iter(
+    let index_buffer = Buffer::from_iter(
         &memory_allocator,
-        BufferUsage {
-            index_buffer: true,
-            ..BufferUsage::empty()
+        BufferCreateInfo {
+            usage: BufferUsage::INDEX_BUFFER,
+            ..Default::default()
         },
-        false,
+        AllocationCreateInfo {
+            usage: MemoryUsage::Upload,
+            ..Default::default()
+        },
         obj.indices,
     )
     .unwrap();
 
-    let uniform_buffer = CpuBufferPool::<vs::ty::Data>::new(
+    let uniform_buffer_allocator = SubbufferAllocator::new(
         memory_allocator.clone(),
-        BufferUsage {
-            uniform_buffer: true,
-            ..BufferUsage::empty()
+        SubbufferAllocatorCreateInfo {
+            buffer_usage: BufferUsage::UNIFORM_BUFFER,
+            memory_usage: MemoryUsage::Upload,
+            ..Default::default()
         },
-        MemoryUsage::Upload,
     );
 
     let vs = vs::load(device.clone()).unwrap();
@@ -290,12 +305,14 @@ fn main() {
 
                     let light_pos = [1.0, 1.0, 1.0f32];
 
-                    let uniform_data = vs::ty::Data {
+                    let uniform_data = vs::Data {
                         mvp: mvp.into(),
                         light: light_pos,
                     };
 
-                    uniform_buffer.from_data(uniform_data).unwrap()
+                    let subbuffer = uniform_buffer_allocator.allocate_sized().unwrap();
+                    *subbuffer.write().unwrap() = uniform_data;
+                    subbuffer
                 };
 
                 let layout = pipeline.layout().set_layouts().first().unwrap();
@@ -421,7 +438,7 @@ fn window_size_dependent_setup(
     // This allows the driver to optimize things, at the cost of slower window resizes.
     // https://computergraphics.stackexchange.com/questions/5742/vulkan-best-way-of-updating-pipeline-viewport
     let pipeline = GraphicsPipeline::start()
-        .vertex_input_state(BuffersDefinition::new().vertex::<obj::Vertex>())
+        .vertex_input_state(obj::Vertex::per_vertex())
         .vertex_shader(vs.entry_point("main").unwrap(), ())
         .input_assembly_state(InputAssemblyState::new())
         .viewport_state(ViewportState::viewport_fixed_scissor_irrelevant([
@@ -463,11 +480,6 @@ mod vs {
                 gl_Position = uniforms.mvp * vec4(position, 1.0);
             }
         ",
-        types_meta: {
-            use bytemuck::{Pod, Zeroable};
-
-            #[derive(Clone, Copy, Zeroable, Pod)]
-        },
     }
 }
 
