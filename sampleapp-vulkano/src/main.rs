@@ -4,14 +4,14 @@ use nalgebra::{Isometry3, Perspective3, Point3, Vector3};
 use obj::{Obj, load_obj};
 use std::{sync::Arc, time::Instant};
 use vulkano::{
-    VulkanLibrary,
+    Validated, VulkanError, VulkanLibrary,
     buffer::{
         Buffer, BufferCreateInfo, BufferUsage,
         allocator::{SubbufferAllocator, SubbufferAllocatorCreateInfo},
     },
     command_buffer::{
-        AutoCommandBufferBuilder, CommandBufferUsage, RenderPassBeginInfo, SubpassContents,
-        allocator::StandardCommandBufferAllocator,
+        AutoCommandBufferBuilder, CommandBufferUsage, RenderPassBeginInfo, SubpassBeginInfo,
+        SubpassContents, SubpassEndInfo, allocator::StandardCommandBufferAllocator,
     },
     descriptor_set::{
         PersistentDescriptorSet, WriteDescriptorSet, allocator::StandardDescriptorSetAllocator,
@@ -21,31 +21,36 @@ use vulkano::{
         physical::PhysicalDeviceType,
     },
     format::Format,
-    image::{AttachmentImage, ImageAccess, ImageUsage, SwapchainImage, view::ImageView},
-    instance::{Instance, InstanceCreateInfo},
-    memory::allocator::{AllocationCreateInfo, MemoryUsage, StandardMemoryAllocator},
+    image::{Image, ImageCreateInfo, ImageType, ImageUsage, view::ImageView},
+    instance::{Instance, InstanceCreateFlags, InstanceCreateInfo},
+    memory::allocator::{AllocationCreateInfo, MemoryTypeFilter, StandardMemoryAllocator},
     pipeline::{
-        GraphicsPipeline, Pipeline, PipelineBindPoint,
+        GraphicsPipeline, Pipeline, PipelineBindPoint, PipelineLayout,
+        PipelineShaderStageCreateInfo,
         graphics::{
-            depth_stencil::DepthStencilState,
+            GraphicsPipelineCreateInfo,
+            color_blend::{ColorBlendAttachmentState, ColorBlendState},
+            depth_stencil::{DepthState, DepthStencilState},
             input_assembly::InputAssemblyState,
-            vertex_input::Vertex as _,
+            multisample::MultisampleState,
+            rasterization::RasterizationState,
+            vertex_input::{Vertex as _, VertexDefinition},
             viewport::{Viewport, ViewportState},
         },
+        layout::PipelineDescriptorSetLayoutCreateInfo,
     },
     render_pass::{Framebuffer, FramebufferCreateInfo, RenderPass, Subpass},
     shader::ShaderModule,
     swapchain::{
-        AcquireError, CompositeAlpha, Swapchain, SwapchainCreateInfo, SwapchainCreationError,
-        SwapchainPresentInfo, acquire_next_image,
+        CompositeAlpha, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
+        acquire_next_image,
     },
-    sync::{self, FlushError, GpuFuture},
+    sync::{self, GpuFuture},
 };
-use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    window::WindowBuilder,
 };
 
 fn main() {
@@ -53,22 +58,20 @@ fn main() {
     // `triangle` example if you haven't done so yet.
 
     let library = VulkanLibrary::new().unwrap();
-    let required_extensions = vulkano_win::required_extensions(&library);
+    let event_loop = EventLoop::new();
+    let required_extensions = Surface::required_extensions(&event_loop);
     let instance = Instance::new(
         library,
         InstanceCreateInfo {
             enabled_extensions: required_extensions,
             // Enable enumerating devices that use non-conformant vulkan implementations. (ex. MoltenVK)
-            enumerate_portability: true,
+            flags: InstanceCreateFlags::ENUMERATE_PORTABILITY,
             ..Default::default()
         },
     )
     .unwrap();
-
-    let event_loop = EventLoop::new();
-    let surface = WindowBuilder::new()
-        .build_vk_surface(&event_loop, instance.clone())
-        .unwrap();
+    let window = Arc::new(WindowBuilder::new().build(&event_loop).unwrap());
+    let surface = Surface::from_window(instance.clone(), window.clone()).unwrap();
 
     let device_extensions = DeviceExtensions {
         khr_swapchain: true,
@@ -124,14 +127,11 @@ fn main() {
             .physical_device()
             .surface_capabilities(&surface, Default::default())
             .unwrap();
-        let image_format = Some(
-            device
-                .physical_device()
-                .surface_formats(&surface, Default::default())
-                .unwrap()[0]
-                .0,
-        );
-        let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
+        let image_format = device
+            .physical_device()
+            .surface_formats(&surface, Default::default())
+            .unwrap()[0]
+            .0;
 
         Swapchain::new(
             device.clone(),
@@ -165,26 +165,28 @@ fn main() {
     let obj: Obj =
         load_obj(&include_bytes!("../../obj-rs/tests/fixtures/normal-cone.obj")[..]).unwrap();
     let vertex_buffer = Buffer::from_iter(
-        &memory_allocator,
+        memory_allocator.clone(),
         BufferCreateInfo {
             usage: BufferUsage::VERTEX_BUFFER,
             ..Default::default()
         },
         AllocationCreateInfo {
-            usage: MemoryUsage::Upload,
+            memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
             ..Default::default()
         },
         obj.vertices,
     )
     .unwrap();
     let index_buffer = Buffer::from_iter(
-        &memory_allocator,
+        memory_allocator.clone(),
         BufferCreateInfo {
             usage: BufferUsage::INDEX_BUFFER,
             ..Default::default()
         },
         AllocationCreateInfo {
-            usage: MemoryUsage::Upload,
+            memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
             ..Default::default()
         },
         obj.indices,
@@ -195,7 +197,8 @@ fn main() {
         memory_allocator.clone(),
         SubbufferAllocatorCreateInfo {
             buffer_usage: BufferUsage::UNIFORM_BUFFER,
-            memory_usage: MemoryUsage::Upload,
+            memory_type_filter: MemoryTypeFilter::PREFER_HOST
+                | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
             ..Default::default()
         },
     );
@@ -206,16 +209,16 @@ fn main() {
     let render_pass = vulkano::single_pass_renderpass!(device.clone(),
         attachments: {
             color: {
-                load: Clear,
-                store: Store,
                 format: swapchain.image_format(),
                 samples: 1,
+                load_op: Clear,
+                store_op: Store,
             },
             depth: {
-                load: Clear,
-                store: DontCare,
                 format: Format::D16_UNORM,
                 samples: 1,
+                load_op: Clear,
+                store_op: DontCare,
             }
         },
         pass: {
@@ -232,7 +235,8 @@ fn main() {
     let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
     let rotation_start = Instant::now();
 
-    let descriptor_set_allocator = StandardDescriptorSetAllocator::new(device.clone());
+    let descriptor_set_allocator =
+        StandardDescriptorSetAllocator::new(device.clone(), Default::default());
     let command_buffer_allocator =
         StandardCommandBufferAllocator::new(device.clone(), Default::default());
 
@@ -251,7 +255,6 @@ fn main() {
                 recreate_swapchain = true;
             }
             Event::RedrawEventsCleared => {
-                let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
                 let dimensions = window.inner_size();
                 if dimensions.width == 0 || dimensions.height == 0 {
                     return;
@@ -266,7 +269,8 @@ fn main() {
                             ..swapchain.create_info()
                         }) {
                             Ok(r) => r,
-                            Err(SwapchainCreationError::ImageExtentNotSupported { .. }) => return,
+                            Err(Validated::ValidationError(_)) => return,
+                            Err(Validated::Error(VulkanError::OutOfDate)) => return,
                             Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
                         };
 
@@ -320,13 +324,14 @@ fn main() {
                     &descriptor_set_allocator,
                     layout.clone(),
                     [WriteDescriptorSet::buffer(0, uniform_buffer_subbuffer)],
+                    [],
                 )
                 .unwrap();
 
                 let (image_index, suboptimal, acquire_future) =
                     match acquire_next_image(swapchain.clone(), None) {
                         Ok(r) => r,
-                        Err(AcquireError::OutOfDate) => {
+                        Err(Validated::Error(VulkanError::OutOfDate)) => {
                             recreate_swapchain = true;
                             return;
                         }
@@ -354,21 +359,28 @@ fn main() {
                                 framebuffers[image_index as usize].clone(),
                             )
                         },
-                        SubpassContents::Inline,
+                        SubpassBeginInfo {
+                            contents: SubpassContents::Inline,
+                            ..Default::default()
+                        },
                     )
                     .unwrap()
                     .bind_pipeline_graphics(pipeline.clone())
+                    .unwrap()
                     .bind_descriptor_sets(
                         PipelineBindPoint::Graphics,
                         pipeline.layout().clone(),
                         0,
                         set,
                     )
+                    .unwrap()
                     .bind_vertex_buffers(0, vertex_buffer.clone())
+                    .unwrap()
                     .bind_index_buffer(index_buffer.clone())
+                    .unwrap()
                     .draw_indexed(index_buffer.len() as u32, 1, 0, 0, 0)
                     .unwrap()
-                    .end_render_pass()
+                    .end_render_pass(SubpassEndInfo::default())
                     .unwrap();
                 let command_buffer = builder.build().unwrap();
 
@@ -388,7 +400,7 @@ fn main() {
                     Ok(future) => {
                         previous_frame_end = Some(future.boxed());
                     }
-                    Err(FlushError::OutOfDate) => {
+                    Err(Validated::Error(VulkanError::OutOfDate)) => {
                         recreate_swapchain = true;
                         previous_frame_end = Some(sync::now(device.clone()).boxed());
                     }
@@ -405,16 +417,31 @@ fn main() {
 
 /// This method is called once during initialization, then again whenever the window is resized
 fn window_size_dependent_setup(
-    memory_allocator: &StandardMemoryAllocator,
-    vs: &ShaderModule,
-    fs: &ShaderModule,
-    images: &[Arc<SwapchainImage>],
+    memory_allocator: &Arc<StandardMemoryAllocator>,
+    vs: &Arc<ShaderModule>,
+    fs: &Arc<ShaderModule>,
+    images: &[Arc<Image>],
     render_pass: Arc<RenderPass>,
 ) -> (Arc<GraphicsPipeline>, Vec<Arc<Framebuffer>>) {
-    let dimensions = images[0].dimensions().width_height();
+    let extent = images[0].extent();
+    let dimensions = [extent[0], extent[1]];
 
     let depth_buffer = ImageView::new_default(
-        AttachmentImage::transient(memory_allocator, dimensions, Format::D16_UNORM).unwrap(),
+        Image::new(
+            memory_allocator.clone(),
+            ImageCreateInfo {
+                image_type: ImageType::Dim2d,
+                format: Format::D16_UNORM,
+                extent: [dimensions[0], dimensions[1], 1],
+                usage: ImageUsage::DEPTH_STENCIL_ATTACHMENT | ImageUsage::TRANSIENT_ATTACHMENT,
+                ..Default::default()
+            },
+            AllocationCreateInfo {
+                memory_type_filter: MemoryTypeFilter::PREFER_DEVICE,
+                ..Default::default()
+            },
+        )
+        .unwrap(),
     )
     .unwrap();
 
@@ -437,22 +464,59 @@ fn window_size_dependent_setup(
     // However in the teapot example, we recreate the pipelines with a hardcoded viewport instead.
     // This allows the driver to optimize things, at the cost of slower window resizes.
     // https://computergraphics.stackexchange.com/questions/5742/vulkan-best-way-of-updating-pipeline-viewport
-    let pipeline = GraphicsPipeline::start()
-        .vertex_input_state(obj::Vertex::per_vertex())
-        .vertex_shader(vs.entry_point("main").unwrap(), ())
-        .input_assembly_state(InputAssemblyState::new())
-        .viewport_state(ViewportState::viewport_fixed_scissor_irrelevant([
-            Viewport {
-                origin: [0.0, 0.0],
-                dimensions: [dimensions[0] as f32, dimensions[1] as f32],
-                depth_range: 0.0..1.0,
-            },
-        ]))
-        .fragment_shader(fs.entry_point("main").unwrap(), ())
-        .depth_stencil_state(DepthStencilState::simple_depth_test())
-        .render_pass(Subpass::from(render_pass, 0).unwrap())
-        .build(memory_allocator.device().clone())
+    let vs_entry = vs.entry_point("main").unwrap();
+    let fs_entry = fs.entry_point("main").unwrap();
+    let vertex_input_state = obj::Vertex::per_vertex()
+        .definition(&vs_entry.info().input_interface)
         .unwrap();
+
+    let stages = [
+        PipelineShaderStageCreateInfo::new(vs_entry),
+        PipelineShaderStageCreateInfo::new(fs_entry),
+    ];
+
+    let device = memory_allocator.device().clone();
+    let layout = PipelineLayout::new(
+        device.clone(),
+        PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
+            .into_pipeline_layout_create_info(device.clone())
+            .unwrap(),
+    )
+    .unwrap();
+
+    let subpass = Subpass::from(render_pass, 0).unwrap();
+    let pipeline = GraphicsPipeline::new(
+        device,
+        None,
+        GraphicsPipelineCreateInfo {
+            stages: stages.into_iter().collect(),
+            vertex_input_state: Some(vertex_input_state),
+            input_assembly_state: Some(InputAssemblyState::default()),
+            viewport_state: Some(ViewportState {
+                viewports: [Viewport {
+                    offset: [0.0, 0.0],
+                    extent: [dimensions[0] as f32, dimensions[1] as f32],
+                    depth_range: 0.0..=1.0,
+                }]
+                .into_iter()
+                .collect(),
+                ..ViewportState::default()
+            }),
+            rasterization_state: Some(RasterizationState::default()),
+            multisample_state: Some(MultisampleState::default()),
+            depth_stencil_state: Some(DepthStencilState {
+                depth: Some(DepthState::simple()),
+                ..Default::default()
+            }),
+            color_blend_state: Some(ColorBlendState::with_attachment_states(
+                subpass.num_color_attachments(),
+                ColorBlendAttachmentState::default(),
+            )),
+            subpass: Some(subpass.into()),
+            ..GraphicsPipelineCreateInfo::layout(layout)
+        },
+    )
+    .unwrap();
 
     (pipeline, framebuffers)
 }

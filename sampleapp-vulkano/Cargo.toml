@@ -10,9 +10,8 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vulkano = "0.33"
-vulkano-win = "0.33"
-vulkano-shaders = "0.33"
+vulkano = "0.34"
+vulkano-shaders = "0.34"
 winit = "0.28"
 nalgebra = "0.32"
 
